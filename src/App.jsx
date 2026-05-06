@@ -200,14 +200,7 @@ const style = `
   .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gold); color: var(--dark); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; cursor: pointer; border: 2px solid rgba(245,166,35,0.3); }
 `;
 
-const EVENTS = [
-  { id:1, emoji:"🌞", title:"La Solar Festival 2026", cat:"Música", date:"Sáb 2 May", time:"2:00 PM", place:"Parque Norte, Medellín", price:"Desde $300.000", color:"linear-gradient(135deg,#1a0a00,#3d2000)", tag:"ESTA SEMANA", desc:"La Solar es el festival más caliente de Medellín. DJ Snake, Porter Robinson, Yandel, Danny Ocean, SOFI TUKKER y más. Tardeo desde las 2 PM.", attendees:"18.000", capacity:"22.000", ticketPlatform:"TuBoleta", link:"https://web.tuboleta.com/images/Eventos/La-Solar-2026/home.html" },
-  { id:2, emoji:"🎸", title:"Audiciones Altavoz 2026", cat:"Música", date:"Mayo 2026", time:"Por confirmar", place:"Varios escenarios, Medellín", price:"Gratis", color:"linear-gradient(135deg,#0a1a00,#1a3d00)", tag:"CONVOCATORIA", desc:"Altavoz, el festival de rock y música independiente más importante de Colombia, abre sus audiciones en mayo. Entrada libre para el público.", attendees:"1.200", capacity:"5.000", ticketPlatform:"Alcaldía de Medellín", link:"https://www.medellin.gov.co/es/eventos/" },
-  { id:3, emoji:"🩰", title:"Ballet: Coppélia", cat:"Arte", date:"Sáb 2 May", time:"3:00 PM", place:"Teatro Universidad de Medellín", price:"En La Tiquetera", color:"linear-gradient(135deg,#1a001a,#3d003d)", tag:null, desc:"Coppélia es un ballet en tres actos, con coreografía original de Arthur Saint-Léon y música de Léo Delibes. Uno de los ballets más encantadores del repertorio universal.", attendees:"420", capacity:"600", ticketPlatform:"La Tiquetera", link:"https://latiquetera.com/events/search?search=coppelia+medellin" },
-  { id:4, emoji:"😂", title:"Stand-Up: Saliendo del Closet", cat:"Comedia", date:"Próxima semana", time:"Por confirmar", place:"Medellín", price:"En La Tiquetera", color:"linear-gradient(135deg,#001a1a,#003d3a)", tag:null, desc:"Un show de stand-up donde, a través de la risa, se quitan prejuicios, miedos y barreras mentales.", attendees:"280", capacity:"400", ticketPlatform:"La Tiquetera", link:"https://latiquetera.com/events/search?search=saliendo+del+closet" },
-  { id:5, emoji:"🤖", title:"AI Summit 2026", cat:"Tech", date:"Jue 7 – Vie 8 May", time:"9:00 AM", place:"Bogotá (evento nacional)", price:"En La Tiquetera", color:"linear-gradient(135deg,#00102a,#001f50)", tag:"NACIONAL", desc:"Encuentro internacional de alto nivel enfocado en inteligencia artificial. Dos días con keynotes, talleres y networking con líderes tech de América Latina.", attendees:"1.500", capacity:"2.000", ticketPlatform:"La Tiquetera", link:"https://latiquetera.com/event/ai-summit-bogota" },
-  { id:6, emoji:"🎻", title:"Orquesta Filarmónica de Medellín", cat:"Música", date:"8 May", time:"Por confirmar", place:"Teatro Pablo Tobón Uribe, Medellín", price:"En La Tiquetera", color:"linear-gradient(135deg,#1a0a00,#2a1500)", tag:null, desc:"La Orquesta Filarmónica de Medellín presenta su temporada 2026 junto a la inigualable voz de Verónica Lin, en víspera del Día de la Madre.", attendees:"650", capacity:"900", ticketPlatform:"La Tiquetera", link:"https://latiquetera.com/events/search?search=filarmonica+medellin+2026" },
-];
+const ADMINS = ["luchofer2001@gmail.com"];
 
 const CATS = ["Todos","Música","Arte","Comedia","Tech","Gastronomía","Baile","Deportes","Teatro","Bienestar"];
 
@@ -219,6 +212,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("home");
   const [saved, setSaved] = useState([]);
   const [search, setSearch] = useState("");
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [showAuth, setShowAuth] = useState(false);
   const [authTab, setAuthTab] = useState("login");
@@ -229,17 +224,48 @@ export default function App() {
   const [authError, setAuthError] = useState("");
   const [authSuccess, setAuthSuccess] = useState("");
 
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (_event === "PASSWORD_RECOVERY") setShowResetPassword(true);
     });
+    fetchEvents();
     return () => subscription.unsubscribe();
   }, []);
 
-  const filtered = EVENTS.filter(e => {
+  const handleResetPassword = async () => {
+    if (!newPassword || newPassword.length < 6) { showToast("⚠️ La contraseña debe tener al menos 6 caracteres"); return; }
+    setResetLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setResetLoading(false);
+    if (error) showToast("⚠️ Error: " + error.message);
+    else { setShowResetPassword(false); setNewPassword(""); showToast("✓ ¡Contraseña actualizada exitosamente!"); }
+  };
+
+  const fetchEvents = async () => {
+    setLoading(true);
+    const { data, error } = await supabase.from("events").select("*").order("created_at", { ascending: false });
+    if (!error && data) {
+      setEvents(data.map(e => ({
+        id: e.id, emoji: e.emoji, title: e.title, cat: e.category,
+        date: e.date, time: e.time, place: e.place, price: e.price,
+        color: e.color, tag: e.tag, desc: e.description,
+        attendees: String(e.attendees), capacity: String(e.capacity),
+        ticketPlatform: e.ticket_platform, link: e.ticket_link,
+        organizerName: e.organizer_name, organizerContact: e.organizer_contact,
+      })));
+    }
+    setLoading(false);
+  };
+
+  const filtered = events.filter(e => {
     const matchCat = activeFilter === "Todos" || e.cat === activeFilter;
     const matchSearch = e.title.toLowerCase().includes(search.toLowerCase()) || e.place.toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
@@ -259,10 +285,31 @@ export default function App() {
     showToast("✓ ¡Reserva confirmada! Revisa tu correo");
   };
 
-  const handleCreateSubmit = () => {
+  const [form, setForm] = useState({ title:"", category:"Música", date:"", time:"", place:"", price:"", capacity:"", description:"", emoji:"🎵", tag:"", ticket_platform:"", ticket_link:"", organizer_name:"", organizer_contact:"" });
+  const [formLoading, setFormLoading] = useState(false);
+
+  const handleFormChange = (field, value) => setForm(f => ({...f, [field]: value}));
+
+  const handleCreateSubmit = async () => {
     if (!user) { setShowAuth(true); setShowCreate(false); return; }
+    if (!form.title || !form.place || !form.date) { showToast("⚠️ Completa los campos obligatorios"); return; }
+    setFormLoading(true);
+    const { error } = await supabase.from("events").insert([{
+      title: form.title, category: form.category, date: form.date,
+      time: form.time, place: form.place, price: form.price || "Gratis",
+      capacity: parseInt(form.capacity) || 0, attendees: 0,
+      description: form.description, emoji: form.emoji,
+      tag: form.tag || null, ticket_platform: form.ticket_platform,
+      ticket_link: form.ticket_link, color: "linear-gradient(135deg,#1a0a00,#2a1500)",
+      organizer_name: form.organizer_name, organizer_contact: form.organizer_contact,
+      user_id: user.id,
+    }]);
+    setFormLoading(false);
+    if (error) { showToast("⚠️ Error al publicar: " + error.message); return; }
     setShowCreate(false);
+    setForm({ title:"", category:"Música", date:"", time:"", place:"", price:"", capacity:"", description:"", emoji:"🎵", tag:"", ticket_platform:"", ticket_link:"", organizer_name:"", organizer_contact:"" });
     showToast("✓ ¡Evento publicado exitosamente!");
+    fetchEvents();
   };
 
   const handleLogin = async () => {
@@ -285,15 +332,40 @@ export default function App() {
     setAuthLoading(false);
   };
 
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  const handleForgotPassword = async () => {
+    if (!forgotEmail) { setAuthError("Escribe tu correo"); return; }
+    setForgotLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+      redirectTo: window.location.origin,
+    });
+    setForgotLoading(false);
+    if (error) setAuthError(error.message);
+    else { setAuthSuccess("✓ Te enviamos un correo para restablecer tu contraseña"); setShowForgot(false); }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setSaved([]);
     showToast("Sesión cerrada");
   };
 
+  const isAdmin = user && ADMINS.includes(user.email);
+
+  const handleDeleteEvent = async (id, e) => {
+    e.stopPropagation();
+    if (!window.confirm("¿Seguro que quieres eliminar este evento?")) return;
+    const { error } = await supabase.from("events").delete().eq("id", id);
+    if (error) showToast("⚠️ Error al eliminar");
+    else { showToast("✓ Evento eliminado"); fetchEvents(); }
+  };
+
   const getUserInitial = () => (user?.user_metadata?.full_name || user?.email || "U")[0].toUpperCase();
   const getUserName = () => user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Usuario";
-  const featuredEvent = EVENTS[0];
+  const featuredEvent = events[0];
 
   return (
     <>
@@ -342,7 +414,7 @@ export default function App() {
             </div>
 
             <div className="main">
-              {activeFilter === "Todos" && !search && (
+              {activeFilter === "Todos" && !search && featuredEvent && (
                 <>
                   <div className="section-header"><div className="section-title">Evento <span>Destacado</span></div></div>
                   <div className="featured-card" onClick={() => setSelectedEvent(featuredEvent)}>
@@ -366,7 +438,12 @@ export default function App() {
                 <span className="section-link">{filtered.length} eventos</span>
               </div>
 
-              {filtered.length === 0 ? (
+              {loading ? (
+                <div style={{textAlign:'center',padding:'60px 0',color:'var(--muted)'}}>
+                  <div style={{fontSize:32,marginBottom:12}}>⏳</div>
+                  <div style={{fontSize:16}}>Cargando eventos...</div>
+                </div>
+              ) : filtered.length === 0 ? (
                 <div style={{textAlign:'center',padding:'60px 0',color:'var(--muted)'}}>
                   <div style={{fontSize:48,marginBottom:12}}>🔍</div>
                   <div style={{fontSize:16}}>No encontramos eventos</div>
@@ -389,7 +466,12 @@ export default function App() {
                         </div>
                         <div className="event-card-footer">
                           <div className={`event-card-price ${ev.price==="Gratis"?"free":""}`}>{ev.price}</div>
-                          <button className="btn-reserve" onClick={e=>{e.stopPropagation();toggleSave(ev.id);}}>{saved.includes(ev.id) ? "❤️" : "🤍"} Guardar</button>
+                          <div style={{display:'flex',gap:6}}>
+                            {isAdmin && (
+                              <button className="btn-reserve" style={{color:'var(--red)',borderColor:'rgba(232,53,58,0.3)'}} onClick={e=>handleDeleteEvent(ev.id,e)}>🗑️</button>
+                            )}
+                            <button className="btn-reserve" onClick={e=>{e.stopPropagation();toggleSave(ev.id);}}>{saved.includes(ev.id) ? "❤️" : "🤍"} Guardar</button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -419,7 +501,7 @@ export default function App() {
               </div>
             ) : (
               <div className="events-grid">
-                {EVENTS.filter(e=>saved.includes(e.id)).map(ev => (
+                {events.filter(e=>saved.includes(e.id)).map(ev => (
                   <div key={ev.id} className="event-card" onClick={() => setSelectedEvent(ev)}>
                     <div className="event-card-img" style={{background: ev.color}}>{ev.emoji}<span className="event-card-cat">{ev.cat}</span></div>
                     <div className="event-card-body">
@@ -490,11 +572,30 @@ export default function App() {
                 {authTab === "register" && <input className="auth-input" placeholder="Tu nombre completo" value={authName} onChange={e=>setAuthName(e.target.value)} />}
                 <input className="auth-input" type="email" placeholder="correo@ejemplo.com" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} />
                 <input className="auth-input" type="password" placeholder="Contraseña" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} />
+                {authTab === "login" && !showForgot && (
+                  <div style={{textAlign:'right',marginTop:-8}}>
+                    <span style={{fontSize:13,color:'var(--gold)',cursor:'pointer',textDecoration:'underline'}} onClick={()=>{setShowForgot(true);setAuthError("");setAuthSuccess("");}}>
+                      ¿Olvidaste tu contraseña?
+                    </span>
+                  </div>
+                )}
+                {showForgot && (
+                  <div style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:12,padding:16}}>
+                    <div style={{fontSize:14,marginBottom:10,color:'var(--muted)'}}>Escribe tu correo y te enviamos un link para restablecer tu contraseña.</div>
+                    <input className="auth-input" type="email" placeholder="correo@ejemplo.com" value={forgotEmail} onChange={e=>setForgotEmail(e.target.value)} style={{marginBottom:10}} />
+                    <div style={{display:'flex',gap:8}}>
+                      <button className="btn-cancel" style={{flex:0,padding:'10px 14px',borderRadius:8}} onClick={()=>setShowForgot(false)}>Cancelar</button>
+                      <button className="auth-btn" style={{margin:0}} disabled={forgotLoading} onClick={handleForgotPassword}>
+                        {forgotLoading ? "Enviando..." : "Enviar correo →"}
+                      </button>
+                    </div>
+                  </div>
+                )}
                 {authError && <div className="auth-error">⚠️ {authError}</div>}
                 {authSuccess && <div className="auth-success">{authSuccess}</div>}
-                <button className="auth-btn" disabled={authLoading} onClick={authTab==="login"?handleLogin:handleRegister}>
+                {!showForgot && <button className="auth-btn" disabled={authLoading} onClick={authTab==="login"?handleLogin:handleRegister}>
                   {authLoading ? "Cargando..." : authTab==="login" ? "Iniciar sesión →" : "Crear cuenta →"}
-                </button>
+                </button>}
               </div>
             </div>
           </div>
@@ -526,11 +627,21 @@ export default function App() {
                 </div>
                 <div className="detail-map">📍 Ver en mapa · {selectedEvent.place}</div>
                 {selectedEvent.ticketPlatform && (
-                  <div style={{marginBottom:16,display:'flex',alignItems:'center',gap:8,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 14px'}}>
+                  <div style={{marginBottom:12,display:'flex',alignItems:'center',gap:8,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 14px'}}>
                     <span style={{fontSize:16}}>🎟️</span>
                     <div>
                       <div style={{fontSize:11,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'0.5px'}}>Venta oficial de entradas</div>
                       <div style={{fontWeight:700,fontSize:14,color:'var(--gold)'}}>{selectedEvent.ticketPlatform}</div>
+                    </div>
+                  </div>
+                )}
+                {selectedEvent.organizerName && (
+                  <div style={{marginBottom:16,display:'flex',alignItems:'center',gap:8,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 14px'}}>
+                    <span style={{fontSize:16}}>👤</span>
+                    <div>
+                      <div style={{fontSize:11,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'0.5px'}}>Organizador</div>
+                      <div style={{fontWeight:700,fontSize:14}}>{selectedEvent.organizerName}</div>
+                      {selectedEvent.organizerContact && <div style={{fontSize:13,color:'var(--gold)',marginTop:2}}>{selectedEvent.organizerContact}</div>}
                     </div>
                   </div>
                 )}
@@ -539,6 +650,9 @@ export default function App() {
                     {selectedEvent.price === "Gratis" ? "Registrarse gratis →" : selectedEvent.price.startsWith("En") ? "Ver entradas →" : `Comprar · ${selectedEvent.price} →`}
                   </button>
                   <button className="btn-share" onClick={()=>toggleSave(selectedEvent.id)}>{saved.includes(selectedEvent.id) ? "❤️" : "🤍"}</button>
+                  {isAdmin && (
+                    <button className="btn-share" style={{color:'var(--red)',borderColor:'rgba(232,53,58,0.3)'}} onClick={e=>{handleDeleteEvent(selectedEvent.id,e);setSelectedEvent(null);}}>🗑️</button>
+                  )}
                 </div>
               </div>
             </div>
@@ -549,21 +663,95 @@ export default function App() {
           <div className="create-overlay" onClick={()=>setShowCreate(false)}>
             <div className="create-panel" onClick={e=>e.stopPropagation()}>
               <div className="create-title">Publicar <span>Evento</span></div>
-              <div className="form-group"><label className="form-label">Nombre del evento</label><input className="form-input" placeholder="ej. Festival de Jazz Medellín" /></div>
-              <div className="form-group"><label className="form-label">Categoría</label><select className="form-select">{CATS.filter(c=>c!=="Todos").map(c=><option key={c}>{c}</option>)}</select></div>
-              <div className="form-row">
-                <div className="form-group"><label className="form-label">Fecha</label><input className="form-input" type="date" /></div>
-                <div className="form-group"><label className="form-label">Hora</label><input className="form-input" type="time" /></div>
+
+              <div className="form-group">
+                <label className="form-label">Emoji del evento</label>
+                <input className="form-input" placeholder="ej. 🎵 🎨 🍜 💃" value={form.emoji} onChange={e=>handleFormChange("emoji",e.target.value)} />
               </div>
-              <div className="form-group"><label className="form-label">Lugar / Dirección</label><input className="form-input" placeholder="ej. Parque Arví, Medellín" /></div>
-              <div className="form-row">
-                <div className="form-group"><label className="form-label">Precio de entrada</label><input className="form-input" placeholder="ej. $50.000 o Gratis" /></div>
-                <div className="form-group"><label className="form-label">Capacidad</label><input className="form-input" type="number" placeholder="ej. 500" /></div>
+              <div className="form-group">
+                <label className="form-label">Nombre del evento *</label>
+                <input className="form-input" placeholder="ej. Festival de Jazz Medellín" value={form.title} onChange={e=>handleFormChange("title",e.target.value)} />
               </div>
-              <div className="form-group"><label className="form-label">Descripción</label><textarea className="form-textarea" placeholder="Cuéntanos de qué trata tu evento..." /></div>
+              <div className="form-group">
+                <label className="form-label">Categoría</label>
+                <select className="form-select" value={form.category} onChange={e=>handleFormChange("category",e.target.value)}>
+                  {CATS.filter(c=>c!=="Todos").map(c=><option key={c}>{c}</option>)}
+                </select>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Fecha *</label>
+                  <input className="form-input" type="date" value={form.date} onChange={e=>handleFormChange("date",e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Hora</label>
+                  <input className="form-input" type="time" value={form.time} onChange={e=>handleFormChange("time",e.target.value)} />
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Lugar / Dirección *</label>
+                <input className="form-input" placeholder="ej. Parque Arví, Medellín" value={form.place} onChange={e=>handleFormChange("place",e.target.value)} />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Precio</label>
+                  <input className="form-input" placeholder="ej. $50.000 o Gratis" value={form.price} onChange={e=>handleFormChange("price",e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Capacidad</label>
+                  <input className="form-input" type="number" placeholder="ej. 500" value={form.capacity} onChange={e=>handleFormChange("capacity",e.target.value)} />
+                </div>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Descripción</label>
+                <textarea className="form-textarea" placeholder="Cuéntanos de qué trata tu evento..." value={form.description} onChange={e=>handleFormChange("description",e.target.value)} />
+              </div>
+
+              <div style={{borderTop:'1px solid var(--border)',margin:'16px 0',paddingTop:16}}>
+                <div style={{fontSize:12,fontWeight:700,color:'var(--gold)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:14}}>👤 Información del organizador</div>
+                <div className="form-group">
+                  <label className="form-label">Nombre del organizador</label>
+                  <input className="form-input" placeholder="ej. Productora XYZ" value={form.organizer_name} onChange={e=>handleFormChange("organizer_name",e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Contacto (WhatsApp, Instagram, correo)</label>
+                  <input className="form-input" placeholder="ej. @productoraxyz o +57 300 123 4567" value={form.organizer_contact} onChange={e=>handleFormChange("organizer_contact",e.target.value)} />
+                </div>
+              </div>
+
+              <div style={{borderTop:'1px solid var(--border)',margin:'16px 0',paddingTop:16}}>
+                <div style={{fontSize:12,fontWeight:700,color:'var(--gold)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:14}}>🎟️ Venta de entradas</div>
+                <div className="form-group">
+                  <label className="form-label">Plataforma de venta</label>
+                  <input className="form-input" placeholder="ej. TuBoleta, La Tiquetera, Gratis" value={form.ticket_platform} onChange={e=>handleFormChange("ticket_platform",e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Link de compra</label>
+                  <input className="form-input" placeholder="https://..." value={form.ticket_link} onChange={e=>handleFormChange("ticket_link",e.target.value)} />
+                </div>
+              </div>
+
               <div className="form-actions">
                 <button className="btn-cancel" onClick={()=>setShowCreate(false)}>Cancelar</button>
-                <button className="btn-submit" onClick={handleCreateSubmit}>Publicar evento →</button>
+                <button className="btn-submit" onClick={handleCreateSubmit} disabled={formLoading}>
+                  {formLoading ? "Publicando..." : "Publicar evento →"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showResetPassword && (
+          <div className="auth-overlay">
+            <div className="auth-panel" style={{position:'relative'}}>
+              <div className="auth-logo">MEDE<span>LLÍ</span>N EVENTOS</div>
+              <div className="auth-title">Nueva contraseña</div>
+              <div className="auth-sub">Escribe tu nueva contraseña para continuar.</div>
+              <div className="auth-form">
+                <input className="auth-input" type="password" placeholder="Nueva contraseña (mín. 6 caracteres)" value={newPassword} onChange={e=>setNewPassword(e.target.value)} />
+                <button className="auth-btn" disabled={resetLoading} onClick={handleResetPassword}>
+                  {resetLoading ? "Guardando..." : "Guardar contraseña →"}
+                </button>
               </div>
             </div>
           </div>
