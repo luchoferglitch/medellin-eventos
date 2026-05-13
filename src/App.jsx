@@ -1,5 +1,30 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabase";
+import { Calendar, MapPin, Users, Star } from "lucide-react";
+
+import catMusica from "./assets/cat-musica.jpg";
+import catArte from "./assets/cat-arte.jpg";
+import catComedia from "./assets/cat-comedia.jpg";
+import catTech from "./assets/cat-tech.jpg";
+import catBaile from "./assets/cat-baile.jpg";
+import catDeportes from "./assets/cat-deportes.jpg";
+import catTeatro from "./assets/cat-teatro.jpg";
+import catGastronomia from "./assets/cat-gastronomia.jpg";
+import catBienestar from "./assets/cat-bienestar.jpg";
+
+const CAT_CONFIG = {
+  "Música":      { img: catMusica,      color: "#7C3AED" },
+  "Arte":        { img: catArte,        color: "#EA580C" },
+  "Comedia":     { img: catComedia,     color: "#D97706" },
+  "Tech":        { img: catTech,        color: "#2563EB" },
+  "Baile":       { img: catBaile,       color: "#DB2777" },
+  "Deportes":    { img: catDeportes,    color: "#16A34A" },
+  "Teatro":      { img: catTeatro,      color: "#DC2626" },
+  "Gastronomía": { img: catGastronomia, color: "#C2410C" },
+  "Bienestar":   { img: catBienestar,   color: "#059669" },
+};
+
+const getCatConfig = (cat) => CAT_CONFIG[cat] || { img: null, color: "#C8860A" };
 
 const style = `
   @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&display=swap');
@@ -87,7 +112,7 @@ const style = `
   }
   .hero-bg {
     position: absolute; inset: 0;
-    background-image: background-image: none;
+    background-image: url('/medellin.jpg');
     background-color: #1a2a3a;
     background-size: cover; background-position: center;
   }
@@ -412,7 +437,7 @@ export default function App() {
         {activeTab === "home" && (
           <>
             <div className="hero">
-              <div className="hero-bg" style={{backgroundImage: "url('/medellin.jpg')"}} />
+              <div className="hero-bg" />
               <div className="hero-content">
                 <div className="hero-tag">📍 Medellín, Colombia</div>
                 <h1 className="hero-title">DESCUBRE<br/><span className="accent">LO QUE</span><br/><span className="accent-red">VIBRA</span></h1>
@@ -446,7 +471,7 @@ export default function App() {
                 <>
                   <div className="section-header"><div className="section-title">Evento <span>Destacado</span></div></div>
                   <div className="featured-card" onClick={() => setSelectedEvent(featuredEvent)}>
-                    <div className="featured-bg" style={{background: featuredEvent.color}}>{featuredEvent.emoji}</div>
+                    <div className="featured-bg" style={{backgroundImage: `url(${getCatConfig(featuredEvent.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}} />
                     <div className="featured-overlay" />
                     <div className="featured-content">
                       <span className="featured-badge">🔥 Más vendido</span>
@@ -480,17 +505,17 @@ export default function App() {
                 <div className="events-grid">
                   {filtered.map(ev => (
                     <div key={ev.id} className="event-card" onClick={() => setSelectedEvent(ev)}>
-                      <div className="event-card-img" style={{background: ev.color}}>
-                        {ev.emoji}
-                        <span className="event-card-cat">{ev.cat}</span>
-                        {ev.tag && <span style={{position:'absolute',top:12,right:12,background:'var(--red)',color:'white',padding:'3px 8px',borderRadius:'100px',fontSize:'10px',fontWeight:700}}>{ev.tag}</span>}
+                      <div className="event-card-img" style={{backgroundImage: `url(${getCatConfig(ev.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}}>
+                        <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.35)'}} />
+                        <span className="event-card-cat" style={{zIndex:1}}>{ev.cat}</span>
+                        {ev.tag && <span style={{position:'absolute',top:12,right:12,background:'var(--red)',color:'white',padding:'3px 8px',borderRadius:'100px',fontSize:'10px',fontWeight:700,zIndex:1}}>{ev.tag}</span>}
                       </div>
                       <div className="event-card-body">
                         <div className="event-card-title">{ev.title}</div>
                         <div className="event-card-info">
-                          <div className="event-card-info-row">📅 {ev.date} · {ev.time}</div>
-                          <div className="event-card-info-row">📍 {ev.place}</div>
-                          <div className="event-card-info-row">👥 {ev.attendees} asistentes</div>
+                          <div className="event-card-info-row"><Calendar size={13} color="var(--muted)" /> {ev.date} · {ev.time}</div>
+                          <div className="event-card-info-row"><MapPin size={13} color="var(--muted)" /> {ev.place}</div>
+                          <div className="event-card-info-row"><Users size={13} color="var(--muted)" /> {ev.attendees} asistentes</div>
                         </div>
                         <div className="event-card-footer">
                           <div className={`event-card-price ${ev.price==="Gratis"?"free":""}`}>{ev.price}</div>
@@ -531,12 +556,15 @@ export default function App() {
               <div className="events-grid">
                 {events.filter(e=>saved.includes(e.id)).map(ev => (
                   <div key={ev.id} className="event-card" onClick={() => setSelectedEvent(ev)}>
-                    <div className="event-card-img" style={{background: ev.color}}>{ev.emoji}<span className="event-card-cat">{ev.cat}</span></div>
+                    <div className="event-card-img" style={{backgroundImage: `url(${getCatConfig(ev.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}}>
+                      <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.35)'}} />
+                      <span className="event-card-cat" style={{zIndex:1}}>{ev.cat}</span>
+                    </div>
                     <div className="event-card-body">
                       <div className="event-card-title">{ev.title}</div>
                       <div className="event-card-info">
-                        <div className="event-card-info-row">📅 {ev.date}</div>
-                        <div className="event-card-info-row">📍 {ev.place}</div>
+                        <div className="event-card-info-row"><Calendar size={13} color="var(--muted)" /> {ev.date}</div>
+                        <div className="event-card-info-row"><MapPin size={13} color="var(--muted)" /> {ev.place}</div>
                       </div>
                       <div className="event-card-footer">
                         <div className={`event-card-price ${ev.price==="Gratis"?"free":""}`}>{ev.price}</div>
@@ -632,8 +660,8 @@ export default function App() {
         {selectedEvent && (
           <div className="detail-overlay" onClick={()=>setSelectedEvent(null)}>
             <div className="detail-panel" onClick={e=>e.stopPropagation()}>
-              <div className="detail-header" style={{background: selectedEvent.color}}>
-                {selectedEvent.emoji}
+              <div className="detail-header" style={{backgroundImage: `url(${getCatConfig(selectedEvent.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}}>
+                <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.4)'}} />
                 <div className="detail-header-overlay" />
                 <button className="detail-close" onClick={()=>setSelectedEvent(null)}>✕</button>
               </div>
