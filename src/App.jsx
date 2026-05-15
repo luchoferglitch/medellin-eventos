@@ -717,6 +717,9 @@ export default function App() {
                     <button className="btn-share" style={{color:'var(--red)',borderColor:'rgba(232,53,58,0.3)'}} onClick={e=>{handleDeleteEvent(selectedEvent.id,e);setSelectedEvent(null);}}>🗑️</button>
                   )}
                 </div>
+                <button onClick={()=>setSelectedEvent(null)} style={{width:'100%',marginTop:16,padding:'16px',borderRadius:12,border:'1px solid var(--border)',background:'var(--surface2)',color:'var(--muted)',fontFamily:'var(--font-body)',fontSize:15,fontWeight:600,cursor:'pointer'}}>
+                  ✕ Cerrar
+                </button>
               </div>
             </div>
           </div>
