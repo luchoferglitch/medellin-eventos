@@ -469,7 +469,12 @@ export default function App() {
 
   const getUserInitial = () => (user?.user_metadata?.full_name || user?.email || "U")[0].toUpperCase();
   const getUserName = () => user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Usuario";
-  const featuredEvent = events[0];
+  const featuredEvent = (() => {
+    const today = new Date().toISOString().split('T')[0];
+    const upcoming = events.filter(e => e.fechaReal >= today).slice(0, 5);
+    if (upcoming.length === 0) return events[0];
+    return upcoming[Math.floor(Date.now() / 3600000) % upcoming.length];
+  })();
 
   return (
     <>
