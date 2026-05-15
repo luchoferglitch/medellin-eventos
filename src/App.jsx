@@ -11,6 +11,7 @@ import catDeportes from "./assets/cat-deportes.jpg";
 import catTeatro from "./assets/cat-teatro.jpg";
 import catGastronomia from "./assets/cat-gastronomia.jpg";
 import catBienestar from "./assets/cat-bienestar.jpg";
+import catAcademicos from "./assets/cat-academicos.jpg";
 
 const CAT_CONFIG = {
   "Música":      { img: catMusica,      color: "#7C3AED" },
@@ -22,6 +23,7 @@ const CAT_CONFIG = {
   "Teatro":      { img: catTeatro,      color: "#DC2626" },
   "Gastronomía": { img: catGastronomia, color: "#C2410C" },
   "Bienestar":   { img: catBienestar,   color: "#059669" },
+  "Académicos":  { img: catAcademicos,  color: "#0369A1" },
 };
 
 const getCatConfig = (cat) => CAT_CONFIG[cat] || { img: null, color: "#C8860A" };
@@ -247,7 +249,7 @@ const style = `
 
 const ADMINS = ["luchofer2001@gmail.com"];
 
-const CATS = ["Todos","Música","Arte","Comedia","Tech","Gastronomía","Baile","Deportes","Teatro","Bienestar"];
+const CATS = ["Todos","Música","Arte","Comedia","Tech","Gastronomía","Baile","Deportes","Teatro","Bienestar","Académicos"];
 
 export default function App() {
   const [activeFilter, setActiveFilter] = useState("Todos");
