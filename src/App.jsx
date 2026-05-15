@@ -527,7 +527,14 @@ export default function App() {
               ))}
             </div>
             <div className="filters-bar">
-              {CATS.map(c => <button key={c} className={`filter-chip ${activeFilter===c?"active":""}`} onClick={() => setActiveFilter(c)}>{c}</button>)}
+              {CATS.map(c => {
+                const count = c === "Todos" ? events.length : events.filter(e => e.cat === c).length;
+                return (
+                  <button key={c} className={`filter-chip ${activeFilter===c?"active":""}`} onClick={() => setActiveFilter(c)}>
+                    {c} {count > 0 && <span style={{fontSize:11,opacity:0.8,marginLeft:4}}>({count})</span>}
+                  </button>
+                );
+              })}
             </div>
 
             <div className="main">
