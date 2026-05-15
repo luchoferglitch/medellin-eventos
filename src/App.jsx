@@ -417,7 +417,7 @@ export default function App() {
       <style>{style}</style>
       <div className="app">
         <nav className="nav">
-          <div className="nav-logo">MEDE<span>LLÍ</span>N EVENTOS</div>
+          <div className="nav-logo">MEDELLÍN VIBRA</div>
           <div className="nav-actions">
             {user ? (
               <>
@@ -617,7 +617,7 @@ export default function App() {
           <div className="auth-overlay" onClick={()=>setShowAuth(false)}>
             <div className="auth-panel" style={{position:'relative'}} onClick={e=>e.stopPropagation()}>
               <button className="auth-close" onClick={()=>setShowAuth(false)}>✕</button>
-              <div className="auth-logo">MEDE<span>LLÍ</span>N EVENTOS</div>
+              <div className="auth-logo">MEDELLÍN VIBRA</div>
               <div className="auth-title">{authTab==="login" ? "Bienvenido" : "Crear cuenta"}</div>
               <div className="auth-sub">{authTab==="login" ? "Inicia sesión para guardar eventos y comprar tiquetes" : "Únete a la comunidad de eventos de Medellín"}</div>
               <div className="auth-tabs">
@@ -800,7 +800,7 @@ export default function App() {
         {showResetPassword && (
           <div className="auth-overlay">
             <div className="auth-panel" style={{position:'relative'}}>
-              <div className="auth-logo">MEDE<span>LLÍ</span>N EVENTOS</div>
+              <div className="auth-logo">MEDELLÍN VIBRA</div>
               <div className="auth-title">Nueva contraseña</div>
               <div className="auth-sub">Escribe tu nueva contraseña para continuar.</div>
               <div className="auth-form">
