@@ -214,7 +214,8 @@ const style = `
   .detail-info-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
   .detail-info-value { font-weight: 600; font-size: 14px; color: var(--text); }
   .detail-desc { color: #555; font-size: 15px; line-height: 1.7; margin-bottom: 28px; }
-  .detail-map { height: 140px; border-radius: 14px; overflow: hidden; margin-bottom: 16px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; gap: 8px; }
+  .detail-map { height: 140px; border-radius: 14px; overflow: hidden; margin-bottom: 16px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; gap: 8px; transition: all 0.2s; }
+  .detail-map:hover { border-color: var(--gold); color: var(--gold); background: rgba(200,134,10,0.05); }
   .detail-actions { display: flex; gap: 12px; }
   .btn-buy { flex: 1; background: var(--gold); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; font-family: var(--font-body); transition: all 0.2s; }
   .btn-buy:hover { background: #a06d08; transform: translateY(-1px); }
@@ -685,7 +686,9 @@ export default function App() {
                     <div style={{height:'100%',background:'var(--gold)',width:`${Math.round(parseInt(selectedEvent.attendees.replace(',',''))/parseInt(selectedEvent.capacity.replace(',',''))*100)}%`,borderRadius:100}} />
                   </div>
                 </div>
-                <div className="detail-map">📍 Ver en mapa · {selectedEvent.place}</div>
+                <div className="detail-map" style={{cursor:'pointer'}} onClick={()=>window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedEvent.place)}`, '_blank')}>
+                  📍 Ver en Google Maps · {selectedEvent.place}
+                </div>
                 {selectedEvent.ticketPlatform && (
                   <div style={{marginBottom:12,display:'flex',alignItems:'center',gap:8,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 14px'}}>
                     <span style={{fontSize:16}}>🎟️</span>
