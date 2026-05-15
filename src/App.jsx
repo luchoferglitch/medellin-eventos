@@ -526,6 +526,43 @@ export default function App() {
               </div>
             </div>
 
+            {(() => {
+              const today = new Date(); today.setHours(0,0,0,0);
+              const day = today.getDay();
+              const diffToFri = (5 - day + 7) % 7;
+              const fri = new Date(today); fri.setDate(today.getDate() + diffToFri);
+              const sun = new Date(fri); sun.setDate(fri.getDate() + 2);
+              const friStr = fri.toISOString().split('T')[0];
+              const sunStr = sun.toISOString().split('T')[0];
+              const weekendEvents = events.filter(e => e.fechaReal >= friStr && e.fechaReal <= sunStr).slice(0, 4);
+              if (weekendEvents.length === 0) return null;
+              return (
+                <div style={{background:'white', padding:'32px 24px', borderBottom:'1px solid var(--border)'}}>
+                  <div style={{maxWidth:1200, margin:'0 auto'}}>
+                    <div className="section-header">
+                      <div className="section-title">🎉 Este <span>Fin de Semana</span></div>
+                      <span className="section-link" onClick={() => setActiveDateFilter("FinDeSemana")}>{weekendEvents.length} eventos →</span>
+                    </div>
+                    <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(240px, 1fr))', gap:16}}>
+                      {weekendEvents.map(ev => (
+                        <div key={ev.id} onClick={() => setSelectedEvent(ev)} style={{display:'flex', gap:12, alignItems:'center', background:'var(--surface2)', borderRadius:12, padding:12, cursor:'pointer', border:'1px solid var(--border)', transition:'all 0.2s'}}
+                          onMouseEnter={e=>e.currentTarget.style.borderColor='var(--gold)'}
+                          onMouseLeave={e=>e.currentTarget.style.borderColor='var(--border)'}
+                        >
+                          <div style={{width:48, height:48, borderRadius:10, backgroundImage:`url(${ev.imageUrl || getCatConfig(ev.cat).img})`, backgroundSize:'cover', backgroundPosition:'center', flexShrink:0}} />
+                          <div style={{overflow:'hidden'}}>
+                            <div style={{fontWeight:600, fontSize:13, lineHeight:1.3, marginBottom:2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{ev.title}</div>
+                            <div style={{fontSize:12, color:'var(--muted)'}}>{ev.date}</div>
+                            <div style={{fontSize:12, color:'var(--gold)', fontWeight:700}}>{ev.price}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             <div className="filters-bar" style={{borderBottom:'none',paddingBottom:8}}>
               {[["Todos","Todos"],["Hoy","Hoy"],["FinDeSemana","Este fin de semana"],["EstaSemana","Esta semana"],["EsteMes","Este mes"]].map(([val,label]) => (
                 <button key={val} className={`filter-chip ${activeDateFilter===val?"active":""}`} onClick={() => setActiveDateFilter(val)}>📅 {label}</button>
