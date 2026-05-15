@@ -305,6 +305,7 @@ export default function App() {
         attendees: String(e.attendees), capacity: String(e.capacity),
         ticketPlatform: e.ticket_platform, link: e.ticket_link,
         organizerName: e.organizer_name, organizerContact: e.organizer_contact,
+        imageUrl: e.image_url,
       })));
     }
     setLoading(false);
@@ -330,7 +331,7 @@ export default function App() {
     showToast("✓ ¡Reserva confirmada! Revisa tu correo");
   };
 
-  const [form, setForm] = useState({ title:"", category:"Música", date:"", time:"", place:"", price:"", capacity:"", description:"", emoji:"🎵", tag:"", ticket_platform:"", ticket_link:"", organizer_name:"", organizer_contact:"" });
+  const [form, setForm] = useState({ title:"", category:"Música", date:"", time:"", place:"", price:"", capacity:"", description:"", emoji:"🎵", tag:"", ticket_platform:"", ticket_link:"", organizer_name:"", organizer_contact:"", image_url:"" });
   const [formLoading, setFormLoading] = useState(false);
 
   const handleFormChange = (field, value) => setForm(f => ({...f, [field]: value}));
@@ -347,12 +348,13 @@ export default function App() {
       tag: form.tag || null, ticket_platform: form.ticket_platform,
       ticket_link: form.ticket_link, color: "linear-gradient(135deg,#1a0a00,#2a1500)",
       organizer_name: form.organizer_name, organizer_contact: form.organizer_contact,
+      image_url: form.image_url || null,
       user_id: user.id,
     }]);
     setFormLoading(false);
     if (error) { showToast("⚠️ Error al publicar: " + error.message); return; }
     setShowCreate(false);
-    setForm({ title:"", category:"Música", date:"", time:"", place:"", price:"", capacity:"", description:"", emoji:"🎵", tag:"", ticket_platform:"", ticket_link:"", organizer_name:"", organizer_contact:"" });
+    setForm({ title:"", category:"Música", date:"", time:"", place:"", price:"", capacity:"", description:"", emoji:"🎵", tag:"", ticket_platform:"", ticket_link:"", organizer_name:"", organizer_contact:"", image_url:"" });
     showToast("✓ ¡Evento publicado exitosamente!");
     fetchEvents();
   };
@@ -417,7 +419,7 @@ export default function App() {
       <style>{style}</style>
       <div className="app">
         <nav className="nav">
-          <div className="nav-logo">MEDELLÍN VIBRA</div>
+          <div className="nav-logo">MEDE<span>LLÍ</span>N EVENTOS</div>
           <div className="nav-actions">
             {user ? (
               <>
@@ -505,7 +507,7 @@ export default function App() {
                 <div className="events-grid">
                   {filtered.map(ev => (
                     <div key={ev.id} className="event-card" onClick={() => setSelectedEvent(ev)}>
-                      <div className="event-card-img" style={{backgroundImage: `url(${getCatConfig(ev.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}}>
+                      <div className="event-card-img" style={{backgroundImage: `url(${ev.imageUrl || getCatConfig(ev.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}}>
                         <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.35)'}} />
                         <span className="event-card-cat" style={{zIndex:1}}>{ev.cat}</span>
                         {ev.tag && <span style={{position:'absolute',top:12,right:12,background:'var(--red)',color:'white',padding:'3px 8px',borderRadius:'100px',fontSize:'10px',fontWeight:700,zIndex:1}}>{ev.tag}</span>}
@@ -556,7 +558,7 @@ export default function App() {
               <div className="events-grid">
                 {events.filter(e=>saved.includes(e.id)).map(ev => (
                   <div key={ev.id} className="event-card" onClick={() => setSelectedEvent(ev)}>
-                    <div className="event-card-img" style={{backgroundImage: `url(${getCatConfig(ev.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}}>
+                    <div className="event-card-img" style={{backgroundImage: `url(${ev.imageUrl || getCatConfig(ev.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}}>
                       <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.35)'}} />
                       <span className="event-card-cat" style={{zIndex:1}}>{ev.cat}</span>
                     </div>
@@ -617,7 +619,7 @@ export default function App() {
           <div className="auth-overlay" onClick={()=>setShowAuth(false)}>
             <div className="auth-panel" style={{position:'relative'}} onClick={e=>e.stopPropagation()}>
               <button className="auth-close" onClick={()=>setShowAuth(false)}>✕</button>
-              <div className="auth-logo">MEDELLÍN VIBRA</div>
+              <div className="auth-logo">MEDE<span>LLÍ</span>N EVENTOS</div>
               <div className="auth-title">{authTab==="login" ? "Bienvenido" : "Crear cuenta"}</div>
               <div className="auth-sub">{authTab==="login" ? "Inicia sesión para guardar eventos y comprar tiquetes" : "Únete a la comunidad de eventos de Medellín"}</div>
               <div className="auth-tabs">
@@ -660,7 +662,7 @@ export default function App() {
         {selectedEvent && (
           <div className="detail-overlay" onClick={()=>setSelectedEvent(null)}>
             <div className="detail-panel" onClick={e=>e.stopPropagation()}>
-              <div className="detail-header" style={{backgroundImage: `url(${getCatConfig(selectedEvent.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}}>
+              <div className="detail-header" style={{backgroundImage: `url(${selectedEvent.imageUrl || getCatConfig(selectedEvent.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}}>
                 <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.4)'}} />
                 <div className="detail-header-overlay" />
                 <button className="detail-close" onClick={()=>setSelectedEvent(null)}>✕</button>
@@ -763,6 +765,12 @@ export default function App() {
                 <textarea className="form-textarea" placeholder="Cuéntanos de qué trata tu evento..." value={form.description} onChange={e=>handleFormChange("description",e.target.value)} />
               </div>
 
+              <div className="form-group">
+                <label className="form-label">🖼️ URL de la imagen del evento</label>
+                <input className="form-input" placeholder="https://... (pega el link de la foto del evento)" value={form.image_url} onChange={e=>handleFormChange("image_url",e.target.value)} />
+                <div style={{fontSize:11,color:'var(--muted)',marginTop:4}}>Si no tienes imagen, se usará la foto de la categoría automáticamente.</div>
+              </div>
+
               <div style={{borderTop:'1px solid var(--border)',margin:'16px 0',paddingTop:16}}>
                 <div style={{fontSize:12,fontWeight:700,color:'var(--gold)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:14}}>👤 Información del organizador</div>
                 <div className="form-group">
@@ -800,7 +808,7 @@ export default function App() {
         {showResetPassword && (
           <div className="auth-overlay">
             <div className="auth-panel" style={{position:'relative'}}>
-              <div className="auth-logo">MEDELLÍN VIBRA</div>
+              <div className="auth-logo">MEDE<span>LLÍ</span>N EVENTOS</div>
               <div className="auth-title">Nueva contraseña</div>
               <div className="auth-sub">Escribe tu nueva contraseña para continuar.</div>
               <div className="auth-form">
