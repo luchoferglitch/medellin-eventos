@@ -254,6 +254,7 @@ const CATS = ["Todos","Música","Arte","Comedia","Tech","Gastronomía","Baile","
 
 export default function App() {
   const [activeFilter, setActiveFilter] = useState("Todos");
+  const [activeDateFilter, setActiveDateFilter] = useState("Todos");
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [toast, setToast] = useState(null);
@@ -299,7 +300,7 @@ export default function App() {
 
   const fetchEvents = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from("events").select("*").order("created_at", { ascending: false });
+    const { data, error } = await supabase.from("events").select("*").order("fecha_real", { ascending: true, nullsFirst: false });
     if (!error && data) {
       setEvents(data.map(e => ({
         id: e.id, emoji: e.emoji, title: e.title, cat: e.category,
@@ -308,7 +309,7 @@ export default function App() {
         attendees: String(e.attendees), capacity: String(e.capacity),
         ticketPlatform: e.ticket_platform, link: e.ticket_link,
         organizerName: e.organizer_name, organizerContact: e.organizer_contact,
-        imageUrl: e.image_url,
+        imageUrl: e.image_url, fechaReal: e.fecha_real,
       })));
     }
     setLoading(false);
@@ -335,16 +336,42 @@ export default function App() {
     return null;
   };
 
+  const getDateRange = () => {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const todayStr = today.toISOString().split('T')[0];
+    const day = today.getDay();
+    const diffToFri = (5 - day + 7) % 7;
+    const fri = new Date(today); fri.setDate(today.getDate() + diffToFri);
+    const sun = new Date(fri); sun.setDate(fri.getDate() + 2);
+    const endWeek = new Date(today); endWeek.setDate(today.getDate() + (7 - day));
+    const endMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    return {
+      today: todayStr,
+      weekendStart: fri.toISOString().split('T')[0],
+      weekendEnd: sun.toISOString().split('T')[0],
+      weekEnd: endWeek.toISOString().split('T')[0],
+      monthEnd: endMonth.toISOString().split('T')[0],
+    };
+  };
+
   const filtered = events.filter(e => {
     const matchCat = activeFilter === "Todos" || e.cat === activeFilter;
     const s = search.toLowerCase();
     const synCat = getCatFromSynonym(s);
-    const matchSearch = !s || 
-      e.title.toLowerCase().includes(s) || 
+    const matchSearch = !s ||
+      e.title.toLowerCase().includes(s) ||
       e.place.toLowerCase().includes(s) ||
       e.desc?.toLowerCase().includes(s) ||
       (synCat && e.cat === synCat);
-    return matchCat && matchSearch;
+    let matchDate = true;
+    if (activeDateFilter !== "Todos" && e.fechaReal) {
+      const { today, weekendStart, weekendEnd, weekEnd, monthEnd } = getDateRange();
+      if (activeDateFilter === "Hoy") matchDate = e.fechaReal === today;
+      else if (activeDateFilter === "FinDeSemana") matchDate = e.fechaReal >= weekendStart && e.fechaReal <= weekendEnd;
+      else if (activeDateFilter === "EstaSemana") matchDate = e.fechaReal >= today && e.fechaReal <= weekEnd;
+      else if (activeDateFilter === "EsteMes") matchDate = e.fechaReal >= today && e.fechaReal <= monthEnd;
+    }
+    return matchCat && matchSearch && matchDate;
   });
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
@@ -494,6 +521,11 @@ export default function App() {
               </div>
             </div>
 
+            <div className="filters-bar" style={{borderBottom:'none',paddingBottom:8}}>
+              {[["Todos","Todos"],["Hoy","Hoy"],["FinDeSemana","Este fin de semana"],["EstaSemana","Esta semana"],["EsteMes","Este mes"]].map(([val,label]) => (
+                <button key={val} className={`filter-chip ${activeDateFilter===val?"active":""}`} onClick={() => setActiveDateFilter(val)}>📅 {label}</button>
+              ))}
+            </div>
             <div className="filters-bar">
               {CATS.map(c => <button key={c} className={`filter-chip ${activeFilter===c?"active":""}`} onClick={() => setActiveFilter(c)}>{c}</button>)}
             </div>
