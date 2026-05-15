@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabase";
-import { Calendar, MapPin, Users, Star } from "lucide-react";
+import { Calendar, MapPin, Users, Star, MessageCircle } from "lucide-react";
 
 import catMusica from "./assets/cat-musica.jpg";
 import catArte from "./assets/cat-arte.jpg";
@@ -820,6 +820,10 @@ export default function App() {
                   <button className="btn-buy" onClick={() => { if(selectedEvent.link) window.open(selectedEvent.link,'_blank'); else handleReserve(); }}>
                     {selectedEvent.price === "Gratis" ? "Registrarse gratis →" : selectedEvent.price.startsWith("En") ? "Ver entradas →" : `Comprar · ${selectedEvent.price} →`}
                   </button>
+                  <button className="btn-share" title="Compartir por WhatsApp" style={{color:'#25D366',borderColor:'rgba(37,211,102,0.3)'}} onClick={()=>{
+                    const texto = `🎉 *${selectedEvent.title}*\n📅 ${selectedEvent.date} · ${selectedEvent.time}\n📍 ${selectedEvent.place}\n💰 ${selectedEvent.price}\n\n👉 Más info en medellinvibra.co`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+                  }}><MessageCircle size={20} /></button>
                   <button className="btn-share" onClick={()=>toggleSave(selectedEvent.id)}>{saved.includes(selectedEvent.id) ? "❤️" : "🤍"}</button>
                   {isAdmin && (
                     <button className="btn-share" style={{color:'var(--red)',borderColor:'rgba(232,53,58,0.3)'}} onClick={e=>{handleDeleteEvent(selectedEvent.id,e);setSelectedEvent(null);}}>🗑️</button>
