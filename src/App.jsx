@@ -314,9 +314,36 @@ export default function App() {
     setLoading(false);
   };
 
+  const SYNONYMS = {
+    "Música":      ["concierto","conciertos","show","banda","artista","música","musica"],
+    "Arte":        ["exposición","exposicion","galería","galeria","museo","pintura","cultura","arte"],
+    "Comedia":     ["humor","chistes","risa","stand up","standup","comedia"],
+    "Tech":        ["tecnología","tecnologia","innovación","innovacion","startup","digital","tech"],
+    "Baile":       ["danza","salsa","tango","rumba","baile","ballet"],
+    "Teatro":      ["obra","espectáculo","espectaculo","actuación","actuacion","escena","teatro"],
+    "Gastronomía": ["comida","restaurante","chef","cocina","food","gastronomía","gastronomia","festival"],
+    "Bienestar":   ["yoga","meditación","meditacion","salud","bienestar","taller"],
+    "Deportes":    ["carrera","fútbol","futbol","running","maratón","maraton","deporte","deportes"],
+    "Académicos":  ["congreso","seminario","simposio","conferencia","académico","academico"],
+  };
+
+  const getCatFromSynonym = (term) => {
+    const t = term.toLowerCase();
+    for (const [cat, syns] of Object.entries(SYNONYMS)) {
+      if (syns.some(s => s.includes(t) || t.includes(s))) return cat;
+    }
+    return null;
+  };
+
   const filtered = events.filter(e => {
     const matchCat = activeFilter === "Todos" || e.cat === activeFilter;
-    const matchSearch = e.title.toLowerCase().includes(search.toLowerCase()) || e.place.toLowerCase().includes(search.toLowerCase());
+    const s = search.toLowerCase();
+    const synCat = getCatFromSynonym(s);
+    const matchSearch = !s || 
+      e.title.toLowerCase().includes(s) || 
+      e.place.toLowerCase().includes(s) ||
+      e.desc?.toLowerCase().includes(s) ||
+      (synCat && e.cat === synCat);
     return matchCat && matchSearch;
   });
 
