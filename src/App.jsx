@@ -523,6 +523,9 @@ export default function App() {
                 <div className="about-tag">¿Qué es Medellín Vibra?</div>
                 <div className="about-title">LA AGENDA DE LA CIUDAD QUE NUNCA PARA</div>
                 <p className="about-text">Medellín no descansa. Cada semana trae nuevos conciertos, exposiciones, ferias y experiencias que hacen de esta ciudad una de las más vibrantes de América Latina. En Medellín Vibra encontrarás todo lo que la ciudad tiene para ofrecerte — reunido en un solo lugar, para que solo te preocupes por disfrutar.</p>
+                <a href="https://www.instagram.com/medellinvibra.co/" target="_blank" rel="noopener noreferrer" style={{display:'inline-flex', alignItems:'center', gap:8, marginTop:20, background:'linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)', color:'white', padding:'10px 20px', borderRadius:100, fontWeight:700, fontSize:14, textDecoration:'none', fontFamily:'var(--font-body)'}}>
+                  📸 Síguenos en Instagram @medellinvibra.co
+                </a>
               </div>
             </div>
 
@@ -717,6 +720,16 @@ export default function App() {
             )}
           </div>
         )}
+
+        <footer style={{background:'var(--surface2)', borderTop:'1px solid var(--border)', padding:'20px 24px', textAlign:'center'}}>
+          <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:16, flexWrap:'wrap'}}>
+            <span style={{fontFamily:'var(--font-display)', fontSize:18, color:'var(--gold)'}}>MEDELLÍN VIBRA</span>
+            <a href="https://www.instagram.com/medellinvibra.co/" target="_blank" rel="noopener noreferrer" style={{display:'inline-flex', alignItems:'center', gap:6, color:'#C0392B', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
+              📸 @medellinvibra.co
+            </a>
+            <span style={{fontSize:12, color:'var(--muted)'}}>© 2026 · medellinvibra.co</span>
+          </div>
+        </footer>
 
         <nav className="bottom-nav">
           {[["🏠","Inicio","home"],["🔍","Explorar","explore"],["🤍","Guardados","saved"],["👤","Perfil","profile"]].map(([icon,label,tab])=>(
