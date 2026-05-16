@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabase";
 import { Calendar, MapPin, Users, Star, MessageCircle } from "lucide-react";
+import { translations } from "./translations";
 
 import catMusica from "./assets/cat-musica.jpg";
 import catArte from "./assets/cat-arte.jpg";
@@ -278,6 +279,8 @@ export default function App() {
   const [newPassword, setNewPassword] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
   const [viewMode, setViewMode] = useState("grid");
+  const [lang, setLang] = useState("es");
+  const t = translations[lang];
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -500,16 +503,22 @@ export default function App() {
         <nav className="nav">
           <div className="nav-logo">MEDE<span>LLÍ</span>N EVENTOS</div>
           <div className="nav-actions">
+            <select value={lang} onChange={e=>setLang(e.target.value)} style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,padding:'6px 10px',fontFamily:'var(--font-body)',fontSize:13,color:'var(--text)',cursor:'pointer',outline:'none'}}>
+              <option value="es">🇨🇴 ES</option>
+              <option value="en">🇺🇸 EN</option>
+              <option value="pt">🇧🇷 PT</option>
+              <option value="fr">🇫🇷 FR</option>
+            </select>
             {user ? (
               <>
-                <button className="btn-ghost" onClick={handleLogout}>Salir</button>
+                <button className="btn-ghost" onClick={handleLogout}>{t.logout}</button>
                 <div className="user-avatar" onClick={() => setActiveTab("profile")}>{getUserInitial()}</div>
-                <button className="btn-primary" onClick={() => setShowCreate(true)}>+ Crear evento</button>
+                <button className="btn-primary" onClick={() => setShowCreate(true)}>{t.createEvent}</button>
               </>
             ) : (
               <>
-                <button className="btn-ghost" onClick={() => { setAuthTab("login"); setShowAuth(true); }}>Iniciar sesión</button>
-                <button className="btn-primary" onClick={() => { setAuthTab("register"); setShowAuth(true); }}>Registrarse</button>
+                <button className="btn-ghost" onClick={() => { setAuthTab("login"); setShowAuth(true); }}>{t.login}</button>
+                <button className="btn-primary" onClick={() => { setAuthTab("register"); setShowAuth(true); }}>{t.register}</button>
               </>
             )}
           </div>
@@ -524,24 +533,24 @@ export default function App() {
                 <h1 className="hero-title">DESCUBRE<br/><span className="accent">LO QUE</span><br/><span className="accent-red">VIBRA</span></h1>
                 <p className="hero-sub">Los mejores eventos de la ciudad de la eterna primavera. Música, arte, gastronomía y mucho más.</p>
                 <div className="search-bar">
-                  <input placeholder="Busca eventos, lugares o artistas..." value={search} onChange={e => setSearch(e.target.value)} />
-                  <button>Buscar</button>
+                  <input placeholder={t.searchPlaceholder} value={search} onChange={e => setSearch(e.target.value)} />
+                  <button>{t.searchBtn}</button>
                 </div>
                 <div className="stats">
-                  <div><div className="stat-num">{stats.eventos}</div><div className="stat-label">Eventos activos</div></div>
-                  <div><div className="stat-num">{stats.usuarios || '—'}</div><div className="stat-label">Usuarios registrados</div></div>
-                  <div><div className="stat-num">{stats.organizadores}</div><div className="stat-label">Organizadores</div></div>
+                  <div><div className="stat-num">{stats.eventos}</div><div className="stat-label">{t.statEvents}</div></div>
+                  <div><div className="stat-num">{stats.usuarios || '—'}</div><div className="stat-label">{t.statUsers}</div></div>
+                  <div><div className="stat-num">{stats.organizadores}</div><div className="stat-label">{t.statOrganizers}</div></div>
                 </div>
               </div>
             </div>
 
             <div className="about-section">
               <div className="about-inner">
-                <div className="about-tag">¿Qué es Medellín Vibra?</div>
-                <div className="about-title">LA AGENDA DE LA CIUDAD QUE NUNCA PARA</div>
-                <p className="about-text">Medellín no descansa. Cada semana trae nuevos conciertos, exposiciones, ferias y experiencias que hacen de esta ciudad una de las más vibrantes de América Latina. En Medellín Vibra encontrarás todo lo que la ciudad tiene para ofrecerte — reunido en un solo lugar, para que solo te preocupes por disfrutar.</p>
+                <div className="about-tag">{t.aboutTag}</div>
+                <div className="about-title">{t.aboutTitle}</div>
+                <p className="about-text">{t.aboutText}</p>
                 <a href="https://www.instagram.com/medellinvibra.co/" target="_blank" rel="noopener noreferrer" style={{display:'inline-flex', alignItems:'center', gap:8, marginTop:20, background:'linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)', color:'white', padding:'10px 20px', borderRadius:100, fontWeight:700, fontSize:14, textDecoration:'none', fontFamily:'var(--font-body)'}}>
-                  📸 Síguenos en Instagram @medellinvibra.co
+                  {t.followUs}
                 </a>
               </div>
             </div>
@@ -560,7 +569,7 @@ export default function App() {
                 <div style={{background:'white', padding:'32px 24px', borderBottom:'1px solid var(--border)'}}>
                   <div style={{maxWidth:1200, margin:'0 auto'}}>
                     <div className="section-header">
-                      <div className="section-title">🎉 Este <span>Fin de Semana</span></div>
+                      <div className="section-title">{t.weekendTitle} <span>{t.weekendTitleSpan}</span></div>
                       <span className="section-link" onClick={() => setActiveDateFilter("FinDeSemana")}>{weekendEvents.length} eventos →</span>
                     </div>
                     <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(240px, 1fr))', gap:16}}>
@@ -587,7 +596,7 @@ export default function App() {
             <div style={{background:'var(--surface2)', padding:'32px 24px', borderBottom:'1px solid var(--border)'}}>
               <div style={{maxWidth:1200, margin:'0 auto'}}>
                 <div className="section-header" style={{marginBottom:16}}>
-                  <div className="section-title">📍 Lugares <span>Destacados</span></div>
+                  <div className="section-title">{t.venuesTitle} <span>{t.venuesTitleSpan}</span></div>
                 </div>
                 <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(160px, 1fr))', gap:12}}>
                   {[
@@ -613,7 +622,7 @@ export default function App() {
               </div>
             </div>
             <div className="filters-bar" style={{borderBottom:'none',paddingBottom:8}}>
-              {[["Todos","Todos"],["Hoy","Hoy"],["FinDeSemana","Este fin de semana"],["EstaSemana","Esta semana"],["EsteMes","Este mes"],["Gratis","🎟️ Gratis"]].map(([val,label]) => (
+              {[["Todos",t.filterAll],["Hoy",t.filterToday],["FinDeSemana",t.filterWeekend],["EstaSemana",t.filterWeek],["EsteMes",t.filterMonth],["Gratis",t.filterFree]].map(([val,label]) => (
                 <button key={val} className={`filter-chip ${activeDateFilter===val?"active":""}`} onClick={() => setActiveDateFilter(val)}>
                   {val !== "Gratis" ? `📅 ${label}` : label}
                 </button>
@@ -633,17 +642,17 @@ export default function App() {
             <div className="main">
               {activeFilter === "Todos" && !search && featuredEvent && (
                 <>
-                  <div className="section-header"><div className="section-title">Evento <span>Destacado</span></div></div>
+                  <div className="section-header"><div className="section-title">{t.featuredTitle} <span>{t.featuredTitleSpan}</span></div></div>
                   <div className="featured-card" onClick={() => setSelectedEvent(featuredEvent)}>
                     <div className="featured-bg" style={{backgroundImage: `url(${getCatConfig(featuredEvent.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}} />
                     <div className="featured-overlay" />
                     <div className="featured-content">
-                      <span className="featured-badge">🔥 Más vendido</span>
+                      <span className="featured-badge">{t.featuredBadge}</span>
                       <div className="featured-title">{featuredEvent.title}</div>
                       <div className="featured-meta">📅 {featuredEvent.date} · ⏰ {featuredEvent.time} · 📍 {featuredEvent.place}</div>
                       <div className="featured-actions">
                         <button className="featured-price" onClick={e=>{e.stopPropagation();setSelectedEvent(featuredEvent);}}>Reservar · {featuredEvent.price}</button>
-                        <button className="featured-save" onClick={e=>{e.stopPropagation();toggleSave(featuredEvent.id);}}>{saved.includes(featuredEvent.id) ? "❤️ Guardado" : "🤍 Guardar"}</button>
+                        <button className="featured-save" onClick={e=>{e.stopPropagation();toggleSave(featuredEvent.id);}}>{saved.includes(featuredEvent.id) ? t.saved : t.save}</button>
                       </div>
                     </div>
                   </div>
@@ -651,7 +660,7 @@ export default function App() {
               )}
 
               <div className="section-header">
-                <div className="section-title">{search ? `Resultados para "${search}"` : activeFilter === "Todos" ? <>Todos los <span>Eventos</span></> : <span>{activeFilter}</span>}</div>
+                <div className="section-title">{search ? `Resultados para "${search}"` : activeFilter === "Todos" ? <>{t.allEvents} <span>{t.allEventsSpan}</span></> : <span>{activeFilter}</span>}</div>
                 <div style={{display:'flex', alignItems:'center', gap:12}}>
                   <span className="section-link">{filtered.length} eventos</span>
                   <div style={{display:'flex', gap:4, background:'var(--surface2)', borderRadius:8, padding:3, border:'1px solid var(--border)'}}>
@@ -664,12 +673,12 @@ export default function App() {
               {loading ? (
                 <div style={{textAlign:'center',padding:'60px 0',color:'var(--muted)'}}>
                   <div style={{fontSize:32,marginBottom:12}}>⏳</div>
-                  <div style={{fontSize:16}}>Cargando eventos...</div>
+                  <div style={{fontSize:16}}>{t.loading}</div>
                 </div>
               ) : filtered.length === 0 ? (
                 <div style={{textAlign:'center',padding:'60px 0',color:'var(--muted)'}}>
                   <div style={{fontSize:48,marginBottom:12}}>🔍</div>
-                  <div style={{fontSize:16}}>No encontramos eventos</div>
+                  <div style={{fontSize:16}}>{t.noEvents}</div>
                 </div>
               ) : viewMode === "grid" ? (
                 <div className="events-grid">
@@ -685,7 +694,7 @@ export default function App() {
                         <div className="event-card-info">
                           <div className="event-card-info-row"><Calendar size={13} color="var(--muted)" /> {ev.date} · {ev.time}</div>
                           <div className="event-card-info-row"><MapPin size={13} color="var(--muted)" /> {ev.place}</div>
-                          <div className="event-card-info-row"><Users size={13} color="var(--muted)" /> {ev.attendees} asistentes</div>
+                          <div className="event-card-info-row"><Users size={13} color="var(--muted)" /> {ev.attendees} {t.attendees}</div>
                         </div>
                         <div className="event-card-footer">
                           <div className={`event-card-price ${ev.price==="Gratis"?"free":""}`}>{ev.price}</div>
@@ -693,7 +702,7 @@ export default function App() {
                             {isAdmin && (
                               <button className="btn-reserve" style={{color:'var(--red)',borderColor:'rgba(232,53,58,0.3)'}} onClick={e=>handleDeleteEvent(ev.id,e)}>🗑️</button>
                             )}
-                            <button className="btn-reserve" onClick={e=>{e.stopPropagation();toggleSave(ev.id);}}>{saved.includes(ev.id) ? "❤️" : "🤍"} Guardar</button>
+                            <button className="btn-reserve" onClick={e=>{e.stopPropagation();toggleSave(ev.id);}}>{saved.includes(ev.id) ? "❤️" : "🤍"} {t.save.replace("🤍 ","")}</button>
                           </div>
                         </div>
                       </div>
@@ -736,19 +745,19 @@ export default function App() {
         {activeTab === "saved" && (
           <div className="main" style={{paddingTop:32}}>
             <div className="section-header">
-              <div className="section-title">Mis <span>Guardados</span></div>
-              <span className="section-link">{saved.length} eventos</span>
+              <div className="section-title">{t.mySaved} <span>{t.mySavedSpan}</span></div>
+              <span className="section-link">{saved.length} {t.allEventsSpan.toLowerCase()}</span>
             </div>
             {!user ? (
               <div style={{textAlign:'center',padding:'80px 0',color:'var(--muted)'}}>
                 <div style={{fontSize:48,marginBottom:12}}>🔐</div>
-                <div style={{fontSize:16,marginBottom:16}}>Inicia sesión para ver tus guardados</div>
-                <button className="btn-primary" onClick={()=>{setAuthTab("login");setShowAuth(true);}}>Iniciar sesión</button>
+                <div style={{fontSize:16,marginBottom:16}}>{t.loginToSave}</div>
+                <button className="btn-primary" onClick={()=>{setAuthTab("login");setShowAuth(true);}}>{t.login}</button>
               </div>
             ) : saved.length === 0 ? (
               <div style={{textAlign:'center',padding:'80px 0',color:'var(--muted)'}}>
                 <div style={{fontSize:48,marginBottom:12}}>🤍</div>
-                <div style={{fontSize:16}}>Aún no tienes eventos guardados</div>
+                <div style={{fontSize:16}}>{t.noSaved}</div>
               </div>
             ) : (
               <div className="events-grid">
@@ -766,7 +775,7 @@ export default function App() {
                       </div>
                       <div className="event-card-footer">
                         <div className={`event-card-price ${ev.price==="Gratis"?"free":""}`}>{ev.price}</div>
-                        <button className="btn-reserve" onClick={e=>{e.stopPropagation();setSelectedEvent(ev);}}>Ver detalle</button>
+                        <button className="btn-reserve" onClick={e=>{e.stopPropagation();setSelectedEvent(ev);}}>{t.viewDetail}</button>
                       </div>
                     </div>
                   </div>
@@ -781,8 +790,8 @@ export default function App() {
             {!user ? (
               <div>
                 <div style={{fontSize:64,marginBottom:16}}>👤</div>
-                <div style={{color:'var(--muted)',marginBottom:24}}>Inicia sesión para ver tu perfil</div>
-                <button className="btn-primary" onClick={()=>{setAuthTab("login");setShowAuth(true);}}>Iniciar sesión</button>
+                <div style={{color:'var(--muted)',marginBottom:24}}>{t.loginToSave}</div>
+                <button className="btn-primary" onClick={()=>{setAuthTab("login");setShowAuth(true);}}>{t.login}</button>
               </div>
             ) : (
               <>
@@ -790,14 +799,14 @@ export default function App() {
                 <div style={{fontFamily:'var(--font-display)',fontSize:28,marginBottom:4}}>{getUserName().toUpperCase()}</div>
                 <div style={{color:'var(--muted)',marginBottom:32,fontSize:14}}>{user.email}</div>
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,maxWidth:300,margin:'0 auto 32px'}}>
-                  {[["Eventos asistidos","12"],["Eventos guardados",String(saved.length)],["Eventos creados","3"],["Reseñas","8"]].map(([l,v])=>(
+                  {[[t.eventsAttended,"12"],[t.eventsSaved,String(saved.length)],[t.eventsCreated,"3"],[t.reviews,"8"]].map(([l,v])=>(
                     <div key={l} style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:14,padding:'16px 12px'}}>
                       <div style={{fontFamily:'var(--font-display)',fontSize:28,color:'var(--gold)'}}>{v}</div>
                       <div style={{fontSize:12,color:'var(--muted)',marginTop:2}}>{l}</div>
                     </div>
                   ))}
                 </div>
-                <button className="btn-ghost" onClick={handleLogout}>Cerrar sesión</button>
+                <button className="btn-ghost" onClick={handleLogout}>{t.closeSession}</button>
               </>
             )}
           </div>
@@ -809,12 +818,12 @@ export default function App() {
             <a href="https://www.instagram.com/medellinvibra.co/" target="_blank" rel="noopener noreferrer" style={{display:'inline-flex', alignItems:'center', gap:6, color:'#C0392B', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
               📸 @medellinvibra.co
             </a>
-            <span style={{fontSize:12, color:'var(--muted)'}}>© 2026 · medellinvibra.co</span>
+            <span style={{fontSize:12, color:'var(--muted)'}}>{t.copyright}</span>
           </div>
         </footer>
 
         <nav className="bottom-nav">
-          {[["🏠","Inicio","home"],["🔍","Explorar","explore"],["🤍","Guardados","saved"],["👤","Perfil","profile"]].map(([icon,label,tab])=>(
+          {[[" 🏠",t.tabHome,"home"],["🔍",t.tabExplore,"explore"],["🤍",t.tabSaved,"saved"],["👤",t.tabProfile,"profile"]].map(([icon,label,tab])=>(
             <button key={tab} className={`bottom-nav-item ${activeTab===tab?"active":""}`} onClick={()=>setActiveTab(tab)}>
               <span>{icon}</span><span>{label}</span>
             </button>
@@ -826,20 +835,20 @@ export default function App() {
             <div className="auth-panel" style={{position:'relative'}} onClick={e=>e.stopPropagation()}>
               <button className="auth-close" onClick={()=>setShowAuth(false)}>✕</button>
               <div className="auth-logo">MEDE<span>LLÍ</span>N EVENTOS</div>
-              <div className="auth-title">{authTab==="login" ? "Bienvenido" : "Crear cuenta"}</div>
-              <div className="auth-sub">{authTab==="login" ? "Inicia sesión para guardar eventos y comprar tiquetes" : "Únete a la comunidad de eventos de Medellín"}</div>
+              <div className="auth-title">{authTab==="login" ? t.welcome : t.createAccount}</div>
+              <div className="auth-sub">{authTab==="login" ? t.loginSub : t.registerSub}</div>
               <div className="auth-tabs">
-                <button className={`auth-tab ${authTab==="login"?"active":""}`} onClick={()=>{setAuthTab("login");setAuthError("");setAuthSuccess("");}}>Iniciar sesión</button>
-                <button className={`auth-tab ${authTab==="register"?"active":""}`} onClick={()=>{setAuthTab("register");setAuthError("");setAuthSuccess("");}}>Registrarse</button>
+                <button className={`auth-tab ${authTab==="login"?"active":""}`} onClick={()=>{setAuthTab("login");setAuthError("");setAuthSuccess("");}}>{t.login}</button>
+                <button className={`auth-tab ${authTab==="register"?"active":""}`} onClick={()=>{setAuthTab("register");setAuthError("");setAuthSuccess("");}}>{t.register}</button>
               </div>
               <div className="auth-form">
-                {authTab === "register" && <input className="auth-input" placeholder="Tu nombre completo" value={authName} onChange={e=>setAuthName(e.target.value)} />}
-                <input className="auth-input" type="email" placeholder="correo@ejemplo.com" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} />
-                <input className="auth-input" type="password" placeholder="Contraseña" value={authPassword} onChange={e=>setAuthPassword(e.target.value)} />
+                {authTab === "register" && <input className="auth-input" placeholder={t.fullName} value={authName} onChange={e=>setAuthName(e.target.value)} />}
+                <input className="auth-input" type="email" placeholder={t.emailPlaceholder} value={authEmail} onChange={e=>setAuthEmail(e.target.value)} />
+                <input className="auth-input" type="password" placeholder={t.passwordPlaceholder} value={authPassword} onChange={e=>setAuthPassword(e.target.value)} />
                 {authTab === "login" && !showForgot && (
                   <div style={{textAlign:'right',marginTop:-8}}>
                     <span style={{fontSize:13,color:'var(--gold)',cursor:'pointer',textDecoration:'underline'}} onClick={()=>{setShowForgot(true);setAuthError("");setAuthSuccess("");}}>
-                      ¿Olvidaste tu contraseña?
+                      {t.forgotPassword}
                     </span>
                   </div>
                 )}
@@ -848,7 +857,7 @@ export default function App() {
                     <div style={{fontSize:14,marginBottom:10,color:'var(--muted)'}}>Escribe tu correo y te enviamos un link para restablecer tu contraseña.</div>
                     <input className="auth-input" type="email" placeholder="correo@ejemplo.com" value={forgotEmail} onChange={e=>setForgotEmail(e.target.value)} style={{marginBottom:10}} />
                     <div style={{display:'flex',gap:8}}>
-                      <button className="btn-cancel" style={{flex:0,padding:'10px 14px',borderRadius:8}} onClick={()=>setShowForgot(false)}>Cancelar</button>
+                      <button className="btn-cancel" style={{flex:0,padding:'10px 14px',borderRadius:8}} onClick={()=>setShowForgot(false)}>{t.cancel}</button>
                       <button className="auth-btn" style={{margin:0}} disabled={forgotLoading} onClick={handleForgotPassword}>
                         {forgotLoading ? "Enviando..." : "Enviar correo →"}
                       </button>
@@ -858,7 +867,7 @@ export default function App() {
                 {authError && <div className="auth-error">⚠️ {authError}</div>}
                 {authSuccess && <div className="auth-success">{authSuccess}</div>}
                 {!showForgot && <button className="auth-btn" disabled={authLoading} onClick={authTab==="login"?handleLogin:handleRegister}>
-                  {authLoading ? "Cargando..." : authTab==="login" ? "Iniciar sesión →" : "Crear cuenta →"}
+                  {authLoading ? t.loading_auth : authTab==="login" ? t.loginBtn : t.registerBtn}
                 </button>}
               </div>
             </div>
@@ -877,10 +886,10 @@ export default function App() {
                 {selectedEvent.tag && <span className="detail-badge" style={{background:'var(--red)',color:'white'}}>{selectedEvent.tag}</span>}
                 <div className="detail-title">{selectedEvent.title}</div>
                 <div className="detail-info-grid">
-                  <div className="detail-info-item"><div className="detail-info-label">Fecha</div><div className="detail-info-value">{selectedEvent.date}</div></div>
-                  <div className="detail-info-item"><div className="detail-info-label">Hora</div><div className="detail-info-value">{selectedEvent.time}</div></div>
-                  <div className="detail-info-item"><div className="detail-info-label">Lugar</div><div className="detail-info-value">{selectedEvent.place}</div></div>
-                  <div className="detail-info-item"><div className="detail-info-label">Precio</div><div className="detail-info-value" style={{color: selectedEvent.price==="Gratis"?'var(--green)':'var(--gold)'}}>{selectedEvent.price}</div></div>
+                  <div className="detail-info-item"><div className="detail-info-label">{t.date}</div><div className="detail-info-value">{selectedEvent.date}</div></div>
+                  <div className="detail-info-item"><div className="detail-info-label">{t.time}</div><div className="detail-info-value">{selectedEvent.time}</div></div>
+                  <div className="detail-info-item"><div className="detail-info-label">{t.place}</div><div className="detail-info-value">{selectedEvent.place}</div></div>
+                  <div className="detail-info-item"><div className="detail-info-label">{t.price}</div><div className="detail-info-value" style={{color: selectedEvent.price==="Gratis"?'var(--green)':'var(--gold)'}}>{selectedEvent.price}</div></div>
                 </div>
                 <p className="detail-desc">{selectedEvent.desc}</p>
                 <div style={{marginBottom:16}}>
@@ -890,14 +899,14 @@ export default function App() {
                   </div>
                 </div>
                 <div className="detail-map" style={{cursor:'pointer'}} onClick={()=>window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedEvent.place)}`, '_blank')}>
-                  📍 Ver en Google Maps · {selectedEvent.place}
+                  📍 {t.viewMap} · {selectedEvent.place}
                 </div>
                 {selectedEvent.ticketPlatform && (
                   <div style={{marginBottom:12,display:'flex',alignItems:'center',gap:8,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 14px',cursor: selectedEvent.link ? 'pointer' : 'default'}}
                     onClick={() => selectedEvent.link && window.open(selectedEvent.link, '_blank')}>
                     <span style={{fontSize:16}}>🎟️</span>
                     <div>
-                      <div style={{fontSize:11,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'0.5px'}}>Venta oficial de entradas</div>
+                      <div style={{fontSize:11,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'0.5px'}}>{t.officialTickets}</div>
                       <div style={{fontWeight:700,fontSize:14,color:'var(--gold)'}}>{selectedEvent.ticketPlatform} {selectedEvent.link && '↗'}</div>
                     </div>
                   </div>
@@ -906,7 +915,7 @@ export default function App() {
                   <div style={{marginBottom:16,display:'flex',alignItems:'center',gap:8,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 14px'}}>
                     <span style={{fontSize:16}}>👤</span>
                     <div>
-                      <div style={{fontSize:11,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'0.5px'}}>Organizador</div>
+                      <div style={{fontSize:11,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'0.5px'}}>{t.organizer}</div>
                       <div style={{fontWeight:700,fontSize:14}}>{selectedEvent.organizerName}</div>
                       {selectedEvent.organizerContact && (
                         selectedEvent.organizerContact.startsWith('http') 
@@ -918,7 +927,7 @@ export default function App() {
                 )}
                 <div className="detail-actions">
                   <button className="btn-buy" onClick={() => { if(selectedEvent.link) window.open(selectedEvent.link,'_blank'); else handleReserve(); }}>
-                    {selectedEvent.price === "Gratis" ? "Registrarse gratis →" : selectedEvent.price.startsWith("En") ? "Ver entradas →" : `Comprar · ${selectedEvent.price} →`}
+                    {selectedEvent.price === "Gratis" ? t.registerFree : selectedEvent.price.startsWith("En") ? t.buyTickets : `${t.buy} · ${selectedEvent.price} →`}
                   </button>
                   <button className="btn-share" title="Compartir por WhatsApp" style={{color:'#25D366',borderColor:'rgba(37,211,102,0.3)'}} onClick={()=>{
                     const texto = `🎉 *${selectedEvent.title}*\n📅 ${selectedEvent.date} · ${selectedEvent.time}\n📍 ${selectedEvent.place}\n💰 ${selectedEvent.price}\n\n👉 Más info en medellinvibra.co`;
@@ -930,7 +939,7 @@ export default function App() {
                   )}
                 </div>
                 <button onClick={()=>setSelectedEvent(null)} style={{width:'100%',marginTop:16,padding:'16px',borderRadius:12,border:'1px solid var(--border)',background:'var(--surface2)',color:'var(--muted)',fontFamily:'var(--font-body)',fontSize:15,fontWeight:600,cursor:'pointer'}}>
-                  ✕ Cerrar
+                  {t.close}
                 </button>
               </div>
             </div>
@@ -1016,9 +1025,9 @@ export default function App() {
               </div>
 
               <div className="form-actions">
-                <button className="btn-cancel" onClick={()=>setShowCreate(false)}>Cancelar</button>
+                <button className="btn-cancel" onClick={()=>setShowCreate(false)}>{t.cancel}</button>
                 <button className="btn-submit" onClick={handleCreateSubmit} disabled={formLoading}>
-                  {formLoading ? "Publicando..." : "Publicar evento →"}
+                  {formLoading ? t.publishing : t.publish}
                 </button>
               </div>
             </div>
