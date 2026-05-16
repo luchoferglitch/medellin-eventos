@@ -273,7 +273,7 @@ export default function App() {
   const [authError, setAuthError] = useState("");
   const [authSuccess, setAuthSuccess] = useState("");
 
-  const [viewMode, setViewMode] = useState("grid");
+  const [stats, setStats] = useState({ eventos: 0, usuarios: 0, organizadores: 0 });
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
@@ -287,6 +287,7 @@ export default function App() {
       if (_event === "PASSWORD_RECOVERY") setShowResetPassword(true);
     });
     fetchEvents();
+    fetchStats();
     return () => subscription.unsubscribe();
   }, []);
 
@@ -299,7 +300,13 @@ export default function App() {
     else { setShowResetPassword(false); setNewPassword(""); showToast("✓ ¡Contraseña actualizada exitosamente!"); }
   };
 
-  const fetchEvents = async () => {
+  const fetchStats = async () => {
+    const { count: eventos } = await supabase.from("events").select("*", { count: "exact", head: true });
+    const { data: orgs } = await supabase.from("events").select("organizer_name");
+    const organizadores = new Set(orgs?.filter(e => e.organizer_name).map(e => e.organizer_name)).size;
+    const { count: usuarios } = await supabase.from("users_view").select("*", { count: "exact", head: true }).catch(() => ({ count: 0 }));
+    setStats({ eventos: eventos || 0, usuarios: usuarios || 0, organizadores: organizadores || 0 });
+  };
     setLoading(true);
     const { data, error } = await supabase.from("events").select("*").order("fecha_real", { ascending: true, nullsFirst: false });
     if (!error && data) {
@@ -513,9 +520,9 @@ export default function App() {
                   <button>Buscar</button>
                 </div>
                 <div className="stats">
-                  <div><div className="stat-num">240+</div><div className="stat-label">Eventos este mes</div></div>
-                  <div><div className="stat-num">48K</div><div className="stat-label">Asistentes</div></div>
-                  <div><div className="stat-num">120+</div><div className="stat-label">Organizadores</div></div>
+                  <div><div className="stat-num">{stats.eventos}</div><div className="stat-label">Eventos activos</div></div>
+                  <div><div className="stat-num">{stats.usuarios || '—'}</div><div className="stat-label">Usuarios registrados</div></div>
+                  <div><div className="stat-num">{stats.organizadores}</div><div className="stat-label">Organizadores</div></div>
                 </div>
               </div>
             </div>
