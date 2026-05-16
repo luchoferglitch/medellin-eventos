@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { supabase } from "./supabase";
 import { Calendar, MapPin, Users, Star, MessageCircle } from "lucide-react";
 import { translations } from "./translations";
@@ -1055,3 +1055,4 @@ export default function App() {
     </>
   );
 }
+
