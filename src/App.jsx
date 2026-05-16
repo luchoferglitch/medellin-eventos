@@ -273,6 +273,7 @@ export default function App() {
   const [authError, setAuthError] = useState("");
   const [authSuccess, setAuthSuccess] = useState("");
 
+  const [viewMode, setViewMode] = useState("grid");
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
@@ -607,7 +608,13 @@ export default function App() {
 
               <div className="section-header">
                 <div className="section-title">{search ? `Resultados para "${search}"` : activeFilter === "Todos" ? <>Todos los <span>Eventos</span></> : <span>{activeFilter}</span>}</div>
-                <span className="section-link">{filtered.length} eventos</span>
+                <div style={{display:'flex', alignItems:'center', gap:12}}>
+                  <span className="section-link">{filtered.length} eventos</span>
+                  <div style={{display:'flex', gap:4, background:'var(--surface2)', borderRadius:8, padding:3, border:'1px solid var(--border)'}}>
+                    <button onClick={()=>setViewMode("grid")} style={{padding:'4px 8px', borderRadius:6, border:'none', cursor:'pointer', background: viewMode==="grid" ? 'var(--gold)' : 'none', color: viewMode==="grid" ? 'white' : 'var(--muted)', fontSize:14}}>⊞</button>
+                    <button onClick={()=>setViewMode("list")} style={{padding:'4px 8px', borderRadius:6, border:'none', cursor:'pointer', background: viewMode==="list" ? 'var(--gold)' : 'none', color: viewMode==="list" ? 'white' : 'var(--muted)', fontSize:14}}>☰</button>
+                  </div>
+                </div>
               </div>
 
               {loading ? (
@@ -620,7 +627,7 @@ export default function App() {
                   <div style={{fontSize:48,marginBottom:12}}>🔍</div>
                   <div style={{fontSize:16}}>No encontramos eventos</div>
                 </div>
-              ) : (
+              ) : viewMode === "grid" ? (
                 <div className="events-grid">
                   {filtered.map(ev => (
                     <div key={ev.id} className="event-card" onClick={() => setSelectedEvent(ev)}>
@@ -646,6 +653,34 @@ export default function App() {
                           </div>
                         </div>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{display:'flex', flexDirection:'column', gap:12, marginBottom:48}}>
+                  {filtered.map(ev => (
+                    <div key={ev.id} onClick={() => setSelectedEvent(ev)} style={{display:'flex', gap:16, alignItems:'center', background:'white', borderRadius:14, padding:14, cursor:'pointer', border:'1px solid var(--border)', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', transition:'all 0.2s'}}
+                      onMouseEnter={e=>e.currentTarget.style.borderColor='var(--gold)'}
+                      onMouseLeave={e=>e.currentTarget.style.borderColor='var(--border)'}
+                    >
+                      <div style={{width:72, height:72, borderRadius:12, backgroundImage:`url(${ev.imageUrl || getCatConfig(ev.cat).img})`, backgroundSize:'cover', backgroundPosition:'center', flexShrink:0, position:'relative'}}>
+                        <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.2)',borderRadius:12}} />
+                      </div>
+                      <div style={{flex:1, overflow:'hidden'}}>
+                        <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8}}>
+                          <div style={{fontWeight:700, fontSize:15, lineHeight:1.3}}>{ev.title}</div>
+                          <div className={`event-card-price ${ev.price==="Gratis"?"free":""}`} style={{flexShrink:0, fontSize:13}}>{ev.price}</div>
+                        </div>
+                        <div style={{fontSize:12, color:'var(--muted)', marginTop:4, display:'flex', gap:12, flexWrap:'wrap'}}>
+                          <span><Calendar size={11} style={{display:'inline',marginRight:3}} />{ev.date}</span>
+                          <span><MapPin size={11} style={{display:'inline',marginRight:3}} />{ev.place}</span>
+                        </div>
+                        <div style={{marginTop:6, display:'flex', gap:6, alignItems:'center'}}>
+                          <span style={{background:'var(--surface2)', padding:'2px 8px', borderRadius:100, fontSize:11, color:'var(--muted)', fontWeight:600}}>{ev.cat}</span>
+                          {ev.tag && <span style={{background:'var(--red)', padding:'2px 8px', borderRadius:100, fontSize:11, color:'white', fontWeight:700}}>{ev.tag}</span>}
+                        </div>
+                      </div>
+                      <button className="btn-reserve" style={{flexShrink:0}} onClick={e=>{e.stopPropagation();toggleSave(ev.id);}}>{saved.includes(ev.id) ? "❤️" : "🤍"}</button>
                     </div>
                   ))}
                 </div>
@@ -814,11 +849,12 @@ export default function App() {
                   📍 Ver en Google Maps · {selectedEvent.place}
                 </div>
                 {selectedEvent.ticketPlatform && (
-                  <div style={{marginBottom:12,display:'flex',alignItems:'center',gap:8,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 14px'}}>
+                  <div style={{marginBottom:12,display:'flex',alignItems:'center',gap:8,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 14px',cursor: selectedEvent.link ? 'pointer' : 'default'}}
+                    onClick={() => selectedEvent.link && window.open(selectedEvent.link, '_blank')}>
                     <span style={{fontSize:16}}>🎟️</span>
                     <div>
                       <div style={{fontSize:11,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'0.5px'}}>Venta oficial de entradas</div>
-                      <div style={{fontWeight:700,fontSize:14,color:'var(--gold)'}}>{selectedEvent.ticketPlatform}</div>
+                      <div style={{fontWeight:700,fontSize:14,color:'var(--gold)'}}>{selectedEvent.ticketPlatform} {selectedEvent.link && '↗'}</div>
                     </div>
                   </div>
                 )}
@@ -828,7 +864,11 @@ export default function App() {
                     <div>
                       <div style={{fontSize:11,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'0.5px'}}>Organizador</div>
                       <div style={{fontWeight:700,fontSize:14}}>{selectedEvent.organizerName}</div>
-                      {selectedEvent.organizerContact && <div style={{fontSize:13,color:'var(--gold)',marginTop:2}}>{selectedEvent.organizerContact}</div>}
+                      {selectedEvent.organizerContact && (
+                        selectedEvent.organizerContact.startsWith('http') 
+                          ? <a href={selectedEvent.organizerContact} target="_blank" rel="noopener noreferrer" style={{fontSize:13,color:'var(--gold)',marginTop:2,display:'block',textDecoration:'none'}}>{selectedEvent.organizerContact} ↗</a>
+                          : <div style={{fontSize:13,color:'var(--gold)',marginTop:2}}>{selectedEvent.organizerContact}</div>
+                      )}
                     </div>
                   </div>
                 )}
