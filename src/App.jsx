@@ -370,6 +370,7 @@ export default function App() {
       else if (activeDateFilter === "FinDeSemana") matchDate = e.fechaReal >= weekendStart && e.fechaReal <= weekendEnd;
       else if (activeDateFilter === "EstaSemana") matchDate = e.fechaReal >= today && e.fechaReal <= weekEnd;
       else if (activeDateFilter === "EsteMes") matchDate = e.fechaReal >= today && e.fechaReal <= monthEnd;
+      else if (activeDateFilter === "Gratis") matchDate = e.price === "Gratis";
     }
     return matchCat && matchSearch && matchDate;
   });
@@ -567,8 +568,10 @@ export default function App() {
             })()}
 
             <div className="filters-bar" style={{borderBottom:'none',paddingBottom:8}}>
-              {[["Todos","Todos"],["Hoy","Hoy"],["FinDeSemana","Este fin de semana"],["EstaSemana","Esta semana"],["EsteMes","Este mes"]].map(([val,label]) => (
-                <button key={val} className={`filter-chip ${activeDateFilter===val?"active":""}`} onClick={() => setActiveDateFilter(val)}>📅 {label}</button>
+              {[["Todos","Todos"],["Hoy","Hoy"],["FinDeSemana","Este fin de semana"],["EstaSemana","Esta semana"],["EsteMes","Este mes"],["Gratis","🎟️ Gratis"]].map(([val,label]) => (
+                <button key={val} className={`filter-chip ${activeDateFilter===val?"active":""}`} onClick={() => setActiveDateFilter(val)}>
+                  {val !== "Gratis" ? `📅 ${label}` : label}
+                </button>
               ))}
             </div>
             <div className="filters-bar">
