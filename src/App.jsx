@@ -277,6 +277,7 @@ export default function App() {
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
+  const [viewMode, setViewMode] = useState("grid");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -301,13 +302,20 @@ export default function App() {
   };
 
   const fetchStats = async () => {
-    const { count: eventos } = await supabase.from("events").select("*", { count: "exact", head: true });
-    const { data: orgs } = await supabase.from("events").select("organizer_name");
-    const organizadores = new Set(orgs?.filter(e => e.organizer_name).map(e => e.organizer_name)).size;
-    const { count: usuarios } = await supabase.from("users_view").select("*", { count: "exact", head: true }).catch(() => ({ count: 0 }));
-    setStats({ eventos: eventos || 0, usuarios: usuarios || 0, organizadores: organizadores || 0 });
+    try {
+      const { count: eventos } = await supabase.from("events").select("*", { count: "exact", head: true });
+      const { data: orgs } = await supabase.from("events").select("organizer_name");
+      const organizadores = new Set(orgs?.filter(e => e.organizer_name).map(e => e.organizer_name)).size;
+      let usuarios = 0;
+      try {
+        const { count } = await supabase.from("users_view").select("*", { count: "exact", head: true });
+        usuarios = count || 0;
+      } catch(e) { usuarios = 0; }
+      setStats({ eventos: eventos || 0, usuarios, organizadores: organizadores || 0 });
+    } catch(e) { console.log("Stats error:", e); }
   };
-    setLoading(true);
+
+  const fetchEvents = async () => {
     const { data, error } = await supabase.from("events").select("*").order("fecha_real", { ascending: true, nullsFirst: false });
     if (!error && data) {
       setEvents(data.map(e => ({
