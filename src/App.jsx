@@ -629,6 +629,7 @@ export default function App() {
                 <button key={val} className={`filter-chip ${activeZona===val?"active":""}`} onClick={() => setActiveZona(val)}>{label}</button>
               ))}
             </div>
+            <div className="filters-bar" style={{borderBottom:'none',paddingBottom:8}}>
               {[["Todos",t.filterAll],["Hoy",t.filterToday],["FinDeSemana",t.filterWeekend],["EstaSemana",t.filterWeek],["EsteMes",t.filterMonth],["Gratis",t.filterFree]].map(([val,label]) => (
                 <button key={val} className={`filter-chip ${activeDateFilter===val?"active":""}`} onClick={() => setActiveDateFilter(val)}>
                   {val !== "Gratis" ? `📅 ${label}` : label}
