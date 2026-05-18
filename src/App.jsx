@@ -256,6 +256,7 @@ const CATS = ["Todos","Música","Arte","Comedia","Tech","Gastronomía","Baile","
 export default function App() {
   const [activeFilter, setActiveFilter] = useState("Todos");
   const [activeDateFilter, setActiveDateFilter] = useState("Todos");
+  const [activeZona, setActiveZona] = useState("Todas");
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [toast, setToast] = useState(null);
@@ -328,7 +329,7 @@ export default function App() {
         attendees: String(e.attendees), capacity: String(e.capacity),
         ticketPlatform: e.ticket_platform, link: e.ticket_link,
         organizerName: e.organizer_name, organizerContact: e.organizer_contact,
-        imageUrl: e.image_url, fechaReal: e.fecha_real, fechaFin: e.fecha_fin,
+        imageUrl: e.image_url, fechaReal: e.fecha_real, fechaFin: e.fecha_fin, zona: e.zona,
       })));
     }
     setLoading(false);
@@ -392,7 +393,8 @@ export default function App() {
       else if (activeDateFilter === "EsteMes") matchDate = e.fechaReal <= monthEnd && fin >= today;
       else if (activeDateFilter === "Gratis") matchDate = e.price === "Gratis";
     }
-    return matchCat && matchSearch && matchDate;
+    const matchZona = activeZona === "Todas" || e.zona === activeZona;
+    return matchCat && matchSearch && matchDate && matchZona;
   });
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
@@ -622,7 +624,11 @@ export default function App() {
                 </div>
               </div>
             </div>
-            <div className="filters-bar" style={{borderBottom:'none',paddingBottom:8}}>
+            <div className="filters-bar" style={{borderBottom:'none',paddingBottom:4,paddingTop:12}}>
+              {[["Todas","🌎 Todas las zonas"],["Medellín","🏙️ Medellín"],["Área Metropolitana","🌆 Área Metropolitana"],["Oriente Cercano","🌿 Oriente Cercano"]].map(([val,label]) => (
+                <button key={val} className={`filter-chip ${activeZona===val?"active":""}`} onClick={() => setActiveZona(val)}>{label}</button>
+              ))}
+            </div>
               {[["Todos",t.filterAll],["Hoy",t.filterToday],["FinDeSemana",t.filterWeekend],["EstaSemana",t.filterWeek],["EsteMes",t.filterMonth],["Gratis",t.filterFree]].map(([val,label]) => (
                 <button key={val} className={`filter-chip ${activeDateFilter===val?"active":""}`} onClick={() => setActiveDateFilter(val)}>
                   {val !== "Gratis" ? `📅 ${label}` : label}
