@@ -413,13 +413,14 @@ export default function App() {
     if (!user) { setShowAuth(true); return; }
     const numId = Number(id);
     if (saved.includes(numId)) {
-      const { error } = await supabase.from("favorites").delete().eq("user_id", user.id).eq("event_id", numId);
+      const { error } = await supabase.from("favorites").delete().eq("event_id", numId);
       if (!error) { setSaved(s => s.filter(x => x !== numId)); showToast("Eliminado de guardados"); }
-      else showToast("⚠️ Error al eliminar");
+      else showToast("⚠️ Error: " + error.message);
     } else {
-      const { error } = await supabase.from("favorites").insert({ user_id: user.id, event_id: numId });
+      const { data, error } = await supabase.from("favorites").insert({ event_id: numId }).select();
+      console.log("Insert result:", data, error);
       if (!error) { setSaved(s => [...s, numId]); showToast("✓ Guardado en tu lista"); }
-      else showToast("⚠️ Error al guardar: " + error.message);
+      else showToast("⚠️ Error: " + error.message);
     }
   };
 
@@ -849,7 +850,7 @@ export default function App() {
         </footer>
 
         <nav className="bottom-nav">
-          {[[" 🏠",t.tabHome,"home"],["🔍",t.tabExplore,"explore"],["🤍",t.tabSaved,"saved"],["👤",t.tabProfile,"profile"]].map(([icon,label,tab])=>(
+          {[[" 🏠",t.tabHome,"home"],["🔍",t.tabExplore,"explore"],[saved.length > 0 ? "❤️" : "🤍",t.tabSaved,"saved"],["👤",t.tabProfile,"profile"]].map(([icon,label,tab])=>(
             <button key={tab} className={`bottom-nav-item ${activeTab===tab?"active":""}`} onClick={()=>setActiveTab(tab)}>
               <span>{icon}</span><span>{label}</span>
             </button>
