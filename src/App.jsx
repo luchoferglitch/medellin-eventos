@@ -520,7 +520,7 @@ export default function App() {
       <style>{style}</style>
       <div className="app">
         <nav className="nav">
-          <div className="nav-logo">MEDE<span>LLÍ</span>N EVENTOS</div>
+          <div className="nav-logo">MEDELLÍN VIBRA</div>
           <div className="nav-actions">
             <select value={lang} onChange={e=>setLang(e.target.value)} style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,padding:'6px 10px',fontFamily:'var(--font-body)',fontSize:13,color:'var(--text)',cursor:'pointer',outline:'none'}}>
               <option value="es">🇨🇴 ES</option>
@@ -550,7 +550,7 @@ export default function App() {
               <div className="hero-content">
                 <a href="https://www.google.com/maps/place/Medell%C3%ADn,+Antioquia/@6.2441988,-75.6357583,12z" target="_blank" rel="noopener noreferrer" className="hero-tag" style={{textDecoration:'none'}}>📍 Medellín, Colombia</a>
                 <h1 className="hero-title">DESCUBRE<br/><span className="accent">LO QUE</span><br/><span className="accent-red">VIBRA</span></h1>
-                <p className="hero-sub">Los mejores eventos de la ciudad de la eterna primavera. Música, arte, gastronomía y mucho más.</p>
+                <p className="hero-sub">Los mejores eventos de la ciudad de la eterna primavera. Música, arte, gastronomía y mucho más. <strong style={{color:'#F5A623'}}>Todo esto en el 2026.</strong></p>
                 <div className="search-bar">
                   <input placeholder={t.searchPlaceholder} value={search} onChange={e => setSearch(e.target.value)} />
                   <button>{t.searchBtn}</button>
@@ -858,7 +858,7 @@ export default function App() {
           <div className="auth-overlay" onClick={()=>setShowAuth(false)}>
             <div className="auth-panel" style={{position:'relative'}} onClick={e=>e.stopPropagation()}>
               <button className="auth-close" onClick={()=>setShowAuth(false)}>✕</button>
-              <div className="auth-logo">MEDE<span>LLÍ</span>N EVENTOS</div>
+              <div className="auth-logo">MEDELLÍN VIBRA</div>
               <div className="auth-title">{authTab==="login" ? t.welcome : t.createAccount}</div>
               <div className="auth-sub">{authTab==="login" ? t.loginSub : t.registerSub}</div>
               <div className="auth-tabs">
@@ -1061,7 +1061,7 @@ export default function App() {
         {showResetPassword && (
           <div className="auth-overlay">
             <div className="auth-panel" style={{position:'relative'}}>
-              <div className="auth-logo">MEDE<span>LLÍ</span>N EVENTOS</div>
+              <div className="auth-logo">MEDELLÍN VIBRA</div>
               <div className="auth-title">Nueva contraseña</div>
               <div className="auth-sub">Escribe tu nueva contraseña para continuar.</div>
               <div className="auth-form">
