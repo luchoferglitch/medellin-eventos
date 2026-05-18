@@ -286,12 +286,12 @@ export default function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) fetchFavorites();
+      if (session?.user) fetchFavorites(session.user);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (_event === "PASSWORD_RECOVERY") setShowResetPassword(true);
-      if (session?.user) fetchFavorites();
+      if (session?.user) fetchFavorites(session.user);
       else setSaved([]);
     });
     fetchEvents();
@@ -402,9 +402,9 @@ export default function App() {
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
-  const fetchFavorites = async () => {
-    if (!user) { setSaved([]); return; }
-    const { data } = await supabase.from("favorites").select("event_id").eq("user_id", user.id);
+  const fetchFavorites = async (currentUser) => {
+    if (!currentUser) { setSaved([]); return; }
+    const { data } = await supabase.from("favorites").select("event_id").eq("user_id", currentUser.id);
     if (data) setSaved(data.map(f => f.event_id));
   };
 
