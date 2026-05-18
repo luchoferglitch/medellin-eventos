@@ -286,10 +286,13 @@ export default function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      if (session?.user) fetchFavorites();
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (_event === "PASSWORD_RECOVERY") setShowResetPassword(true);
+      if (session?.user) fetchFavorites();
+      else setSaved([]);
     });
     fetchEvents();
     fetchStats();
@@ -399,10 +402,23 @@ export default function App() {
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
-  const toggleSave = (id) => {
+  const fetchFavorites = async () => {
+    if (!user) { setSaved([]); return; }
+    const { data } = await supabase.from("favorites").select("event_id").eq("user_id", user.id);
+    if (data) setSaved(data.map(f => f.event_id));
+  };
+
+  const toggleSave = async (id) => {
     if (!user) { setShowAuth(true); return; }
-    setSaved(s => s.includes(id) ? s.filter(x=>x!==id) : [...s,id]);
-    showToast(saved.includes(id) ? "Eliminado de guardados" : "✓ Guardado en tu lista");
+    if (saved.includes(id)) {
+      await supabase.from("favorites").delete().eq("user_id", user.id).eq("event_id", id);
+      setSaved(s => s.filter(x => x !== id));
+      showToast("Eliminado de guardados");
+    } else {
+      await supabase.from("favorites").insert({ user_id: user.id, event_id: id });
+      setSaved(s => [...s, id]);
+      showToast("✓ Guardado en tu lista");
+    }
   };
 
   const handleReserve = () => {
