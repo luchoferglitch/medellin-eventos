@@ -296,6 +296,7 @@ export default function App() {
     });
     fetchEvents();
     fetchStats();
+    supabase.from("page_views").insert({}).then(() => {});
     return () => subscription.unsubscribe();
   }, []);
 
@@ -313,12 +314,8 @@ export default function App() {
       const { count: eventos } = await supabase.from("events").select("*", { count: "exact", head: true });
       const { data: orgs } = await supabase.from("events").select("organizer_name");
       const organizadores = new Set(orgs?.filter(e => e.organizer_name).map(e => e.organizer_name)).size;
-      let usuarios = 0;
-      try {
-        const { count } = await supabase.from("users_view").select("*", { count: "exact", head: true });
-        usuarios = count || 0;
-      } catch(e) { usuarios = 0; }
-      setStats({ eventos: eventos || 0, usuarios, organizadores: organizadores || 0 });
+      const { count: visitas } = await supabase.from("page_views").select("*", { count: "exact", head: true });
+      setStats({ eventos: eventos || 0, usuarios: visitas || 0, organizadores: organizadores || 0 });
     } catch(e) { console.log("Stats error:", e); }
   };
 
@@ -560,7 +557,7 @@ export default function App() {
                 </div>
                 <div className="stats">
                   <div><div className="stat-num">{stats.eventos}</div><div className="stat-label">{t.statEvents}</div></div>
-                  <div><div className="stat-num">{stats.usuarios || '—'}</div><div className="stat-label">{t.statUsers}</div></div>
+                  <div><div className="stat-num">{stats.usuarios || 0}</div><div className="stat-label">{lang === 'es' ? 'Visitas' : lang === 'en' ? 'Visits' : lang === 'pt' ? 'Visitas' : 'Visites'}</div></div>
                   <div><div className="stat-num">{stats.organizadores}</div><div className="stat-label">{t.statOrganizers}</div></div>
                 </div>
               </div>
