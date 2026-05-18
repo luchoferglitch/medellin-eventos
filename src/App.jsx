@@ -328,7 +328,7 @@ export default function App() {
         attendees: String(e.attendees), capacity: String(e.capacity),
         ticketPlatform: e.ticket_platform, link: e.ticket_link,
         organizerName: e.organizer_name, organizerContact: e.organizer_contact,
-        imageUrl: e.image_url, fechaReal: e.fecha_real,
+        imageUrl: e.image_url, fechaReal: e.fecha_real, fechaFin: e.fecha_fin,
       })));
     }
     setLoading(false);
@@ -385,10 +385,11 @@ export default function App() {
     let matchDate = true;
     if (activeDateFilter !== "Todos" && e.fechaReal) {
       const { today, weekendStart, weekendEnd, weekEnd, monthEnd } = getDateRange();
-      if (activeDateFilter === "Hoy") matchDate = e.fechaReal === today;
-      else if (activeDateFilter === "FinDeSemana") matchDate = e.fechaReal >= weekendStart && e.fechaReal <= weekendEnd;
-      else if (activeDateFilter === "EstaSemana") matchDate = e.fechaReal >= today && e.fechaReal <= weekEnd;
-      else if (activeDateFilter === "EsteMes") matchDate = e.fechaReal >= today && e.fechaReal <= monthEnd;
+      const fin = e.fechaFin || e.fechaReal;
+      if (activeDateFilter === "Hoy") matchDate = e.fechaReal <= today && fin >= today;
+      else if (activeDateFilter === "FinDeSemana") matchDate = e.fechaReal <= weekendEnd && fin >= weekendStart;
+      else if (activeDateFilter === "EstaSemana") matchDate = e.fechaReal <= weekEnd && fin >= today;
+      else if (activeDateFilter === "EsteMes") matchDate = e.fechaReal <= monthEnd && fin >= today;
       else if (activeDateFilter === "Gratis") matchDate = e.price === "Gratis";
     }
     return matchCat && matchSearch && matchDate;
@@ -563,7 +564,7 @@ export default function App() {
               const sun = new Date(fri); sun.setDate(fri.getDate() + 2);
               const friStr = fri.toISOString().split('T')[0];
               const sunStr = sun.toISOString().split('T')[0];
-              const weekendEvents = events.filter(e => e.fechaReal >= friStr && e.fechaReal <= sunStr).slice(0, 4);
+              const weekendEvents = events.filter(e => e.fechaReal <= sunStr && (e.fechaFin || e.fechaReal) >= friStr).slice(0, 4);
               if (weekendEvents.length === 0) return null;
               return (
                 <div style={{background:'white', padding:'32px 24px', borderBottom:'1px solid var(--border)'}}>
@@ -1055,4 +1056,3 @@ export default function App() {
     </>
   );
 }
-
