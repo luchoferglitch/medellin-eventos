@@ -404,20 +404,22 @@ export default function App() {
 
   const fetchFavorites = async (currentUser) => {
     if (!currentUser) { setSaved([]); return; }
-    const { data } = await supabase.from("favorites").select("event_id").eq("user_id", currentUser.id);
-    if (data) setSaved(data.map(f => f.event_id));
+    const { data, error } = await supabase.from("favorites").select("event_id").eq("user_id", currentUser.id);
+    if (error) { console.log("Error fetching favorites:", error); return; }
+    if (data) setSaved(data.map(f => Number(f.event_id)));
   };
 
   const toggleSave = async (id) => {
     if (!user) { setShowAuth(true); return; }
-    if (saved.includes(id)) {
-      await supabase.from("favorites").delete().eq("user_id", user.id).eq("event_id", id);
-      setSaved(s => s.filter(x => x !== id));
-      showToast("Eliminado de guardados");
+    const numId = Number(id);
+    if (saved.includes(numId)) {
+      const { error } = await supabase.from("favorites").delete().eq("user_id", user.id).eq("event_id", numId);
+      if (!error) { setSaved(s => s.filter(x => x !== numId)); showToast("Eliminado de guardados"); }
+      else showToast("⚠️ Error al eliminar");
     } else {
-      await supabase.from("favorites").insert({ user_id: user.id, event_id: id });
-      setSaved(s => [...s, id]);
-      showToast("✓ Guardado en tu lista");
+      const { error } = await supabase.from("favorites").insert({ user_id: user.id, event_id: numId });
+      if (!error) { setSaved(s => [...s, numId]); showToast("✓ Guardado en tu lista"); }
+      else showToast("⚠️ Error al guardar: " + error.message);
     }
   };
 
