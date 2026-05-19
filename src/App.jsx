@@ -461,7 +461,10 @@ export default function App() {
       // Enviar alerta al admin
       await fetch("https://jtbqaqugnqkympwnfsod.supabase.co/functions/v1/alerta-evento", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0YnFhcXVnbnFreW1wd25mc29kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODUzMzQsImV4cCI6MjA5MzA2MTMzNH0.3tHT9CVRhboFrC3pTNMMQ-i2GeEPv_nUkG4d-hPuSdc"
+        },
         body: JSON.stringify({ title: form.title, organizer: form.organizer_name, contact: form.organizer_contact, place: form.place, date: form.date }),
       });
     }
