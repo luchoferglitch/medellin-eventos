@@ -320,7 +320,7 @@ export default function App() {
   };
 
   const fetchEvents = async () => {
-    const { data, error } = await supabase.from("events").select("*").order("fecha_real", { ascending: true, nullsFirst: false });
+    const { data, error } = await supabase.from("events").select("*").eq("estado", "aprobado").order("fecha_real", { ascending: true, nullsFirst: false });
     if (!error && data) {
       setEvents(data.map(e => ({
         id: e.id, emoji: e.emoji, title: e.title, cat: e.category,
@@ -436,6 +436,7 @@ export default function App() {
     if (!user) { setShowAuth(true); setShowCreate(false); return; }
     if (!form.title || !form.place || !form.date) { showToast("⚠️ Completa los campos obligatorios"); return; }
     setFormLoading(true);
+    const esAdmin = ADMINS.includes(user.email);
     const { error } = await supabase.from("events").insert([{
       title: form.title, category: form.category, date: form.date,
       time: form.time, place: form.place, price: form.price || "Gratis",
@@ -446,13 +447,24 @@ export default function App() {
       organizer_name: form.organizer_name, organizer_contact: form.organizer_contact,
       image_url: form.image_url || null,
       user_id: user.id,
+      estado: esAdmin ? "aprobado" : "pendiente",
     }]);
     setFormLoading(false);
     if (error) { showToast("⚠️ Error al publicar: " + error.message); return; }
     setShowCreate(false);
     setForm({ title:"", category:"Música", date:"", time:"", place:"", price:"", capacity:"", description:"", emoji:"🎵", tag:"", ticket_platform:"", ticket_link:"", organizer_name:"", organizer_contact:"", image_url:"" });
-    showToast("✓ ¡Evento publicado exitosamente!");
-    fetchEvents();
+    if (esAdmin) {
+      showToast("✓ ¡Evento publicado exitosamente!");
+      fetchEvents();
+    } else {
+      showToast("✓ ¡Evento enviado! Lo revisaremos pronto.");
+      // Enviar alerta al admin
+      await fetch("https://jtbqaqugnqkympwnfsod.supabase.co/functions/v1/alerta-evento", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: form.title, organizer: form.organizer_name, contact: form.organizer_contact, place: form.place, date: form.date }),
+      });
+    }
   };
 
   const handleLogin = async () => {
