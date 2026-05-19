@@ -2,7 +2,17 @@ const RESEND_API_KEY = "re_FpmMceDx_4D8QRf4HzMCdUu9BWN7UgFan";
 const FROM_EMAIL = "hola@medellinvibra.co";
 const ADMIN_EMAIL = "hola@medellinvibra.co";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
   const { title, organizer, contact, place, date } = await req.json();
 
   await fetch("https://api.resend.com/emails", {
@@ -38,5 +48,8 @@ Deno.serve(async (req) => {
     }),
   });
 
-  return new Response(JSON.stringify({ message: "Alerta enviada" }), { status: 200 });
+  return new Response(JSON.stringify({ message: "Alerta enviada" }), { 
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json" }
+  });
 });
