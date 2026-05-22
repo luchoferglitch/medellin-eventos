@@ -16,9 +16,8 @@ export const translations = {
     statOrganizers: "Organizadores",
 
     // About
-    aboutTag: "¿Qué es Medellín Vibra?",
-    aboutTitle: "LA AGENDA DE LA CIUDAD QUE NUNCA PARA",
-    aboutText: "Medellín no descansa. Cada semana trae nuevos conciertos, exposiciones, ferias y experiencias que hacen de esta ciudad una de las más vibrantes de América Latina. En Medellín Vibra encontrarás todo lo que la ciudad tiene para ofrecerte — reunido en un solo lugar, para que solo te preocupes por disfrutar.",
+   aboutTitle: "LA AGENDA QUE VIBRA SIN FRONTERAS",
+aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos hemos expandido al Área Metropolitana y el Oriente Cercano. Cada semana trae nuevos conciertos, festivales, ferias y experiencias en toda la región. En Medellín Vibra encontrarás todo reunido en un solo lugar, para que solo te preocupes por disfrutar. ¡Porque en Antioquia, siempre hay algo que vibra! 🌟",
     followUs: "📸 Síguenos en Instagram @medellinvibra.co",
 
     // Filters
