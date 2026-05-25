@@ -927,10 +927,6 @@ export default function App() {
                   <div className="detail-info-item"><div className="detail-info-label">{t.price}</div><div className="detail-info-value" style={{color: selectedEvent.price==="Gratis"?'var(--green)':'var(--gold)'}}>{selectedEvent.price}</div></div>
                 </div>
                 <p className="detail-desc">{selectedEvent.desc}</p>
-               style={{background:'var(--surface2)',borderRadius:100,height:8,overflow:'hidden'}}>
-                    <div style={{height:'100%',background:'var(--gold)',width:`${Math.round(parseInt(selectedEvent.attendees.replace(',',''))/parseInt(selectedEvent.capacity.replace(',',''))*100)}%`,borderRadius:100}} />
-                  </div>
-                </div>
                 <div className="detail-map" style={{cursor:'pointer'}} onClick={()=>window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedEvent.place)}`, '_blank')}>
                   📍 {t.viewMap} · {selectedEvent.place}
                 </div>
