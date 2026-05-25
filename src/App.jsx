@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from "react";
 import { supabase } from "./supabase";
-import { Calendar, MapPin, Users, Star, MessageCircle } from "lucide-react";
+import { Calendar, MapPin, Star, MessageCircle } from "lucide-react";
 import { translations } from "./translations";
 
 import catMusica from "./assets/cat-musica.jpg";
@@ -730,7 +730,6 @@ export default function App() {
                         <div className="event-card-info">
                           <div className="event-card-info-row"><Calendar size={13} color="var(--muted)" /> {ev.date} · {ev.time}</div>
                           <div className="event-card-info-row"><MapPin size={13} color="var(--muted)" /> {ev.place}</div>
-                          <div className="event-card-info-row"><Users size={13} color="var(--muted)" /> {ev.attendees} {t.attendees}</div>
                         </div>
                         <div className="event-card-footer">
                           <div className={`event-card-price ${ev.price==="Gratis"?"free":""}`}>{ev.price}</div>
@@ -928,9 +927,7 @@ export default function App() {
                   <div className="detail-info-item"><div className="detail-info-label">{t.price}</div><div className="detail-info-value" style={{color: selectedEvent.price==="Gratis"?'var(--green)':'var(--gold)'}}>{selectedEvent.price}</div></div>
                 </div>
                 <p className="detail-desc">{selectedEvent.desc}</p>
-                <div style={{marginBottom:16}}>
-                  <div style={{fontSize:12,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:8}}>Asistentes ({selectedEvent.attendees} / {selectedEvent.capacity})</div>
-                  <div style={{background:'var(--surface2)',borderRadius:100,height:8,overflow:'hidden'}}>
+               style={{background:'var(--surface2)',borderRadius:100,height:8,overflow:'hidden'}}>
                     <div style={{height:'100%',background:'var(--gold)',width:`${Math.round(parseInt(selectedEvent.attendees.replace(',',''))/parseInt(selectedEvent.capacity.replace(',',''))*100)}%`,borderRadius:100}} />
                   </div>
                 </div>
