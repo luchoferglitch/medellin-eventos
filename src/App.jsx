@@ -275,7 +275,7 @@ export default function App() {
   const [authError, setAuthError] = useState("");
   const [authSuccess, setAuthSuccess] = useState("");
 
-  const [stats, setStats] = useState({ eventos: 0, usuarios: 0, organizadores: 0 });
+  const [stats, setStats] = useState({ eventos: 0, promocionados: 0, usuarios: 0, organizadores: 0 });
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
@@ -311,11 +311,15 @@ export default function App() {
 
   const fetchStats = async () => {
     try {
-      const { count: eventos } = await supabase.from("events").select("*", { count: "exact", head: true });
+     const { count: aprobados } = await supabase.from("events").select("*", { count: "exact", head: true }).eq("estado", "aprobado");
+const { count: vencidos } = await supabase.from("events").select("*", { count: "exact", head: true }).eq("estado", "vencido");
+const eventos = (aprobados || 0) + (vencidos || 0);
+const { count: vencidos } = await supabase.from("events").select("*", { count: "exact", head: true }).eq("estado", "vencido");
+setStats({ eventos: aprobados || 0, promocionados: eventos, usuarios: visitas || 0, organizadores: organizadores || 0 });
       const { data: orgs } = await supabase.from("events").select("organizer_name");
       const organizadores = new Set(orgs?.filter(e => e.organizer_name).map(e => e.organizer_name)).size;
       const { count: visitas } = await supabase.from("page_views").select("*", { count: "exact", head: true });
-      setStats({ eventos: eventos || 0, usuarios: visitas || 0, organizadores: organizadores || 0 });
+      setStats({ eventos: aprobados || 0, promocionados: eventos, usuarios: visitas || 0, organizadores: organizadores || 0 });
     } catch(e) { console.log("Stats error:", e); }
   };
 
@@ -568,6 +572,7 @@ export default function App() {
                 <p className="hero-sub">Los mejores eventos de la ciudad de la eterna primavera. Música, arte, gastronomía y mucho más. <strong style={{color:'#F5A623'}}>Todo esto en el 2026.</strong></p>
                 <div className="search-bar">
                   <input placeholder={t.searchPlaceholder} value={search} onChange={e => setSearch(e.target.value)} />
+<div><div className="stat-num">{stats.promocionados}</div><div className="stat-label">{lang === 'es' ? 'Promocionados' : lang === 'en' ? 'Promoted' : lang === 'pt' ? 'Promovidos' : 'Promus'}</div></div>
                   <button>{t.searchBtn}</button>
                 </div>
                 <div className="stats">
