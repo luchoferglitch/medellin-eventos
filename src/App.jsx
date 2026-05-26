@@ -314,7 +314,6 @@ export default function App() {
      const { count: aprobados } = await supabase.from("events").select("*", { count: "exact", head: true }).eq("estado", "aprobado");
 const { count: vencidos } = await supabase.from("events").select("*", { count: "exact", head: true }).eq("estado", "vencido");
 const eventos = (aprobados || 0) + (vencidos || 0);
-const { count: vencidos } = await supabase.from("events").select("*", { count: "exact", head: true }).eq("estado", "vencido");
 setStats({ eventos: aprobados || 0, promocionados: eventos, usuarios: visitas || 0, organizadores: organizadores || 0 });
       const { data: orgs } = await supabase.from("events").select("organizer_name");
       const organizadores = new Set(orgs?.filter(e => e.organizer_name).map(e => e.organizer_name)).size;
