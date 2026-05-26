@@ -569,11 +569,13 @@ export default function App() {
                 <p className="hero-sub">Los mejores eventos de la ciudad de la eterna primavera. Música, arte, gastronomía y mucho más. <strong style={{color:'#F5A623'}}>Todo esto en el 2026.</strong></p>
                 <div className="search-bar">
                   <input placeholder={t.searchPlaceholder} value={search} onChange={e => setSearch(e.target.value)} />
-<div><div className="stat-num">{stats.promocionados}</div><div className="stat-label">{lang === 'es' ? 'Promocionados' : lang === 'en' ? 'Promoted' : lang === 'pt' ? 'Promovidos' : 'Promus'}</div></div>
-                  <button>{t.searchBtn}</button>
-                </div>
-                <div className="stats">
+<div className="stats">
                   <div><div className="stat-num">{stats.eventos}</div><div className="stat-label">{t.statEvents}</div></div>
+                  <div><div className="stat-num">{stats.promocionados}</div><div className="stat-label">{lang === 'es' ? 'Promocionados' : lang === 'en' ? 'Promoted' : lang === 'pt' ? 'Promovidos' : 'Promus'}</div></div>
+                  <div><div className="stat-num">{stats.usuarios || 0}</div><div className="stat-label">{lang === 'es' ? 'Visitas' : lang === 'en' ? 'Visits' : lang === 'pt' ? 'Visitas' : 'Visites'}</div></div>
+                  <div><div className="stat-num">{stats.organizadores}</div><div className="stat-label">{t.statOrganizers}</div></div>
+                </div><div><div className="stat-num">{stats.eventos}</div><div className="stat-label">{t.statEvents}</div></div>
+<div><div className="stat-num">{stats.promocionados}</div><div className="stat-label">{lang === 'es' ? 'Promocionados' : lang === 'en' ? 'Promoted' : lang === 'pt' ? 'Promovidos' : 'Promus'}</div></div>
                   <div><div className="stat-num">{stats.usuarios || 0}</div><div className="stat-label">{lang === 'es' ? 'Visitas' : lang === 'en' ? 'Visits' : lang === 'pt' ? 'Visitas' : 'Visites'}</div></div>
                   <div><div className="stat-num">{stats.organizadores}</div><div className="stat-label">{t.statOrganizers}</div></div>
                 </div>
