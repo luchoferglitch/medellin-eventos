@@ -313,6 +313,7 @@ export default function App() {
     try {
       const { data: contadorData } = await supabase.from("contador_historico").select("total").eq("id", 1).single();
       const promocionados = contadorData?.total || 104;
+      const { count: aprobados } = await supabase.from("events").select("*", { count: "exact", head: true }).eq("estado", "aprobado");
       const { data: orgs } = await supabase.from("events").select("organizer_name");
       const organizadores = new Set(orgs?.filter(e => e.organizer_name).map(e => e.organizer_name)).size;
       const { count: visitas } = await supabase.from("page_views").select("*", { count: "exact", head: true });
