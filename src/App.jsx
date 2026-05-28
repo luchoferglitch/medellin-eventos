@@ -311,13 +311,12 @@ export default function App() {
 
   const fetchStats = async () => {
     try {
-      const { count: aprobados } = await supabase.from("events").select("*", { count: "exact", head: true }).eq("estado", "aprobado");
-      const { count: vencidos } = await supabase.from("events").select("*", { count: "exact", head: true }).eq("estado", "vencido");
-      const eventos = (aprobados || 0) + (vencidos || 0);
+      const { data: contadorData } = await supabase.from("contador_historico").select("total").eq("id", 1).single();
+      const promocionados = contadorData?.total || 104;
       const { data: orgs } = await supabase.from("events").select("organizer_name");
       const organizadores = new Set(orgs?.filter(e => e.organizer_name).map(e => e.organizer_name)).size;
       const { count: visitas } = await supabase.from("page_views").select("*", { count: "exact", head: true });
-      setStats({ eventos: aprobados || 0, promocionados: eventos, usuarios: visitas || 0, organizadores: organizadores || 0 });
+      setStats({ eventos: aprobados || 0, promocionados: promocionados, usuarios: visitas || 0, organizadores: organizadores || 0 });
     } catch(e) { console.log("Stats error:", e); }
   };
   const fetchEvents = async () => {
