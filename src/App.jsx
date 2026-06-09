@@ -407,11 +407,13 @@ export default function App() {
     const matchCat = activeFilter === "Todos" || e.cat === activeFilter;
     const s = search.toLowerCase();
     const synCat = getCatFromSynonym(s);
+    const effectiveTagForSearch = e.tag || (isNewEvent(e) ? "Nuevo" : null);
     const matchSearch = !s ||
       e.title.toLowerCase().includes(s) ||
       e.place.toLowerCase().includes(s) ||
       e.desc?.toLowerCase().includes(s) ||
-      (synCat && e.cat === synCat);
+      (synCat && e.cat === synCat) ||
+      effectiveTagForSearch?.toLowerCase().includes(s);
     let matchDate = true;
     if (activeDateFilter !== "Todos" && e.fechaReal) {
       const { today, weekendStart, weekendEnd, weekEnd, monthEnd } = getDateRange();
