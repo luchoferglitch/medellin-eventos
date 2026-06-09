@@ -615,6 +615,9 @@ export default function App() {
     if (mapInstanceRef.current || !mapRef.current) return;
     const L = leafletRef.current;
     if (!L) return;
+    // Forzar dimensiones antes de inicializar
+    mapRef.current.style.height = '100%';
+    mapRef.current.style.width = '100%';
     const map = L.map(mapRef.current, {
       center: [6.2442, -75.5812],
       zoom: 12,
@@ -625,17 +628,23 @@ export default function App() {
       maxZoom: 19,
     }).addTo(map);
     mapInstanceRef.current = map;
+    // Forzar re-render del mapa después de montarlo
+    setTimeout(() => { map.invalidateSize(); }, 100);
   }, []);
 
   // Cargar Leaflet dinámicamente
   useEffect(() => {
     if (activeTab !== "map") return;
-    if (leafletRef.current) { initMap(); return; }
+    if (leafletRef.current) {
+      initMap();
+      // Si ya estaba inicializado, forzar invalidateSize por si el contenedor cambió
+      setTimeout(() => { mapInstanceRef.current?.invalidateSize(); }, 150);
+      return;
+    }
     const script = document.createElement('script');
     script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
     script.onload = () => {
       leafletRef.current = window.L;
-      // Fix default icon paths
       delete window.L.Icon.Default.prototype._getIconUrl;
       window.L.Icon.Default.mergeOptions({
         iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -1159,8 +1168,8 @@ export default function App() {
             </div>
 
             {/* Mapa Leaflet */}
-            <div className="map-container" style={{flex:1, position:'relative'}}>
-              <div ref={mapRef} className="map-wrap" style={{height:'100%', width:'100%'}} />
+            <div className="map-container" style={{flex:1, position:'relative', height:'calc(100vh - 200px)'}}>
+              <div ref={mapRef} className="map-wrap" style={{height:'100%', width:'100%', minHeight:'400px'}} />
               {!geoLoading && markersRef.current.length === 0 && filtered.length > 0 && (
                 <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', zIndex:999, pointerEvents:'none'}}>
                   <div style={{background:'white', border:'1px solid var(--border)', borderRadius:16, padding:'20px 28px', textAlign:'center', boxShadow:'0 4px 20px rgba(0,0,0,0.1)'}}>
