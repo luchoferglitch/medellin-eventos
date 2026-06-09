@@ -219,7 +219,7 @@ const style = `
   .event-card-price.free { color: var(--green); }
   .btn-reserve { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font-body); transition: all 0.2s; }
   .btn-reserve:hover { background: var(--gold); color: white; border-color: var(--gold); }
-  .detail-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); display: flex; align-items: flex-end; justify-content: center; animation: fadeIn 0.2s; }
+  .detail-overlay { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); display: flex; align-items: flex-end; justify-content: center; animation: fadeIn 0.2s; }
   @keyframes fadeIn { from{opacity:0} to{opacity:1} }
   .detail-panel { background: white; border-radius: 24px 24px 0 0; width: 100%; max-width: 700px; max-height: 92vh; overflow-y: auto; animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1); }
   @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
