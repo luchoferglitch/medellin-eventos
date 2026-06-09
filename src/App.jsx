@@ -29,6 +29,24 @@ const CAT_CONFIG = {
 
 const getCatConfig = (cat) => CAT_CONFIG[cat] || { img: null, color: "#C8860A" };
 
+// Sistema de tags editoriales
+const TAGS_CONFIG = {
+  "Destacado":        { emoji: "⭐", color: "#C8860A", bg: "rgba(200,134,10,0.12)", border: "rgba(200,134,10,0.3)" },
+  "Últimas entradas": { emoji: "🎟️", color: "#DC2626", bg: "rgba(220,38,38,0.10)", border: "rgba(220,38,38,0.3)" },
+  "Agotado":          { emoji: "🔥", color: "#7C3AED", bg: "rgba(124,58,237,0.10)", border: "rgba(124,58,237,0.3)" },
+  "Nuevo":            { emoji: "🆕", color: "#059669", bg: "rgba(5,150,105,0.10)",  border: "rgba(5,150,105,0.3)"  },
+};
+
+const ADMIN_TAGS = ["Destacado", "Últimas entradas", "Agotado"]; // asignables manualmente
+
+const isNewEvent = (event) => {
+  if (!event.fechaReal) return false;
+  const created = event.createdAt ? new Date(event.createdAt) : null;
+  if (!created) return false;
+  const diffDays = (Date.now() - created.getTime()) / (1000 * 60 * 60 * 24);
+  return diffDays <= 7;
+};
+
 const style = `
   @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -247,6 +265,13 @@ const style = `
   .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--green); color: white; padding: 12px 24px; border-radius: 100px; font-weight: 700; font-size: 14px; z-index: 300; animation: toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1); box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
   @keyframes toastIn { from{transform:translateX(-50%) translateY(20px);opacity:0} to{transform:translateX(-50%) translateY(0);opacity:1} }
   .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gold); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; cursor: pointer; border: 2px solid rgba(200,134,10,0.3); }
+  .tags-bar { padding: 10px 24px; display: flex; gap: 8px; overflow-x: auto; background: white; border-bottom: 1px solid var(--border); }
+  .tags-bar::-webkit-scrollbar { display: none; }
+  .tag-chip { flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; padding: 6px 14px; border-radius: 100px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; white-space: nowrap; }
+  .tag-chip:hover { transform: translateY(-1px); }
+  .admin-tag-picker { position: absolute; bottom: calc(100% + 8px); right: 0; background: white; border: 1px solid var(--border); border-radius: 14px; padding: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); z-index: 50; min-width: 180px; }
+  .admin-tag-option { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: background 0.15s; }
+  .admin-tag-option:hover { background: var(--surface2); }
 `;
 
 const ADMINS = ["luchofer2001@gmail.com"];
@@ -257,6 +282,8 @@ export default function App() {
   const [activeFilter, setActiveFilter] = useState("Todos");
   const [activeDateFilter, setActiveDateFilter] = useState("Todos");
   const [activeZona, setActiveZona] = useState("Todas");
+  const [activeTagFilter, setActiveTagFilter] = useState(null);
+  const [adminTagPicker, setAdminTagPicker] = useState(null); // event id with open picker
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [toast, setToast] = useState(null);
@@ -331,6 +358,7 @@ export default function App() {
         ticketPlatform: e.ticket_platform, link: e.ticket_link,
         organizerName: e.organizer_name, organizerContact: e.organizer_contact,
         imageUrl: e.image_url, fechaReal: e.fecha_real, fechaFin: e.fecha_fin, zona: e.zona,
+        createdAt: e.created_at,
       })));
     }
     setLoading(false);
@@ -395,7 +423,9 @@ export default function App() {
       else if (activeDateFilter === "Gratis") matchDate = e.price === "Gratis";
     }
     const matchZona = activeZona === "Todas" || e.zona === activeZona;
-    return matchCat && matchSearch && matchDate && matchZona;
+    const effectiveTag = e.tag || (isNewEvent(e) ? "Nuevo" : null);
+    const matchTag = !activeTagFilter || effectiveTag === activeTagFilter;
+    return matchCat && matchSearch && matchDate && matchZona && matchTag;
   });
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
@@ -522,8 +552,17 @@ export default function App() {
     else { showToast("✓ Evento eliminado"); fetchEvents(); }
   };
 
+  const handleAdminSetTag = async (eventId, newTag) => {
+    const { error } = await supabase.from("events").update({ tag: newTag }).eq("id", eventId);
+    if (error) { showToast("⚠️ Error al actualizar tag"); return; }
+    setEvents(evs => evs.map(e => e.id === eventId ? { ...e, tag: newTag } : e));
+    setAdminTagPicker(null);
+    showToast(newTag ? `✓ Tag "${newTag}" asignado` : "✓ Tag eliminado");
+  };
+
   const getUserInitial = () => (user?.user_metadata?.full_name || user?.email || "U")[0].toUpperCase();
   const getUserName = () => user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Usuario";
+  const getEffectiveTag = (ev) => ev.tag || (isNewEvent(ev) ? "Nuevo" : null);
   const featuredEvent = (() => {
     const today = new Date().toISOString().split('T')[0];
     const upcoming = events.filter(e => e.fechaReal >= today).slice(0, 5);
@@ -677,6 +716,53 @@ export default function App() {
               })}
             </div>
 
+            {/* BARRA DE TAGS */}
+            {(() => {
+              const tagCounts = Object.keys(TAGS_CONFIG).reduce((acc, tag) => {
+                acc[tag] = events.filter(e => {
+                  const eff = e.tag || (isNewEvent(e) ? "Nuevo" : null);
+                  return eff === tag;
+                }).length;
+                return acc;
+              }, {});
+              const hasAny = Object.values(tagCounts).some(c => c > 0);
+              if (!hasAny) return null;
+              return (
+                <div className="tags-bar">
+                  <button
+                    className="tag-chip"
+                    onClick={() => setActiveTagFilter(null)}
+                    style={{
+                      background: !activeTagFilter ? "var(--gold)" : "var(--surface2)",
+                      color: !activeTagFilter ? "white" : "var(--muted)",
+                      border: `1px solid ${!activeTagFilter ? "var(--gold)" : "var(--border)"}`,
+                    }}
+                  >
+                    Todos los tags
+                  </button>
+                  {Object.entries(TAGS_CONFIG).map(([tag, cfg]) => {
+                    if (tagCounts[tag] === 0) return null;
+                    const isActive = activeTagFilter === tag;
+                    return (
+                      <button
+                        key={tag}
+                        className="tag-chip"
+                        onClick={() => setActiveTagFilter(isActive ? null : tag)}
+                        style={{
+                          background: isActive ? cfg.color : cfg.bg,
+                          color: isActive ? "white" : cfg.color,
+                          border: `1px solid ${isActive ? cfg.color : cfg.border}`,
+                        }}
+                      >
+                        {cfg.emoji} {tag}
+                        <span style={{opacity:0.7, fontWeight:400, marginLeft:2}}>({tagCounts[tag]})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+
             <div className="main">
               {activeFilter === "Todos" && !search && featuredEvent && (
                 <>
@@ -725,7 +811,12 @@ export default function App() {
                       <div className="event-card-img" style={{backgroundImage: `url(${ev.imageUrl || getCatConfig(ev.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}}>
                         <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.35)'}} />
                         <span className="event-card-cat" style={{zIndex:1}}>{ev.cat}</span>
-                        {ev.tag && <span style={{position:'absolute',top:12,right:12,background:'var(--red)',color:'white',padding:'3px 8px',borderRadius:'100px',fontSize:'10px',fontWeight:700,zIndex:1}}>{ev.tag}</span>}
+                        {(() => {
+                          const effTag = getEffectiveTag(ev);
+                          if (!effTag) return null;
+                          const cfg = TAGS_CONFIG[effTag];
+                          return <span style={{position:'absolute',top:12,right:12,background:cfg?.color||'var(--red)',color:'white',padding:'3px 8px',borderRadius:'100px',fontSize:'10px',fontWeight:700,zIndex:1}}>{cfg?.emoji} {effTag}</span>;
+                        })()}
                       </div>
                       <div className="event-card-body">
                         <div className="event-card-title">{ev.title}</div>
@@ -735,9 +826,28 @@ export default function App() {
                         </div>
                         <div className="event-card-footer">
                           <div className={`event-card-price ${ev.price==="Gratis"?"free":""}`}>{ev.price}</div>
-                          <div style={{display:'flex',gap:6}}>
+                          <div style={{display:'flex',gap:6,position:'relative'}}>
                             {isAdmin && (
-                              <button className="btn-reserve" style={{color:'var(--red)',borderColor:'rgba(232,53,58,0.3)'}} onClick={e=>handleDeleteEvent(ev.id,e)}>🗑️</button>
+                              <>
+                                <button className="btn-reserve" style={{color:'var(--gold)',borderColor:'rgba(200,134,10,0.3)',fontSize:11}} onClick={e=>{e.stopPropagation();setAdminTagPicker(adminTagPicker===ev.id?null:ev.id);}}>🏷️ Tag</button>
+                                {adminTagPicker === ev.id && (
+                                  <div className="admin-tag-picker" onClick={e=>e.stopPropagation()}>
+                                    <div style={{fontSize:11,color:'var(--muted)',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6,padding:'0 4px'}}>Asignar tag</div>
+                                    {ADMIN_TAGS.map(tag => {
+                                      const cfg = TAGS_CONFIG[tag];
+                                      return (
+                                        <div key={tag} className="admin-tag-option" onClick={()=>handleAdminSetTag(ev.id, ev.tag===tag ? null : tag)}>
+                                          <span>{cfg.emoji}</span>
+                                          <span style={{color: cfg.color}}>{tag}</span>
+                                          {ev.tag === tag && <span style={{marginLeft:'auto',color:'var(--green)'}}>✓</span>}
+                                        </div>
+                                      );
+                                    })}
+                                    {ev.tag && <div className="admin-tag-option" style={{color:'var(--muted)'}} onClick={()=>handleAdminSetTag(ev.id,null)}>✕ Quitar tag</div>}
+                                  </div>
+                                )}
+                                <button className="btn-reserve" style={{color:'var(--red)',borderColor:'rgba(232,53,58,0.3)'}} onClick={e=>handleDeleteEvent(ev.id,e)}>🗑️</button>
+                              </>
                             )}
                             <button className="btn-reserve" onClick={e=>{e.stopPropagation();toggleSave(ev.id);}}>{saved.includes(ev.id) ? "❤️" : "🤍"} {t.save.replace("🤍 ","")}</button>
                           </div>
@@ -767,7 +877,12 @@ export default function App() {
                         </div>
                         <div style={{marginTop:6, display:'flex', gap:6, alignItems:'center'}}>
                           <span style={{background:'var(--surface2)', padding:'2px 8px', borderRadius:100, fontSize:11, color:'var(--muted)', fontWeight:600}}>{ev.cat}</span>
-                          {ev.tag && <span style={{background:'var(--red)', padding:'2px 8px', borderRadius:100, fontSize:11, color:'white', fontWeight:700}}>{ev.tag}</span>}
+                          {(() => {
+                            const effTag = getEffectiveTag(ev);
+                            if (!effTag) return null;
+                            const cfg = TAGS_CONFIG[effTag];
+                            return <span style={{background:cfg?.color||'var(--red)', padding:'2px 8px', borderRadius:100, fontSize:11, color:'white', fontWeight:700}}>{cfg?.emoji} {effTag}</span>;
+                          })()}
                         </div>
                       </div>
                       <button className="btn-reserve" style={{flexShrink:0}} onClick={e=>{e.stopPropagation();toggleSave(ev.id);}}>{saved.includes(ev.id) ? "❤️" : "🤍"}</button>
@@ -920,7 +1035,12 @@ export default function App() {
                 <button className="detail-close" onClick={()=>setSelectedEvent(null)}>✕</button>
               </div>
               <div className="detail-body">
-                {selectedEvent.tag && <span className="detail-badge" style={{background:'var(--red)',color:'white'}}>{selectedEvent.tag}</span>}
+                {(() => {
+                  const effTag = getEffectiveTag(selectedEvent);
+                  if (!effTag) return null;
+                  const cfg = TAGS_CONFIG[effTag];
+                  return <span className="detail-badge" style={{background:cfg?.color||'var(--red)',color:'white'}}>{cfg?.emoji} {effTag}</span>;
+                })()}
                 <div className="detail-title">{selectedEvent.title}</div>
                 <div className="detail-info-grid">
                   <div className="detail-info-item"><div className="detail-info-label">{t.date}</div><div className="detail-info-value">{selectedEvent.date}</div></div>
