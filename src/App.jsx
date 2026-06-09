@@ -379,7 +379,7 @@ export default function App() {
         ticketPlatform: e.ticket_platform, link: e.ticket_link,
         organizerName: e.organizer_name, organizerContact: e.organizer_contact,
         imageUrl: e.image_url, fechaReal: e.fecha_real, fechaFin: e.fecha_fin, zona: e.zona,
-        createdAt: e.created_at,
+        createdAt: e.created_at, lat: e.lat, lng: e.lng,
       })));
     }
     setLoading(false);
@@ -583,18 +583,27 @@ export default function App() {
     showToast(newTag ? `✓ Tag "${newTag}" asignado` : "✓ Tag eliminado");
   };
 
-  // Geocodificación con Nominatim + caché en memoria
-  const geocode = useCallback(async (place) => {
-    if (geoCache[place]) return geoCache[place];
+  // Geocodificación con Supabase como caché persistente
+  const geocode = useCallback(async (ev) => {
+    // 1. Si el evento ya tiene coordenadas en Supabase, usarlas directamente
+    if (ev.lat && ev.lng) return { lat: ev.lat, lng: ev.lng };
+    // 2. Si ya están en caché en memoria, usarlas
+    if (geoCache[ev.place]) return geoCache[ev.place];
+    // 3. Llamar a Nominatim
     try {
-      const query = encodeURIComponent(`${place}, Medellín, Colombia`);
+      const query = encodeURIComponent(`${ev.place}, Medellín, Colombia`);
       const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=co`, {
         headers: { 'Accept-Language': 'es', 'User-Agent': 'MedellinVibra/1.0' }
       });
       const data = await res.json();
       if (data && data[0]) {
         const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-        setGeoCache(c => ({ ...c, [place]: coords }));
+        // 4. Guardar en Supabase para que la próxima vez sea instantáneo
+        await supabase.from("events").update({ lat: coords.lat, lng: coords.lng }).eq("id", ev.id);
+        // 5. Actualizar evento en memoria local
+        setEvents(evs => evs.map(e => e.id === ev.id ? { ...e, lat: coords.lat, lng: coords.lng } : e));
+        // 6. Guardar en caché en memoria
+        setGeoCache(c => ({ ...c, [ev.place]: coords }));
         return coords;
       }
     } catch(e) { console.log("Geocode error:", e); }
@@ -652,37 +661,51 @@ export default function App() {
     const eventsToShow = filtered.filter(e => e.place);
     if (eventsToShow.length === 0) return;
 
-    setGeoLoading(true);
-    setGeoProgress({ done: 0, total: eventsToShow.length });
+    const addMarker = (ev, coords) => {
+      const cfg = getCatConfig(ev.cat);
+      const color = cfg.color || '#C8860A';
+      const markerHtml = `<div style="width:32px;height:32px;border-radius:50% 50% 50% 0;background:${color};border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg);font-size:13px;">${ev.emoji||'📍'}</span></div>`;
+      const icon = L.divIcon({ html: markerHtml, className: '', iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -36] });
+      const marker = L.marker([coords.lat, coords.lng], { icon });
+      const priceColor = ev.price === "Gratis" ? "var(--green)" : "var(--gold)";
+      marker.bindPopup(`
+        <div class="map-popup">
+          <div class="map-popup-title">${ev.title}</div>
+          <div class="map-popup-meta">📅 ${ev.date}${ev.time ? ' · ⏰ ' + ev.time : ''}</div>
+          <div class="map-popup-meta">📍 ${ev.place}</div>
+          <div class="map-popup-price" style="color:${priceColor}">${ev.price}</div>
+          <button class="map-popup-btn" onclick="window.__mvOpenEvent(${ev.id})">Ver detalle →</button>
+        </div>
+      `, { maxWidth: 240 });
+      marker.addTo(map);
+      markersRef.current.push(marker);
+    };
 
-    let done = 0;
+    // FASE 1: Pintar instantáneamente los que ya tienen coords en Supabase
+    const withCoords = eventsToShow.filter(e => e.lat && e.lng);
+    const withoutCoords = eventsToShow.filter(e => !e.lat || !e.lng);
+
+    withCoords.forEach(ev => addMarker(ev, { lat: ev.lat, lng: ev.lng }));
+
+    // FASE 2: Geocodificar los que no tienen coords (en segundo plano)
+    if (withoutCoords.length === 0) {
+      setGeoLoading(false);
+      return;
+    }
+
+    setGeoLoading(true);
+    setGeoProgress({ done: withCoords.length, total: eventsToShow.length });
+
+    let done = withCoords.length;
     const delay = (ms) => new Promise(r => setTimeout(r, ms));
 
     (async () => {
-      for (const ev of eventsToShow) {
-        const coords = await geocode(ev.place);
-        if (coords) {
-          const cfg = getCatConfig(ev.cat);
-          const color = cfg.color || '#C8860A';
-          const markerHtml = `<div style="width:32px;height:32px;border-radius:50% 50% 50% 0;background:${color};border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg);font-size:13px;">${ev.emoji||'📍'}</span></div>`;
-          const icon = L.divIcon({ html: markerHtml, className: '', iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -36] });
-          const marker = L.marker([coords.lat, coords.lng], { icon });
-          const priceColor = ev.price === "Gratis" ? "var(--green)" : "var(--gold)";
-          marker.bindPopup(`
-            <div class="map-popup">
-              <div class="map-popup-title">${ev.title}</div>
-              <div class="map-popup-meta">📅 ${ev.date}${ev.time ? ' · ⏰ ' + ev.time : ''}</div>
-              <div class="map-popup-meta">📍 ${ev.place}</div>
-              <div class="map-popup-price" style="color:${priceColor}">${ev.price}</div>
-              <button class="map-popup-btn" onclick="window.__mvOpenEvent(${ev.id})">Ver detalle →</button>
-            </div>
-          `, { maxWidth: 240 });
-          marker.addTo(map);
-          markersRef.current.push(marker);
-        }
+      for (const ev of withoutCoords) {
+        const coords = await geocode(ev);
+        if (coords) addMarker(ev, coords);
         done++;
         setGeoProgress({ done, total: eventsToShow.length });
-        if (done < eventsToShow.length) await delay(1100); // Nominatim: max 1 req/seg
+        if (done < eventsToShow.length) await delay(1100);
       }
       setGeoLoading(false);
     })();
