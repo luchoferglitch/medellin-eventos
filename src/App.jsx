@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+﻿import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "./supabase";
 import { Calendar, MapPin, Star, MessageCircle } from "lucide-react";
 import { translations } from "./translations";
@@ -49,6 +49,7 @@ const isNewEvent = (event) => {
 
 const style = `
   @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&display=swap');
+  @import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
     --gold: #C8860A; --red: #C0392B; --green: #27AE60;
@@ -262,6 +263,19 @@ const style = `
   .bottom-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted); font-size: 11px; cursor: pointer; padding: 4px 16px; transition: color 0.2s; background: none; border: none; font-family: var(--font-body); }
   .bottom-nav-item.active { color: var(--gold); }
   .bottom-nav-item span:first-child { font-size: 20px; }
+  .map-container { position: relative; flex: 1; min-height: 0; }
+  .map-wrap { height: 100%; width: 100%; }
+  .map-popup { font-family: var(--font-body); min-width: 200px; }
+  .map-popup-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; color: var(--text); }
+  .map-popup-meta { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .map-popup-price { font-weight: 700; font-size: 13px; color: var(--gold); margin-bottom: 8px; }
+  .map-popup-btn { background: var(--gold); color: white; border: none; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: var(--font-body); width: 100%; }
+  .map-loading { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: white; border: 1px solid var(--border); border-radius: 100px; padding: 6px 16px; font-size: 12px; font-weight: 600; color: var(--muted); z-index: 1000; box-shadow: 0 2px 12px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 6px; }
+  .map-filters { position: absolute; top: 12px; right: 12px; z-index: 1000; display: flex; flex-direction: column; gap: 6px; }
+  .map-filter-btn { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font-body); box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.2s; color: var(--text); }
+  .map-filter-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .leaflet-popup-content-wrapper { border-radius: 14px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important; border: 1px solid var(--border) !important; }
+  .leaflet-popup-tip { display: none !important; }
   .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--green); color: white; padding: 12px 24px; border-radius: 100px; font-weight: 700; font-size: 14px; z-index: 300; animation: toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1); box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
   @keyframes toastIn { from{transform:translateX(-50%) translateY(20px);opacity:0} to{transform:translateX(-50%) translateY(0);opacity:1} }
   .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gold); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; cursor: pointer; border: 2px solid rgba(200,134,10,0.3); }
@@ -283,7 +297,14 @@ export default function App() {
   const [activeDateFilter, setActiveDateFilter] = useState("Todos");
   const [activeZona, setActiveZona] = useState("Todas");
   const [activeTagFilter, setActiveTagFilter] = useState(null);
-  const [adminTagPicker, setAdminTagPicker] = useState(null); // event id with open picker
+  const [adminTagPicker, setAdminTagPicker] = useState(null);
+  const [geoCache, setGeoCache] = useState({});
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [geoProgress, setGeoProgress] = useState({ done: 0, total: 0 });
+  const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const markersRef = useRef([]);
+  const leafletRef = useRef(null); // event id with open picker
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [toast, setToast] = useState(null);
@@ -561,6 +582,130 @@ export default function App() {
     setAdminTagPicker(null);
     showToast(newTag ? `✓ Tag "${newTag}" asignado` : "✓ Tag eliminado");
   };
+
+  // Geocodificación con Nominatim + caché en memoria
+  const geocode = useCallback(async (place) => {
+    if (geoCache[place]) return geoCache[place];
+    try {
+      const query = encodeURIComponent(`${place}, Medellín, Colombia`);
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=co`, {
+        headers: { 'Accept-Language': 'es', 'User-Agent': 'MedellinVibra/1.0' }
+      });
+      const data = await res.json();
+      if (data && data[0]) {
+        const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+        setGeoCache(c => ({ ...c, [place]: coords }));
+        return coords;
+      }
+    } catch(e) { console.log("Geocode error:", e); }
+    return null;
+  }, [geoCache]);
+
+  // Inicializar mapa Leaflet
+  const initMap = useCallback(() => {
+    if (mapInstanceRef.current || !mapRef.current) return;
+    const L = leafletRef.current;
+    if (!L) return;
+    const map = L.map(mapRef.current, {
+      center: [6.2442, -75.5812],
+      zoom: 12,
+      zoomControl: true,
+    });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap',
+      maxZoom: 19,
+    }).addTo(map);
+    mapInstanceRef.current = map;
+  }, []);
+
+  // Cargar Leaflet dinámicamente
+  useEffect(() => {
+    if (activeTab !== "map") return;
+    if (leafletRef.current) { initMap(); return; }
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.onload = () => {
+      leafletRef.current = window.L;
+      // Fix default icon paths
+      delete window.L.Icon.Default.prototype._getIconUrl;
+      window.L.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      });
+      initMap();
+    };
+    document.head.appendChild(script);
+  }, [activeTab, initMap]);
+
+  // Pintar markers cuando cambian los eventos filtrados o el tab
+  useEffect(() => {
+    if (activeTab !== "map") return;
+    const L = leafletRef.current;
+    const map = mapInstanceRef.current;
+    if (!L || !map) return;
+
+    // Limpiar markers anteriores
+    markersRef.current.forEach(m => m.remove());
+    markersRef.current = [];
+
+    const eventsToShow = filtered.filter(e => e.place);
+    if (eventsToShow.length === 0) return;
+
+    setGeoLoading(true);
+    setGeoProgress({ done: 0, total: eventsToShow.length });
+
+    let done = 0;
+    const delay = (ms) => new Promise(r => setTimeout(r, ms));
+
+    (async () => {
+      for (const ev of eventsToShow) {
+        const coords = await geocode(ev.place);
+        if (coords) {
+          const cfg = getCatConfig(ev.cat);
+          const color = cfg.color || '#C8860A';
+          const markerHtml = `<div style="width:32px;height:32px;border-radius:50% 50% 50% 0;background:${color};border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg);font-size:13px;">${ev.emoji||'📍'}</span></div>`;
+          const icon = L.divIcon({ html: markerHtml, className: '', iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -36] });
+          const marker = L.marker([coords.lat, coords.lng], { icon });
+          const priceColor = ev.price === "Gratis" ? "var(--green)" : "var(--gold)";
+          marker.bindPopup(`
+            <div class="map-popup">
+              <div class="map-popup-title">${ev.title}</div>
+              <div class="map-popup-meta">📅 ${ev.date}${ev.time ? ' · ⏰ ' + ev.time : ''}</div>
+              <div class="map-popup-meta">📍 ${ev.place}</div>
+              <div class="map-popup-price" style="color:${priceColor}">${ev.price}</div>
+              <button class="map-popup-btn" onclick="window.__mvOpenEvent(${ev.id})">Ver detalle →</button>
+            </div>
+          `, { maxWidth: 240 });
+          marker.addTo(map);
+          markersRef.current.push(marker);
+        }
+        done++;
+        setGeoProgress({ done, total: eventsToShow.length });
+        if (done < eventsToShow.length) await delay(1100); // Nominatim: max 1 req/seg
+      }
+      setGeoLoading(false);
+    })();
+  }, [activeTab, filtered]);
+
+  // Exponer función global para el popup
+  useEffect(() => {
+    window.__mvOpenEvent = (id) => {
+      const ev = events.find(e => e.id === id);
+      if (ev) setSelectedEvent(ev);
+    };
+    return () => { delete window.__mvOpenEvent; };
+  }, [events]);
+
+  // Cleanup mapa al desmontar
+  useEffect(() => {
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, []);
 
   const getUserInitial = () => (user?.user_metadata?.full_name || user?.email || "U")[0].toUpperCase();
   const getUserName = () => user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Usuario";
@@ -966,7 +1111,47 @@ export default function App() {
           </div>
         )}
 
-        <footer style={{background:'var(--surface2)', borderTop:'1px solid var(--border)', padding:'20px 24px', textAlign:'center'}}>
+        {/* PESTAÑA MAPA */}
+        {activeTab === "map" && (
+          <div style={{flex:1, display:'flex', flexDirection:'column', minHeight:0, height:'calc(100vh - 120px)'}}>
+            {/* Header del mapa */}
+            <div style={{background:'white', borderBottom:'1px solid var(--border)', padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0}}>
+              <div>
+                <div style={{fontFamily:'var(--font-display)', fontSize:22, color:'var(--text)'}}>Mapa de <span style={{color:'var(--gold)'}}>Eventos</span></div>
+                <div style={{fontSize:12, color:'var(--muted)', marginTop:1}}>{filtered.length} eventos · {activeFilter !== "Todos" ? activeFilter : "todas las categorías"}{activeZona !== "Todas" ? ` · ${activeZona}` : ""}</div>
+              </div>
+              {geoLoading && (
+                <div style={{display:'flex', alignItems:'center', gap:6, background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:100, padding:'6px 12px'}}>
+                  <div style={{width:8,height:8,borderRadius:'50%',background:'var(--gold)',animation:'pulse 1s infinite'}} />
+                  <span style={{fontSize:11, fontWeight:600, color:'var(--muted)'}}>Cargando {geoProgress.done}/{geoProgress.total}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Filtros rápidos sobre el mapa */}
+            <div style={{background:'white', padding:'8px 16px', display:'flex', gap:6, overflowX:'auto', flexShrink:0, borderBottom:'1px solid var(--border)'}}>
+              {CATS.map(c => (
+                <button key={c} className={`filter-chip ${activeFilter===c?"active":""}`} style={{fontSize:12,padding:'5px 12px'}} onClick={() => setActiveFilter(c)}>{c}</button>
+              ))}
+            </div>
+
+            {/* Mapa Leaflet */}
+            <div className="map-container" style={{flex:1, position:'relative'}}>
+              <div ref={mapRef} className="map-wrap" style={{height:'100%', width:'100%'}} />
+              {!geoLoading && markersRef.current.length === 0 && filtered.length > 0 && (
+                <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', zIndex:999, pointerEvents:'none'}}>
+                  <div style={{background:'white', border:'1px solid var(--border)', borderRadius:16, padding:'20px 28px', textAlign:'center', boxShadow:'0 4px 20px rgba(0,0,0,0.1)'}}>
+                    <div style={{fontSize:32, marginBottom:8}}>🗺️</div>
+                    <div style={{fontWeight:700, marginBottom:4}}>Geocodificando ubicaciones</div>
+                    <div style={{fontSize:13, color:'var(--muted)'}}>Los pins aparecerán en unos segundos…</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <footer style={{background:'var(--surface2)', borderTop:'1px solid var(--border)', padding:'20px 24px', textAlign:'center', display: activeTab === 'map' ? 'none' : 'block'}}>
           <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:16, flexWrap:'wrap'}}>
             <span style={{fontFamily:'var(--font-display)', fontSize:18, color:'var(--gold)'}}>MEDELLÍN VIBRA</span>
             <a href="https://www.instagram.com/medellinvibra.co/" target="_blank" rel="noopener noreferrer" style={{display:'inline-flex', alignItems:'center', gap:6, color:'#C0392B', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
@@ -977,7 +1162,7 @@ export default function App() {
         </footer>
 
         <nav className="bottom-nav">
-          {[[" 🏠",t.tabHome,"home"],["🔍",t.tabExplore,"explore"],[saved.length > 0 ? "❤️" : "🤍",t.tabSaved,"saved"],["👤",t.tabProfile,"profile"]].map(([icon,label,tab])=>(
+          {[[" 🏠",t.tabHome,"home"],["🔍",t.tabExplore,"explore"],["🗺️","Mapa","map"],[saved.length > 0 ? "❤️" : "🤍",t.tabSaved,"saved"],["👤",t.tabProfile,"profile"]].map(([icon,label,tab])=>(
             <button key={tab} className={`bottom-nav-item ${activeTab===tab?"active":""}`} onClick={()=>setActiveTab(tab)}>
               <span>{icon}</span><span>{label}</span>
             </button>
@@ -1051,8 +1236,19 @@ export default function App() {
                   <div className="detail-info-item"><div className="detail-info-label">{t.price}</div><div className="detail-info-value" style={{color: selectedEvent.price==="Gratis"?'var(--green)':'var(--gold)'}}>{selectedEvent.price}</div></div>
                 </div>
                 <p className="detail-desc">{selectedEvent.desc}</p>
-                <div className="detail-map" style={{cursor:'pointer'}} onClick={()=>window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedEvent.place)}`, '_blank')}>
-                  📍 {t.viewMap} · {selectedEvent.place}
+                <div style={{marginBottom:16}}>
+                  <iframe
+                    title="Ubicación del evento"
+                    width="100%"
+                    height="160"
+                    style={{border:'none', borderRadius:14, display:'block'}}
+                    loading="lazy"
+                    src={`https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent('-75.65,-75.50,6.18,6.35')}&layer=mapnik&marker=${encodeURIComponent(`6.2442,-75.5812`)}`}
+                  />
+                  <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedEvent.place)}`} target="_blank" rel="noopener noreferrer"
+                    style={{display:'flex', alignItems:'center', gap:6, marginTop:8, color:'var(--gold)', fontSize:13, fontWeight:600, textDecoration:'none'}}>
+                    📍 Abrir en Google Maps · {selectedEvent.place} ↗
+                  </a>
                 </div>
                 {selectedEvent.ticketPlatform && (
                   <div style={{marginBottom:12,display:'flex',alignItems:'center',gap:8,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 14px',cursor: selectedEvent.link ? 'pointer' : 'default'}}
