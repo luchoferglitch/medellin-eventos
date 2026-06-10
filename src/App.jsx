@@ -781,11 +781,19 @@ export default function App() {
       markersRef.current.push(marker);
     };
 
+    // Ajustar el encuadre del mapa para que se vean todos los pines
+    const fitToMarkers = () => {
+      if (markersRef.current.length === 0) return;
+      const bounds = L.featureGroup(markersRef.current).getBounds();
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+    };
+
     // FASE 1: Pintar instantáneamente los que ya tienen coords en Supabase
     const withCoords = eventsToShow.filter(e => e.lat && e.lng);
     const withoutCoords = eventsToShow.filter(e => !e.lat || !e.lng);
 
     withCoords.forEach(ev => addMarker(ev, { lat: ev.lat, lng: ev.lng }));
+    fitToMarkers();
 
     // FASE 2: Geocodificar los que no tienen coords (en segundo plano)
     if (withoutCoords.length === 0) {
@@ -807,6 +815,7 @@ export default function App() {
         setGeoProgress({ done, total: eventsToShow.length });
         if (done < eventsToShow.length) await delay(1100);
       }
+      fitToMarkers();
       setGeoLoading(false);
     })();
   }, [activeTab, filtered]);
