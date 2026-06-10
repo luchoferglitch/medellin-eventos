@@ -292,6 +292,77 @@ const ADMINS = ["luchofer2001@gmail.com"];
 
 const CATS = ["Todos","Música","Arte","Comedia","Tech","Gastronomía","Baile","Deportes","Teatro","Bienestar","Académicos"];
 
+// ── Geocodificación: límites de la región y venues verificados ──
+// Rectángulo que cubre el Valle de Aburrá y el Oriente Cercano
+const GEO_BOUNDS = { latMin: 5.90, latMax: 6.50, lngMin: -75.80, lngMax: -75.10 };
+const inRegion = (lat, lng) =>
+  lat >= GEO_BOUNDS.latMin && lat <= GEO_BOUNDS.latMax &&
+  lng >= GEO_BOUNDS.lngMin && lng <= GEO_BOUNDS.lngMax;
+
+// Normaliza texto: minúsculas y sin tildes, para comparar nombres de lugares
+const normPlace = (s) => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+// Coordenadas verificadas (Google Places, jun 2026). Se comparan por palabra
+// completa contra el campo `place`, en orden: los más específicos primero.
+const VENUES_CONOCIDOS = [
+  // Venues de Medellín
+  { match: "teatro metropolitano", lat: 6.2430, lng: -75.5775 },
+  { match: "plaza mayor", lat: 6.2410, lng: -75.5759 },
+  { match: "pablo tobon", lat: 6.2476, lng: -75.5594 },
+  { match: "mamm", lat: 6.2238, lng: -75.5738 },
+  { match: "museo de arte moderno", lat: 6.2238, lng: -75.5738 },
+  { match: "el tesoro", lat: 6.1973, lng: -75.5582 },
+  { match: "claustro comfama", lat: 6.2459, lng: -75.5640 },
+  { match: "teatro comfama", lat: 6.2459, lng: -75.5640 },
+  { match: "patio teatro", lat: 6.2459, lng: -75.5640 },
+  { match: "teatro ateneo", lat: 6.2445, lng: -75.5634 },
+  { match: "teatro panamericana", lat: 6.1980, lng: -75.5737 },
+  { match: "teatro lido", lat: 6.2524, lng: -75.5645 },
+  { match: "coliseo de combate", lat: 6.2550, lng: -75.5887 },
+  { match: "alfonso galvis", lat: 6.2577, lng: -75.5876 },
+  { match: "atanasio girardot", lat: 6.2568, lng: -75.5902 },
+  { match: "jardin botanico", lat: 6.2694, lng: -75.5648 },
+  { match: "parque explora", lat: 6.2706, lng: -75.5650 },
+  { match: "biblioteca espana", lat: 6.2947, lng: -75.5441 },
+  { match: "jose luis arroyave", lat: 6.2545, lng: -75.6134 },
+  { match: "chamorro city hall", lat: 6.2047, lng: -75.5971 },
+  { match: "city hall el rodeo", lat: 6.2047, lng: -75.5971 },
+  { match: "eafit", lat: 6.1996, lng: -75.5792 },
+  { match: "universidad ces", lat: 6.2080, lng: -75.5524 },
+  { match: "upb", lat: 6.2421, lng: -75.5895 },
+  { match: "pontificia bolivariana", lat: 6.2421, lng: -75.5895 },
+  { match: "universidad de medellin", lat: 6.2312, lng: -75.6109 },
+  { match: "coltejer", lat: 6.2501, lng: -75.5661 },
+  { match: "trilogia bar", lat: 6.2256, lng: -75.5724 },
+  // Venues del Área Metropolitana y Oriente Cercano
+  { match: "polideportivo sur", lat: 6.1630, lng: -75.6003 },
+  { match: "polideportivo de envigado", lat: 6.1630, lng: -75.6003 },
+  { match: "media luna", lat: 6.0729, lng: -75.4971 },
+  { match: "llanogrande", lat: 6.1153, lng: -75.4170 },
+  // Municipios (parques principales) — van al final, como respaldo
+  { match: "el retiro", lat: 6.0573, lng: -75.5027 },
+  { match: "carmen de viboral", lat: 6.0832, lng: -75.3354 },
+  { match: "marinilla", lat: 6.1737, lng: -75.3346 },
+  { match: "rionegro", lat: 6.1536, lng: -75.3736 },
+  { match: "guarne", lat: 6.2772, lng: -75.4428 },
+  { match: "la ceja", lat: 6.0303, lng: -75.4314 },
+  { match: "sabaneta", lat: 6.1515, lng: -75.6154 },
+  { match: "envigado", lat: 6.1700, lng: -75.5874 },
+  { match: "itagui", lat: 6.1723, lng: -75.6094 },
+  { match: "la estrella", lat: 6.1578, lng: -75.6431 },
+  { match: "caldas", lat: 6.0911, lng: -75.6353 },
+  { match: "bello", lat: 6.3367, lng: -75.5558 },
+  { match: "copacabana", lat: 6.3467, lng: -75.5092 },
+  { match: "girardota", lat: 6.3786, lng: -75.4453 },
+  { match: "barbosa", lat: 6.4389, lng: -75.3314 },
+];
+
+// Busca el lugar en el diccionario de venues verificados (coincidencia de palabra completa)
+const matchVenueConocido = (place) => {
+  const placeNorm = normPlace(place);
+  return VENUES_CONOCIDOS.find(v => new RegExp(`\\b${v.match}\\b`).test(placeNorm)) || null;
+};
+
 export default function App() {
   const [activeFilter, setActiveFilter] = useState("Todos");
   const [activeDateFilter, setActiveDateFilter] = useState("Todos");
@@ -589,21 +660,41 @@ export default function App() {
     if (ev.lat && ev.lng) return { lat: ev.lat, lng: ev.lng };
     // 2. Si ya están en caché en memoria, usarlas
     if (geoCache[ev.place]) return geoCache[ev.place];
-    // 3. Llamar a Nominatim
+
+    // Guarda coordenadas en Supabase, en el estado local y en la caché en memoria
+    const saveCoords = async (coords) => {
+      await supabase.from("events").update({ lat: coords.lat, lng: coords.lng }).eq("id", ev.id);
+      setEvents(evs => evs.map(e => e.id === ev.id ? { ...e, lat: coords.lat, lng: coords.lng } : e));
+      setGeoCache(c => ({ ...c, [ev.place]: coords }));
+    };
+
+    // 3. Diccionario de venues verificados — sin llamadas externas, precisión garantizada
+    const known = matchVenueConocido(ev.place);
+    if (known) {
+      const coords = { lat: known.lat, lng: known.lng };
+      await saveCoords(coords);
+      return coords;
+    }
+
+    // 4. Nominatim, restringido a la región con viewbox + bounded
     try {
-      const query = encodeURIComponent(`${ev.place}, Medellín, Colombia`);
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=co`, {
+      // Si el lugar ya menciona Medellín o Antioquia, no duplicar el contexto
+      const placeNorm = normPlace(ev.place);
+      const sufijo = (placeNorm.includes("medellin") || placeNorm.includes("antioquia"))
+        ? ", Colombia"
+        : ", Medellín, Colombia";
+      const query = encodeURIComponent(`${ev.place}${sufijo}`);
+      // viewbox en formato lng1,lat1,lng2,lat2 (esquinas del rectángulo regional)
+      const viewbox = `${GEO_BOUNDS.lngMin},${GEO_BOUNDS.latMax},${GEO_BOUNDS.lngMax},${GEO_BOUNDS.latMin}`;
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=co&viewbox=${viewbox}&bounded=1`, {
         headers: { 'Accept-Language': 'es', 'User-Agent': 'MedellinVibra/1.0' }
       });
       const data = await res.json();
       if (data && data[0]) {
         const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-        // 4. Guardar en Supabase para que la próxima vez sea instantáneo
-        await supabase.from("events").update({ lat: coords.lat, lng: coords.lng }).eq("id", ev.id);
-        // 5. Actualizar evento en memoria local
-        setEvents(evs => evs.map(e => e.id === ev.id ? { ...e, lat: coords.lat, lng: coords.lng } : e));
-        // 6. Guardar en caché en memoria
-        setGeoCache(c => ({ ...c, [ev.place]: coords }));
+        // 5. Validación final: nunca guardar coordenadas fuera de la región
+        if (!inRegion(coords.lat, coords.lng)) return null;
+        await saveCoords(coords);
         return coords;
       }
     } catch(e) { console.log("Geocode error:", e); }
