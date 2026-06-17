@@ -943,35 +943,6 @@ export default function App() {
               );
             })()}
 
-            {/* LUGARES DESTACADOS */}
-            <div style={{background:'var(--surface2)', padding:'32px 24px', borderBottom:'1px solid var(--border)'}}>
-              <div style={{maxWidth:1200, margin:'0 auto'}}>
-                <div className="section-header" style={{marginBottom:16}}>
-                  <div className="section-title">{t.venuesTitle} <span>{t.venuesTitleSpan}</span></div>
-                </div>
-                <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(160px, 1fr))', gap:12}}>
-                  {[
-                    {name:"Teatro Pablo Tobón Uribe", emoji:"🎭", maps:"https://maps.google.com/?q=Teatro+Pablo+Tobon+Uribe+Medellin"},
-                    {name:"La Macarena", emoji:"🎵", maps:"https://maps.google.com/?q=La+Macarena+Medellin"},
-                    {name:"Parque Norte", emoji:"🎡", maps:"https://maps.google.com/?q=Parque+Norte+Medellin"},
-                    {name:"Plaza Mayor", emoji:"🏛️", maps:"https://maps.google.com/?q=Plaza+Mayor+Medellin"},
-                    {name:"Teatro Metropolitano", emoji:"🎼", maps:"https://maps.google.com/?q=Teatro+Metropolitano+Medellin"},
-                    {name:"Estadio Atanasio Girardot", emoji:"⚽", maps:"https://maps.google.com/?q=Estadio+Atanasio+Girardot+Medellin"},
-                    {name:"Parque Explora", emoji:"🔭", maps:"https://maps.google.com/?q=Parque+Explora+Medellin"},
-                    {name:"El Tesoro Parque Comercial", emoji:"🛍️", maps:"https://maps.google.com/?q=El+Tesoro+Parque+Comercial+Medellin"},
-                  ].map(lugar => (
-                    <a key={lugar.name} href={lugar.maps} target="_blank" rel="noopener noreferrer" style={{display:'flex', flexDirection:'column', alignItems:'center', gap:8, background:'white', borderRadius:14, padding:'16px 12px', textDecoration:'none', border:'1px solid var(--border)', transition:'all 0.2s', textAlign:'center'}}
-                      onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--gold)';e.currentTarget.style.transform='translateY(-2px)';}}
-                      onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.transform='translateY(0)';}}
-                    >
-                      <span style={{fontSize:28}}>{lugar.emoji}</span>
-                      <span style={{fontSize:12, fontWeight:600, color:'var(--text)', lineHeight:1.3}}>{lugar.name}</span>
-                      <span style={{fontSize:11, color:'var(--gold)'}}>Ver en mapa ↗</span>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </div>
             <div className="filters-bar" style={{borderBottom:'none',paddingBottom:4,paddingTop:12}}>
               {[["Todas","🌎 Todas las zonas"],["Medellín","🏙️ Medellín"],["Área Metropolitana","🌆 Área Metropolitana"],["Oriente Cercano","🌿 Oriente Cercano"]].map(([val,label]) => (
                 <button key={val} className={`filter-chip ${activeZona===val?"active":""}`} onClick={() => setActiveZona(val)}>{label}</button>
@@ -1170,6 +1141,36 @@ export default function App() {
                 </div>
               )}
             </div>
+
+            {/* LUGARES DESTACADOS */}
+            <div style={{background:'var(--surface2)', padding:'32px 24px', borderTop:'1px solid var(--border)', borderBottom:'1px solid var(--border)'}}>
+              <div style={{maxWidth:1200, margin:'0 auto'}}>
+                <div className="section-header" style={{marginBottom:16}}>
+                  <div className="section-title">{t.venuesTitle} <span>{t.venuesTitleSpan}</span></div>
+                </div>
+                <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(160px, 1fr))', gap:12}}>
+                  {[
+                    {name:"Teatro Pablo Tobón Uribe", emoji:"🎭", maps:"https://maps.google.com/?q=Teatro+Pablo+Tobon+Uribe+Medellin"},
+                    {name:"La Macarena", emoji:"🎵", maps:"https://maps.google.com/?q=La+Macarena+Medellin"},
+                    {name:"Parque Norte", emoji:"🎡", maps:"https://maps.google.com/?q=Parque+Norte+Medellin"},
+                    {name:"Plaza Mayor", emoji:"🏛️", maps:"https://maps.google.com/?q=Plaza+Mayor+Medellin"},
+                    {name:"Teatro Metropolitano", emoji:"🎼", maps:"https://maps.google.com/?q=Teatro+Metropolitano+Medellin"},
+                    {name:"Estadio Atanasio Girardot", emoji:"⚽", maps:"https://maps.google.com/?q=Estadio+Atanasio+Girardot+Medellin"},
+                    {name:"Parque Explora", emoji:"🔭", maps:"https://maps.google.com/?q=Parque+Explora+Medellin"},
+                    {name:"El Tesoro Parque Comercial", emoji:"🛍️", maps:"https://maps.google.com/?q=El+Tesoro+Parque+Comercial+Medellin"},
+                  ].map(lugar => (
+                    <a key={lugar.name} href={lugar.maps} target="_blank" rel="noopener noreferrer" style={{display:'flex', flexDirection:'column', alignItems:'center', gap:8, background:'white', borderRadius:14, padding:'16px 12px', textDecoration:'none', border:'1px solid var(--border)', transition:'all 0.2s', textAlign:'center'}}
+                      onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--gold)';e.currentTarget.style.transform='translateY(-2px)';}}
+                      onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.transform='translateY(0)';}}
+                    >
+                      <span style={{fontSize:28}}>{lugar.emoji}</span>
+                      <span style={{fontSize:12, fontWeight:600, color:'var(--text)', lineHeight:1.3}}>{lugar.name}</span>
+                      <span style={{fontSize:11, color:'var(--gold)'}}>Ver en mapa ↗</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
           </>
         )}
 
@@ -1288,6 +1289,9 @@ export default function App() {
             <span style={{fontFamily:'var(--font-display)', fontSize:18, color:'var(--gold)'}}>MEDELLÍN VIBRA</span>
             <a href="https://www.instagram.com/medellinvibra.co/" target="_blank" rel="noopener noreferrer" style={{display:'inline-flex', alignItems:'center', gap:6, color:'#C0392B', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
               📸 @medellinvibra.co
+            </a>
+            <a href="mailto:hola@medellinvibra.co" style={{display:'inline-flex', alignItems:'center', gap:6, color:'var(--gold)', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
+              ✉️ hola@medellinvibra.co
             </a>
             <span style={{fontSize:12, color:'var(--muted)'}}>{t.copyright}</span>
           </div>
