@@ -1426,9 +1426,6 @@ export default function App() {
                   <button className="btn-buy" onClick={() => { if(selectedEvent.link) window.open(selectedEvent.link,'_blank'); else handleReserve(); }}>
                     {selectedEvent.price === "Gratis" ? t.registerFree : selectedEvent.price.startsWith("En") ? t.buyTickets : `${t.buy} · ${selectedEvent.price} →`}
                   </button>
-                  <button className="btn-reserve" style={{flexShrink:0}} onClick={() => { setSelectedEvent(null); navigate(`/evento/${slugify(selectedEvent.title)}-${selectedEvent.id}`); }}>
-                    🔗 Compartir
-                  </button>
                   <button className="btn-share" title="Compartir por WhatsApp" style={{color:'#25D366',borderColor:'rgba(37,211,102,0.3)'}} onClick={()=>{
                     const texto = `🎉 *${selectedEvent.title}*\n📅 ${selectedEvent.date} · ${selectedEvent.time}\n📍 ${selectedEvent.place}\n💰 ${selectedEvent.price}\n\n👉 Más info en medellinvibra.co`;
                     window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
@@ -1438,6 +1435,12 @@ export default function App() {
                     <button className="btn-share" style={{color:'var(--red)',borderColor:'rgba(232,53,58,0.3)'}} onClick={e=>{handleDeleteEvent(selectedEvent.id,e);setSelectedEvent(null);}}>🗑️</button>
                   )}
                 </div>
+                <button
+                  onClick={() => { setSelectedEvent(null); navigate(`/evento/${slugify(selectedEvent.title)}-${selectedEvent.id}`); }}
+                  style={{width:'100%', marginTop:10, padding:'13px', borderRadius:12, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontFamily:'var(--font-body)', fontSize:14, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6}}
+                >
+                  🔗 Ver página del evento · Compartir link
+                </button>
                 <button onClick={()=>setSelectedEvent(null)} style={{width:'100%',marginTop:16,padding:'16px',borderRadius:12,border:'1px solid var(--border)',background:'var(--surface2)',color:'var(--muted)',fontFamily:'var(--font-body)',fontSize:15,fontWeight:600,cursor:'pointer'}}>
                   {t.close}
                 </button>
