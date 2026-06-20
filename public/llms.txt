@@ -1,0 +1,27 @@
+# Medellín Vibra
+
+> Agenda cultural de eventos para Medellín, el Área Metropolitana y el Oriente Cercano de Antioquia, Colombia.
+
+Medellín Vibra (medellinvibra.co) es una plataforma de descubrimiento de eventos culturales, deportivos, gastronómicos y de entretenimiento en la región antioqueña. Los usuarios pueden explorar eventos por categoría, zona y fecha, guardar favoritos y publicar sus propios eventos.
+
+## Secciones principales
+
+- **Inicio:** Agenda completa de eventos próximos con filtros por categoría, zona y fecha.
+- **Esta Semana:** Eventos que ocurren en los próximos 7 días.
+- **Categorías:** Música, Teatro, Comedia, Baile, Arte, Gastronomía, Deportes, Tech, Bienestar, Académicos.
+- **Zonas:** Medellín, Área Metropolitana (Envigado, Sabaneta, Bello, Itagüí, Caldas, Copacabana, Girardota, Barbosa, La Estrella), Oriente Cercano (Rionegro, El Retiro, El Carmen de Viboral, Guarne, Marinilla, Santuario).
+- **Favoritos:** Eventos guardados por el usuario (requiere registro).
+- **Publicar evento:** Formulario para que organizadores registren sus eventos (sujetos a moderación).
+
+## Tecnología
+
+- Frontend: React + Vite
+- Backend: Supabase (PostgreSQL)
+- Hosting: Vercel
+- Idiomas: Español, Inglés, Portugués, Francés
+
+## Contacto
+
+- Email: hola@medellinvibra.co
+- Instagram: @medellinvibra.co
+- Web: https://medellinvibra.co
