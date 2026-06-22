@@ -295,6 +295,18 @@ const style = `
   .admin-tag-picker { position: absolute; bottom: calc(100% + 8px); right: 0; background: white; border: 1px solid var(--border); border-radius: 14px; padding: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); z-index: 50; min-width: 180px; }
   .admin-tag-option { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; transition: background 0.15s; }
   .admin-tag-option:hover { background: var(--surface2); }
+  .admin-panel { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .admin-section-title { font-family: var(--font-display); font-size: 22px; color: var(--text); padding: 8px 0 4px; }
+  .admin-event-row { background: white; border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; }
+  .admin-event-row-img { width: 56px; height: 56px; border-radius: 10px; background: var(--surface2); background-size: cover; background-position: center; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+  .admin-event-row-info { flex: 1; min-width: 0; }
+  .admin-event-row-title { font-weight: 700; font-size: 14px; color: var(--text); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .admin-event-row-meta { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .admin-event-row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .admin-btn-approve { background: #059669; color: white; border: none; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: var(--font-body); }
+  .admin-btn-reject { background: var(--red); color: white; border: none; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: var(--font-body); }
+  .admin-btn-delete { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: var(--font-body); }
+  .admin-badge { background: var(--red); color: white; border-radius: 100px; font-size: 10px; font-weight: 700; padding: 1px 6px; margin-left: 4px; }
 `;
 
 const ADMINS = ["luchofer2001@gmail.com"];
@@ -378,6 +390,8 @@ export default function App() {
   const [activeZona, setActiveZona] = useState("Todas");
   const [activeTagFilter, setActiveTagFilter] = useState(null);
   const [adminTagPicker, setAdminTagPicker] = useState(null);
+  const [pendingEvents, setPendingEvents] = useState([]);
+  const [adminSection, setAdminSection] = useState("pending"); // "pending" | "approved"
   const [geoCache, setGeoCache] = useState({});
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoProgress, setGeoProgress] = useState({ done: 0, total: 0 });
@@ -664,6 +678,27 @@ export default function App() {
     showToast(newTag ? `✓ Tag "${newTag}" asignado` : "✓ Tag eliminado");
   };
 
+  const fetchPendingEvents = async () => {
+    const { data } = await supabase.from("events").select("*").eq("estado", "pendiente").order("created_at", { ascending: false });
+    setPendingEvents(data || []);
+  };
+
+  const handleApprove = async (id) => {
+    const { error } = await supabase.from("events").update({ estado: "aprobado" }).eq("id", id);
+    if (error) { showToast("⚠️ Error al aprobar"); return; }
+    setPendingEvents(evs => evs.filter(e => e.id !== id));
+    fetchEvents();
+    showToast("✅ Evento aprobado");
+  };
+
+  const handleReject = async (id) => {
+    if (!window.confirm("¿Rechazar y eliminar este evento?")) return;
+    const { error } = await supabase.from("events").delete().eq("id", id);
+    if (error) { showToast("⚠️ Error al rechazar"); return; }
+    setPendingEvents(evs => evs.filter(e => e.id !== id));
+    showToast("✗ Evento rechazado");
+  };
+
   // Geocodificación con Supabase como caché persistente
   const geocode = useCallback(async (ev) => {
     // 1. Si el evento ya tiene coordenadas en Supabase, usarlas directamente
@@ -829,6 +864,10 @@ export default function App() {
       setGeoLoading(false);
     })();
   }, [activeTab, filtered]);
+
+  useEffect(() => {
+    if (activeTab === "admin" && isAdmin) fetchPendingEvents();
+  }, [activeTab]);
 
   // Exponer función global para el popup
   useEffect(() => {
@@ -1296,7 +1335,108 @@ export default function App() {
           </div>
         )}
 
-        <footer style={{background:'var(--surface2)', borderTop:'1px solid var(--border)', padding:'20px 24px', textAlign:'center', display: activeTab === 'map' ? 'none' : 'block'}}>
+        {/* PANEL ADMIN */}
+        {activeTab === "admin" && isAdmin && (
+          <div className="admin-panel">
+            {/* Header */}
+            <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', paddingBottom:4}}>
+              <div style={{fontFamily:'var(--font-display)', fontSize:28, color:'var(--text)'}}>
+                Panel <span style={{color:'var(--gold)'}}>Admin</span>
+              </div>
+              <button onClick={()=>{fetchPendingEvents();fetchEvents();}} style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,padding:'6px 12px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-body)'}}>
+                🔄 Actualizar
+              </button>
+            </div>
+
+            {/* Tabs internos */}
+            <div style={{display:'flex', gap:8, background:'var(--surface2)', borderRadius:12, padding:4}}>
+              {[["pending","⏳ Pendientes", pendingEvents.length],["approved","✅ Aprobados", events.length]].map(([key,label,count])=>(
+                <button key={key} onClick={()=>setAdminSection(key)}
+                  style={{flex:1, padding:'8px', borderRadius:9, border:'none', fontFamily:'var(--font-body)', fontWeight:700, fontSize:13, cursor:'pointer',
+                    background: adminSection===key ? 'white' : 'transparent',
+                    color: adminSection===key ? 'var(--text)' : 'var(--muted)',
+                    boxShadow: adminSection===key ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+                  }}>
+                  {label} <span style={{background: key==='pending' && count>0 ? 'var(--red)' : 'var(--surface2)', color: key==='pending' && count>0 ? 'white' : 'var(--muted)', borderRadius:100, padding:'1px 7px', fontSize:11}}>{count}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Sección Pendientes */}
+            {adminSection === "pending" && (
+              pendingEvents.length === 0
+                ? <div style={{textAlign:'center', padding:'48px 0', color:'var(--muted)'}}>
+                    <div style={{fontSize:48, marginBottom:12}}>🎉</div>
+                    <div style={{fontWeight:700, marginBottom:4}}>Sin eventos pendientes</div>
+                    <div style={{fontSize:13}}>Todo está al día</div>
+                  </div>
+                : pendingEvents.map(ev => (
+                  <div key={ev.id} className="admin-event-row">
+                    <div className="admin-event-row-img" style={{backgroundImage: ev.image_url ? `url(${ev.image_url})` : 'none'}}>
+                      {!ev.image_url && (ev.emoji || "📅")}
+                    </div>
+                    <div className="admin-event-row-info">
+                      <div className="admin-event-row-title">{ev.title}</div>
+                      <div className="admin-event-row-meta">
+                        📅 {ev.date} · 📍 {ev.place}<br/>
+                        💰 {ev.price} · 🏷️ {ev.category}<br/>
+                        {ev.organizer_name && `👤 ${ev.organizer_name}`}
+                        {ev.organizer_contact && ` · ${ev.organizer_contact}`}
+                      </div>
+                      {ev.description && <div style={{fontSize:12, color:'var(--muted)', marginBottom:8, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden'}}>{ev.description}</div>}
+                      <div className="admin-event-row-actions">
+                        <button className="admin-btn-approve" onClick={()=>handleApprove(ev.id)}>✅ Aprobar</button>
+                        <button className="admin-btn-reject" onClick={()=>handleReject(ev.id)}>✗ Rechazar</button>
+                        {ev.ticket_link && <a href={ev.ticket_link} target="_blank" rel="noopener noreferrer" style={{fontSize:12,color:'var(--gold)',fontWeight:600,textDecoration:'none',padding:'6px 0'}}>🔗 Ver link</a>}
+                      </div>
+                    </div>
+                  </div>
+                ))
+            )}
+
+            {/* Sección Aprobados */}
+            {adminSection === "approved" && (
+              events.map(ev => (
+                <div key={ev.id} className="admin-event-row">
+                  <div className="admin-event-row-img" style={{backgroundImage: ev.imageUrl ? `url(${ev.imageUrl})` : 'none'}}>
+                    {!ev.imageUrl && (ev.emoji || "📅")}
+                  </div>
+                  <div className="admin-event-row-info">
+                    <div className="admin-event-row-title">{ev.title}</div>
+                    <div className="admin-event-row-meta">📅 {ev.date} · 📍 {ev.place} · 💰 {ev.price}</div>
+                    <div className="admin-event-row-actions">
+                      {/* Tag picker */}
+                      <div style={{position:'relative'}}>
+                        <button className="admin-btn-delete" onClick={()=>setAdminTagPicker(adminTagPicker===ev.id?null:ev.id)}>
+                          🏷️ {ev.tag || "Sin tag"}
+                        </button>
+                        {adminTagPicker === ev.id && (
+                          <div className="admin-tag-picker" onClick={e=>e.stopPropagation()}>
+                            {ADMIN_TAGS.map(tag => {
+                              const cfg = TAGS_CONFIG[tag];
+                              return (
+                                <div key={tag} className="admin-tag-option" onClick={()=>handleAdminSetTag(ev.id, ev.tag===tag ? null : tag)}>
+                                  <span>{cfg.emoji}</span>
+                                  <span style={{color:cfg.color}}>{tag}</span>
+                                  {ev.tag === tag && <span style={{marginLeft:'auto',color:'var(--green)'}}>✓</span>}
+                                </div>
+                              );
+                            })}
+                            {ev.tag && <div className="admin-tag-option" style={{color:'var(--muted)'}} onClick={()=>handleAdminSetTag(ev.id,null)}>✕ Quitar tag</div>}
+                          </div>
+                        )}
+                      </div>
+                      <button className="admin-btn-delete" onClick={()=>setSelectedEvent(ev)}>👁️ Ver</button>
+                      <button className="admin-btn-reject" onClick={e=>handleDeleteEvent(ev.id,e)}>🗑️ Eliminar</button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        <footer style={{background:'var(--surface2)', borderTop:'1px solid var(--border)', padding:'20px 24px', textAlign:'center', display: activeTab === 'map' || activeTab === 'admin' ? 'none' : 'block'}}>
           <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:16, flexWrap:'wrap'}}>
             <span style={{fontFamily:'var(--font-display)', fontSize:18, color:'var(--gold)'}}>MEDELLÍN VIBRA</span>
             <a href="https://www.instagram.com/medellinvibra.co/" target="_blank" rel="noopener noreferrer" style={{display:'inline-flex', alignItems:'center', gap:6, color:'#C0392B', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
@@ -1315,6 +1455,12 @@ export default function App() {
               <span>{icon}</span><span>{label}</span>
             </button>
           ))}
+          {isAdmin && (
+            <button className={`bottom-nav-item ${activeTab==="admin"?"active":""}`} onClick={()=>setActiveTab("admin")}>
+              <span>⚙️{pendingEvents.length > 0 && <span className="admin-badge">{pendingEvents.length}</span>}</span>
+              <span>Admin</span>
+            </button>
+          )}
         </nav>
 
         {showAuth && (
