@@ -1209,6 +1209,8 @@ export default function App() {
                     {name:"Estadio Atanasio Girardot", emoji:"⚽", maps:"https://maps.google.com/?q=Estadio+Atanasio+Girardot+Medellin"},
                     {name:"Parque Explora", emoji:"🔭", maps:"https://maps.google.com/?q=Parque+Explora+Medellin"},
                     {name:"El Tesoro Parque Comercial", emoji:"🛍️", maps:"https://maps.google.com/?q=El+Tesoro+Parque+Comercial+Medellin"},
+                    {name:"City Hall El Rodeo", emoji:"🎤", maps:"https://maps.google.com/?q=City+Hall+El+Rodeo+Medellin"},
+                    {name:"MAMM — Museo de Arte Moderno", emoji:"🎨", maps:"https://maps.google.com/?q=MAMM+Museo+Arte+Moderno+Medellin"},
                   ].map(lugar => (
                     <a key={lugar.name} href={lugar.maps} target="_blank" rel="noopener noreferrer" style={{display:'flex', flexDirection:'column', alignItems:'center', gap:8, background:'white', borderRadius:14, padding:'16px 12px', textDecoration:'none', border:'1px solid var(--border)', transition:'all 0.2s', textAlign:'center'}}
                       onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--gold)';e.currentTarget.style.transform='translateY(-2px)';}}
