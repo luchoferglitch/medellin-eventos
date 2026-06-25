@@ -392,7 +392,7 @@ export default function App() {
   const [adminTagPicker, setAdminTagPicker] = useState(null);
   const [pendingEvents, setPendingEvents] = useState([]);
   const [adminSection, setAdminSection] = useState("pending"); // "pending" | "approved" | "stats"
-  const [stats, setStats] = useState(null);
+  const [adminStats, setAdminStats] = useState(null);
   const [geoCache, setGeoCache] = useState({});
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoProgress, setGeoProgress] = useState({ done: 0, total: 0 });
@@ -684,46 +684,22 @@ export default function App() {
     setPendingEvents(data || []);
   };
 
-  const fetchStats = async () => {
-    // Todos los eventos
+  const fetchAdminStats = async () => {
     const { data: allEvents } = await supabase.from("events").select("category, zona, estado, fecha_real, organizer_name");
-    // Suscriptores
     const { count: totalSubs } = await supabase.from("subscribers").select("*", { count: "exact", head: true }).eq("activo", true);
-
     if (!allEvents) return;
-
-    // Por estado
     const byEstado = { aprobado: 0, pendiente: 0, archivado: 0 };
     allEvents.forEach(e => { if (byEstado[e.estado] !== undefined) byEstado[e.estado]++; });
-
-    // Por categoría
     const byCat = {};
-    allEvents.filter(e => e.estado === "aprobado").forEach(e => {
-      byCat[e.category] = (byCat[e.category] || 0) + 1;
-    });
-
-    // Por zona
+    allEvents.filter(e => e.estado === "aprobado").forEach(e => { byCat[e.category] = (byCat[e.category] || 0) + 1; });
     const byZona = {};
-    allEvents.filter(e => e.estado === "aprobado").forEach(e => {
-      const z = e.zona || "Sin zona";
-      byZona[z] = (byZona[z] || 0) + 1;
-    });
-
-    // Por mes
+    allEvents.filter(e => e.estado === "aprobado").forEach(e => { const z = e.zona || "Sin zona"; byZona[z] = (byZona[z] || 0) + 1; });
     const byMes = {};
-    allEvents.filter(e => e.estado === "aprobado" && e.fecha_real).forEach(e => {
-      const mes = e.fecha_real.slice(0, 7); // "2026-07"
-      byMes[mes] = (byMes[mes] || 0) + 1;
-    });
-
-    // Organizadores más activos
+    allEvents.filter(e => e.estado === "aprobado" && e.fecha_real).forEach(e => { const mes = e.fecha_real.slice(0, 7); byMes[mes] = (byMes[mes] || 0) + 1; });
     const byOrg = {};
-    allEvents.filter(e => e.estado === "aprobado" && e.organizer_name).forEach(e => {
-      byOrg[e.organizer_name] = (byOrg[e.organizer_name] || 0) + 1;
-    });
+    allEvents.filter(e => e.estado === "aprobado" && e.organizer_name).forEach(e => { byOrg[e.organizer_name] = (byOrg[e.organizer_name] || 0) + 1; });
     const topOrgs = Object.entries(byOrg).sort((a, b) => b[1] - a[1]).slice(0, 8);
-
-    setStats({ byEstado, byCat, byZona, byMes, topOrgs, totalSubs: totalSubs || 0, total: allEvents.length });
+    setAdminStats({ byEstado, byCat, byZona, byMes, topOrgs, totalSubs: totalSubs || 0, total: allEvents.length });
   };
 
   const handleApprove = async (id) => {
@@ -909,7 +885,7 @@ export default function App() {
   }, [activeTab, filtered]);
 
   useEffect(() => {
-    if (activeTab === "admin" && isAdmin) { fetchPendingEvents(); fetchStats(); }
+    if (activeTab === "admin" && isAdmin) { fetchPendingEvents(); fetchAdminStats(); }
   }, [activeTab]);
 
   // Exponer función global para el popup
@@ -1396,7 +1372,7 @@ export default function App() {
             {/* Tabs internos */}
             <div style={{display:'flex', gap:8, background:'var(--surface2)', borderRadius:12, padding:4}}>
               {[["pending","⏳ Pendientes", pendingEvents.length],["approved","✅ Aprobados", events.length],["stats","📊 Stats", null]].map(([key,label,count])=>(
-                <button key={key} onClick={()=>{ setAdminSection(key); if(key==='stats') fetchStats(); }}
+                <button key={key} onClick={()=>{ setAdminSection(key); if(key==='stats') fetchAdminStats(); }}
                   style={{flex:1, padding:'8px', borderRadius:9, border:'none', fontFamily:'var(--font-body)', fontWeight:700, fontSize:13, cursor:'pointer',
                     background: adminSection===key ? 'white' : 'transparent',
                     color: adminSection===key ? 'var(--text)' : 'var(--muted)',
@@ -1481,7 +1457,7 @@ export default function App() {
 
             {/* Sección Stats */}
             {adminSection === "stats" && (
-              !stats
+              !adminStats
                 ? <div style={{textAlign:'center', padding:'48px 0', color:'var(--muted)'}}>
                     <div style={{fontSize:40, marginBottom:12}}>⏳</div>
                     <div style={{fontWeight:700}}>Cargando estadísticas…</div>
@@ -1491,10 +1467,10 @@ export default function App() {
                     {/* Números grandes */}
                     <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10}}>
                       {[
-                        ["✅ Aprobados", stats.byEstado.aprobado, "#059669"],
-                        ["⏳ Pendientes", stats.byEstado.pendiente, "#D97706"],
-                        ["📦 Archivados", stats.byEstado.archivado, "#6B7280"],
-                        ["📬 Suscriptores", stats.totalSubs, "#C8860A"],
+                        ["✅ Aprobados", adminStats.byEstado.aprobado, "#059669"],
+                        ["⏳ Pendientes", adminStats.byEstado.pendiente, "#D97706"],
+                        ["📦 Archivados", adminStats.byEstado.archivado, "#6B7280"],
+                        ["📬 Suscriptores", adminStats.totalSubs, "#C8860A"],
                       ].map(([label, value, color]) => (
                         <div key={label} style={{background:'white', border:'1px solid var(--border)', borderRadius:14, padding:'16px', textAlign:'center'}}>
                           <div style={{fontFamily:'var(--font-display)', fontSize:36, color}}>{value}</div>
@@ -1506,8 +1482,8 @@ export default function App() {
                     {/* Por categoría */}
                     <div style={{background:'white', border:'1px solid var(--border)', borderRadius:14, padding:'16px'}}>
                       <div style={{fontWeight:700, fontSize:13, marginBottom:12, color:'var(--text)'}}>📂 Eventos por categoría</div>
-                      {Object.entries(stats.byCat).sort((a,b)=>b[1]-a[1]).map(([cat, count]) => {
-                        const max = Math.max(...Object.values(stats.byCat));
+                      {Object.entries(adminStats.byCat).sort((a,b)=>b[1]-a[1]).map(([cat, count]) => {
+                        const max = Math.max(...Object.values(adminStats.byCat));
                         const pct = Math.round((count / max) * 100);
                         const color = CAT_CONFIG[cat]?.color || '#C8860A';
                         return (
@@ -1526,8 +1502,8 @@ export default function App() {
                     {/* Por zona */}
                     <div style={{background:'white', border:'1px solid var(--border)', borderRadius:14, padding:'16px'}}>
                       <div style={{fontWeight:700, fontSize:13, marginBottom:12, color:'var(--text)'}}>🗺️ Eventos por zona</div>
-                      {Object.entries(stats.byZona).sort((a,b)=>b[1]-a[1]).map(([zona, count]) => {
-                        const max = Math.max(...Object.values(stats.byZona));
+                      {Object.entries(adminStats.byZona).sort((a,b)=>b[1]-a[1]).map(([zona, count]) => {
+                        const max = Math.max(...Object.values(adminStats.byZona));
                         const pct = Math.round((count / max) * 100);
                         return (
                           <div key={zona} style={{marginBottom:8}}>
@@ -1545,8 +1521,8 @@ export default function App() {
                     {/* Por mes */}
                     <div style={{background:'white', border:'1px solid var(--border)', borderRadius:14, padding:'16px'}}>
                       <div style={{fontWeight:700, fontSize:13, marginBottom:12, color:'var(--text)'}}>📅 Eventos por mes</div>
-                      {Object.entries(stats.byMes).sort((a,b)=>a[0].localeCompare(b[0])).map(([mes, count]) => {
-                        const max = Math.max(...Object.values(stats.byMes));
+                      {Object.entries(adminStats.byMes).sort((a,b)=>a[0].localeCompare(b[0])).map(([mes, count]) => {
+                        const max = Math.max(...Object.values(adminStats.byMes));
                         const pct = Math.round((count / max) * 100);
                         const [year, month] = mes.split('-');
                         const label = new Date(parseInt(year), parseInt(month)-1).toLocaleDateString('es-CO', {month:'long', year:'numeric'});
@@ -1566,8 +1542,8 @@ export default function App() {
                     {/* Organizadores más activos */}
                     <div style={{background:'white', border:'1px solid var(--border)', borderRadius:14, padding:'16px'}}>
                       <div style={{fontWeight:700, fontSize:13, marginBottom:12, color:'var(--text)'}}>👤 Organizadores más activos</div>
-                      {stats.topOrgs.map(([org, count], i) => (
-                        <div key={org} style={{display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderBottom: i < stats.topOrgs.length-1 ? '1px solid var(--border)' : 'none'}}>
+                      {adminStats.topOrgs.map(([org, count], i) => (
+                        <div key={org} style={{display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderBottom: i < adminStats.topOrgs.length-1 ? '1px solid var(--border)' : 'none'}}>
                           <div style={{width:24, height:24, borderRadius:'50%', background:'var(--surface2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:700, color:'var(--muted)', flexShrink:0}}>{i+1}</div>
                           <div style={{flex:1, fontSize:13, fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{org}</div>
                           <div style={{background:'var(--gold)', color:'white', borderRadius:100, padding:'2px 10px', fontSize:11, fontWeight:700, flexShrink:0}}>{count}</div>
