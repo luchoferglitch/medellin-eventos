@@ -391,7 +391,8 @@ export default function App() {
   const [activeTagFilter, setActiveTagFilter] = useState(null);
   const [adminTagPicker, setAdminTagPicker] = useState(null);
   const [pendingEvents, setPendingEvents] = useState([]);
-  const [adminSection, setAdminSection] = useState("pending"); // "pending" | "approved"
+  const [adminSection, setAdminSection] = useState("pending"); // "pending" | "approved" | "stats"
+  const [stats, setStats] = useState(null);
   const [geoCache, setGeoCache] = useState({});
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoProgress, setGeoProgress] = useState({ done: 0, total: 0 });
@@ -683,6 +684,48 @@ export default function App() {
     setPendingEvents(data || []);
   };
 
+  const fetchStats = async () => {
+    // Todos los eventos
+    const { data: allEvents } = await supabase.from("events").select("category, zona, estado, fecha_real, organizer_name");
+    // Suscriptores
+    const { count: totalSubs } = await supabase.from("subscribers").select("*", { count: "exact", head: true }).eq("activo", true);
+
+    if (!allEvents) return;
+
+    // Por estado
+    const byEstado = { aprobado: 0, pendiente: 0, archivado: 0 };
+    allEvents.forEach(e => { if (byEstado[e.estado] !== undefined) byEstado[e.estado]++; });
+
+    // Por categoría
+    const byCat = {};
+    allEvents.filter(e => e.estado === "aprobado").forEach(e => {
+      byCat[e.category] = (byCat[e.category] || 0) + 1;
+    });
+
+    // Por zona
+    const byZona = {};
+    allEvents.filter(e => e.estado === "aprobado").forEach(e => {
+      const z = e.zona || "Sin zona";
+      byZona[z] = (byZona[z] || 0) + 1;
+    });
+
+    // Por mes
+    const byMes = {};
+    allEvents.filter(e => e.estado === "aprobado" && e.fecha_real).forEach(e => {
+      const mes = e.fecha_real.slice(0, 7); // "2026-07"
+      byMes[mes] = (byMes[mes] || 0) + 1;
+    });
+
+    // Organizadores más activos
+    const byOrg = {};
+    allEvents.filter(e => e.estado === "aprobado" && e.organizer_name).forEach(e => {
+      byOrg[e.organizer_name] = (byOrg[e.organizer_name] || 0) + 1;
+    });
+    const topOrgs = Object.entries(byOrg).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+    setStats({ byEstado, byCat, byZona, byMes, topOrgs, totalSubs: totalSubs || 0, total: allEvents.length });
+  };
+
   const handleApprove = async (id) => {
     const { error } = await supabase.from("events").update({ estado: "aprobado" }).eq("id", id);
     if (error) { showToast("⚠️ Error al aprobar"); return; }
@@ -866,7 +909,7 @@ export default function App() {
   }, [activeTab, filtered]);
 
   useEffect(() => {
-    if (activeTab === "admin" && isAdmin) fetchPendingEvents();
+    if (activeTab === "admin" && isAdmin) { fetchPendingEvents(); fetchStats(); }
   }, [activeTab]);
 
   // Exponer función global para el popup
@@ -1352,14 +1395,14 @@ export default function App() {
 
             {/* Tabs internos */}
             <div style={{display:'flex', gap:8, background:'var(--surface2)', borderRadius:12, padding:4}}>
-              {[["pending","⏳ Pendientes", pendingEvents.length],["approved","✅ Aprobados", events.length]].map(([key,label,count])=>(
-                <button key={key} onClick={()=>setAdminSection(key)}
+              {[["pending","⏳ Pendientes", pendingEvents.length],["approved","✅ Aprobados", events.length],["stats","📊 Stats", null]].map(([key,label,count])=>(
+                <button key={key} onClick={()=>{ setAdminSection(key); if(key==='stats') fetchStats(); }}
                   style={{flex:1, padding:'8px', borderRadius:9, border:'none', fontFamily:'var(--font-body)', fontWeight:700, fontSize:13, cursor:'pointer',
                     background: adminSection===key ? 'white' : 'transparent',
                     color: adminSection===key ? 'var(--text)' : 'var(--muted)',
                     boxShadow: adminSection===key ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
                   }}>
-                  {label} <span style={{background: key==='pending' && count>0 ? 'var(--red)' : 'var(--surface2)', color: key==='pending' && count>0 ? 'white' : 'var(--muted)', borderRadius:100, padding:'1px 7px', fontSize:11}}>{count}</span>
+                  {label} {count !== null && <span style={{background: key==='pending' && count>0 ? 'var(--red)' : 'var(--surface2)', color: key==='pending' && count>0 ? 'white' : 'var(--muted)', borderRadius:100, padding:'1px 7px', fontSize:11}}>{count}</span>}
                 </button>
               ))}
             </div>
@@ -1434,6 +1477,105 @@ export default function App() {
                   </div>
                 </div>
               ))
+            )}
+
+            {/* Sección Stats */}
+            {adminSection === "stats" && (
+              !stats
+                ? <div style={{textAlign:'center', padding:'48px 0', color:'var(--muted)'}}>
+                    <div style={{fontSize:40, marginBottom:12}}>⏳</div>
+                    <div style={{fontWeight:700}}>Cargando estadísticas…</div>
+                  </div>
+                : <div style={{display:'flex', flexDirection:'column', gap:16}}>
+
+                    {/* Números grandes */}
+                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10}}>
+                      {[
+                        ["✅ Aprobados", stats.byEstado.aprobado, "#059669"],
+                        ["⏳ Pendientes", stats.byEstado.pendiente, "#D97706"],
+                        ["📦 Archivados", stats.byEstado.archivado, "#6B7280"],
+                        ["📬 Suscriptores", stats.totalSubs, "#C8860A"],
+                      ].map(([label, value, color]) => (
+                        <div key={label} style={{background:'white', border:'1px solid var(--border)', borderRadius:14, padding:'16px', textAlign:'center'}}>
+                          <div style={{fontFamily:'var(--font-display)', fontSize:36, color}}>{value}</div>
+                          <div style={{fontSize:12, color:'var(--muted)', fontWeight:600, marginTop:2}}>{label}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Por categoría */}
+                    <div style={{background:'white', border:'1px solid var(--border)', borderRadius:14, padding:'16px'}}>
+                      <div style={{fontWeight:700, fontSize:13, marginBottom:12, color:'var(--text)'}}>📂 Eventos por categoría</div>
+                      {Object.entries(stats.byCat).sort((a,b)=>b[1]-a[1]).map(([cat, count]) => {
+                        const max = Math.max(...Object.values(stats.byCat));
+                        const pct = Math.round((count / max) * 100);
+                        const color = CAT_CONFIG[cat]?.color || '#C8860A';
+                        return (
+                          <div key={cat} style={{marginBottom:8}}>
+                            <div style={{display:'flex', justifyContent:'space-between', fontSize:12, fontWeight:600, marginBottom:3}}>
+                              <span>{cat}</span><span style={{color:'var(--muted)'}}>{count}</span>
+                            </div>
+                            <div style={{background:'var(--surface2)', borderRadius:100, height:8, overflow:'hidden'}}>
+                              <div style={{width:`${pct}%`, height:'100%', background:color, borderRadius:100, transition:'width 0.5s'}} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Por zona */}
+                    <div style={{background:'white', border:'1px solid var(--border)', borderRadius:14, padding:'16px'}}>
+                      <div style={{fontWeight:700, fontSize:13, marginBottom:12, color:'var(--text)'}}>🗺️ Eventos por zona</div>
+                      {Object.entries(stats.byZona).sort((a,b)=>b[1]-a[1]).map(([zona, count]) => {
+                        const max = Math.max(...Object.values(stats.byZona));
+                        const pct = Math.round((count / max) * 100);
+                        return (
+                          <div key={zona} style={{marginBottom:8}}>
+                            <div style={{display:'flex', justifyContent:'space-between', fontSize:12, fontWeight:600, marginBottom:3}}>
+                              <span>{zona}</span><span style={{color:'var(--muted)'}}>{count}</span>
+                            </div>
+                            <div style={{background:'var(--surface2)', borderRadius:100, height:8, overflow:'hidden'}}>
+                              <div style={{width:`${pct}%`, height:'100%', background:'var(--gold)', borderRadius:100, transition:'width 0.5s'}} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Por mes */}
+                    <div style={{background:'white', border:'1px solid var(--border)', borderRadius:14, padding:'16px'}}>
+                      <div style={{fontWeight:700, fontSize:13, marginBottom:12, color:'var(--text)'}}>📅 Eventos por mes</div>
+                      {Object.entries(stats.byMes).sort((a,b)=>a[0].localeCompare(b[0])).map(([mes, count]) => {
+                        const max = Math.max(...Object.values(stats.byMes));
+                        const pct = Math.round((count / max) * 100);
+                        const [year, month] = mes.split('-');
+                        const label = new Date(parseInt(year), parseInt(month)-1).toLocaleDateString('es-CO', {month:'long', year:'numeric'});
+                        return (
+                          <div key={mes} style={{marginBottom:8}}>
+                            <div style={{display:'flex', justifyContent:'space-between', fontSize:12, fontWeight:600, marginBottom:3}}>
+                              <span style={{textTransform:'capitalize'}}>{label}</span><span style={{color:'var(--muted)'}}>{count}</span>
+                            </div>
+                            <div style={{background:'var(--surface2)', borderRadius:100, height:8, overflow:'hidden'}}>
+                              <div style={{width:`${pct}%`, height:'100%', background:'#7C3AED', borderRadius:100, transition:'width 0.5s'}} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Organizadores más activos */}
+                    <div style={{background:'white', border:'1px solid var(--border)', borderRadius:14, padding:'16px'}}>
+                      <div style={{fontWeight:700, fontSize:13, marginBottom:12, color:'var(--text)'}}>👤 Organizadores más activos</div>
+                      {stats.topOrgs.map(([org, count], i) => (
+                        <div key={org} style={{display:'flex', alignItems:'center', gap:10, padding:'8px 0', borderBottom: i < stats.topOrgs.length-1 ? '1px solid var(--border)' : 'none'}}>
+                          <div style={{width:24, height:24, borderRadius:'50%', background:'var(--surface2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:700, color:'var(--muted)', flexShrink:0}}>{i+1}</div>
+                          <div style={{flex:1, fontSize:13, fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{org}</div>
+                          <div style={{background:'var(--gold)', color:'white', borderRadius:100, padding:'2px 10px', fontSize:11, fontWeight:700, flexShrink:0}}>{count}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                  </div>
             )}
           </div>
         )}
