@@ -143,7 +143,7 @@ const style = `
   }
   .hero-bg {
     position: absolute; inset: 0;
-    background-image: url('/medellin.jpg');
+    background-image: url('https://i.imgur.com/gcIvQUD.jpg');
     background-color: #1a2a3a;
     background-size: cover; background-position: center;
   }
