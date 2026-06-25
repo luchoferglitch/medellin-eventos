@@ -4,6 +4,7 @@ import { supabase } from "./supabase";
 import { Calendar, MapPin, Star, MessageCircle } from "lucide-react";
 import { translations } from "./translations";
 import EventoPage from "./EventoPage";
+import OrganizadorPage from "./OrganizadorPage";
 
 import catMusica from "./assets/cat-musica.jpg";
 import catArte from "./assets/cat-arte.jpg";
@@ -920,6 +921,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/evento/:slug" element={<EventoPage />} />
+      <Route path="/organizador/:slug" element={<OrganizadorPage />} />
       <Route path="*" element={<>
       <style>{style}</style>
       <div className="app">
@@ -1675,17 +1677,19 @@ export default function App() {
                   </div>
                 )}
                 {selectedEvent.organizerName && (
-                  <div style={{marginBottom:16,display:'flex',alignItems:'center',gap:8,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 14px'}}>
-                    <span style={{fontSize:16}}>👤</span>
-                    <div>
-                      <div style={{fontSize:11,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'0.5px'}}>{t.organizer}</div>
-                      <div style={{fontWeight:700,fontSize:14}}>{selectedEvent.organizerName}</div>
+                  <div style={{marginBottom:16, display:'flex', alignItems:'center', gap:12, background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:12, padding:'12px 14px', cursor:'pointer'}}
+                    onClick={() => { setSelectedEvent(null); navigate(`/organizador/${slugify(selectedEvent.organizerName)}`); }}>
+                    <div style={{width:40, height:40, borderRadius:'50%', background:'var(--gold)', color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, flexShrink:0}}>
+                      {selectedEvent.organizerName[0]?.toUpperCase()}
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:11, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'0.5px'}}>{t.organizer}</div>
+                      <div style={{fontWeight:700, fontSize:14}}>{selectedEvent.organizerName}</div>
                       {selectedEvent.organizerContact && (
-                        selectedEvent.organizerContact.startsWith('http') 
-                          ? <a href={selectedEvent.organizerContact} target="_blank" rel="noopener noreferrer" style={{fontSize:13,color:'var(--gold)',marginTop:2,display:'block',textDecoration:'none'}}>{selectedEvent.organizerContact} ↗</a>
-                          : <div style={{fontSize:13,color:'var(--gold)',marginTop:2}}>{selectedEvent.organizerContact}</div>
+                        <div style={{fontSize:12, color:'var(--gold)', marginTop:2}}>{selectedEvent.organizerContact}</div>
                       )}
                     </div>
+                    <span style={{color:'var(--gold)', fontSize:20}}>›</span>
                   </div>
                 )}
                 <div className="detail-actions">
