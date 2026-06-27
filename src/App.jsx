@@ -508,7 +508,7 @@ export default function App() {
     } catch(e) { console.log("Stats error:", e); }
   };
   const fetchEvents = async () => {
-    const { data, error } = await supabase.from("events").select("*").eq("estado", "aprobado").order("fecha_real", { ascending: true, nullsFirst: false });
+    const { data, error } = await supabase.from("events").select("*, recurrencia, dia_semana, dia_mes").eq("estado", "aprobado").order("fecha_real", { ascending: true, nullsFirst: false });
     if (!error && data) {
       setEvents(data.map(e => ({
         id: e.id, emoji: e.emoji, title: e.title, cat: e.category,
