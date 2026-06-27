@@ -394,6 +394,10 @@ export default function App() {
   const [pendingEvents, setPendingEvents] = useState([]);
   const [adminSection, setAdminSection] = useState("pending"); // "pending" | "approved" | "stats"
   const [adminStats, setAdminStats] = useState(null);
+  const [subEmail, setSubEmail] = useState("");
+  const [subNombre, setSubNombre] = useState("");
+  const [subLoading, setSubLoading] = useState(false);
+  const [subDone, setSubDone] = useState(false);
   const [geoCache, setGeoCache] = useState({});
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoProgress, setGeoProgress] = useState({ done: 0, total: 0 });
@@ -907,6 +911,21 @@ export default function App() {
       }
     };
   }, []);
+
+  const handleSubscribe = async () => {
+    if (!subEmail || !subEmail.includes("@")) { showToast("⚠️ Ingresa un correo válido"); return; }
+    setSubLoading(true);
+    const { error } = await supabase.from("subscribers").insert({ email: subEmail.trim().toLowerCase(), nombre: subNombre.trim() || null });
+    setSubLoading(false);
+    if (error) {
+      if (error.code === "23505") showToast("📧 Ya estás suscrito");
+      else showToast("⚠️ Error al suscribirse");
+    } else {
+      setSubDone(true);
+      setSubEmail("");
+      setSubNombre("");
+    }
+  };
 
   const getUserInitial = () => (user?.user_metadata?.full_name || user?.email || "U")[0].toUpperCase();
   const getUserName = () => user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Usuario";
@@ -1558,16 +1577,48 @@ export default function App() {
           </div>
         )}
 
-        <footer style={{background:'var(--surface2)', borderTop:'1px solid var(--border)', padding:'20px 24px', textAlign:'center', display: activeTab === 'map' || activeTab === 'admin' ? 'none' : 'block'}}>
-          <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:16, flexWrap:'wrap'}}>
-            <span style={{fontFamily:'var(--font-display)', fontSize:18, color:'var(--gold)'}}>MEDELLÍN VIBRA</span>
-            <a href="https://www.instagram.com/medellinvibra.co/" target="_blank" rel="noopener noreferrer" style={{display:'inline-flex', alignItems:'center', gap:6, color:'#C0392B', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
-              📸 @medellinvibra.co
-            </a>
-            <a href="mailto:hola@medellinvibra.co" style={{display:'inline-flex', alignItems:'center', gap:6, color:'var(--gold)', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
-              ✉️ hola@medellinvibra.co
-            </a>
-            <span style={{fontSize:12, color:'var(--muted)'}}>{t.copyright}</span>
+        <footer style={{background:'var(--surface2)', borderTop:'1px solid var(--border)', display: activeTab === 'map' || activeTab === 'admin' ? 'none' : 'block'}}>
+          {/* Bloque newsletter */}
+          <div style={{background:'var(--dark)', padding:'32px 24px', textAlign:'center'}}>
+            {subDone ? (
+              <div>
+                <div style={{fontSize:40, marginBottom:12}}>🎉</div>
+                <div style={{fontFamily:'var(--font-display)', fontSize:24, color:'var(--gold)', marginBottom:8}}>¡YA ESTÁS SUSCRITO!</div>
+                <div style={{color:'rgba(255,255,255,0.7)', fontSize:14}}>Cada viernes te mandamos los mejores eventos de la semana.</div>
+              </div>
+            ) : (
+              <>
+                <div style={{fontFamily:'var(--font-display)', fontSize:26, color:'white', marginBottom:4}}>📬 AGENDA SEMANAL</div>
+                <div style={{color:'rgba(255,255,255,0.6)', fontSize:14, marginBottom:20}}>Recibe cada viernes los mejores eventos de Medellín</div>
+                <div style={{display:'flex', flexDirection:'column', gap:10, maxWidth:360, margin:'0 auto'}}>
+                  <input type="text" placeholder="Tu nombre (opcional)" value={subNombre} onChange={e => setSubNombre(e.target.value)}
+                    style={{padding:'12px 16px', borderRadius:10, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.08)', color:'white', fontSize:14, fontFamily:'var(--font-body)', outline:'none'}} />
+                  <input type="email" placeholder="Tu correo electrónico" value={subEmail} onChange={e => setSubEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSubscribe()}
+                    style={{padding:'12px 16px', borderRadius:10, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.08)', color:'white', fontSize:14, fontFamily:'var(--font-body)', outline:'none'}} />
+                  <button onClick={handleSubscribe} disabled={subLoading}
+                    style={{padding:'13px', borderRadius:10, background:'var(--gold)', color:'white', border:'none', fontWeight:700, fontSize:15, fontFamily:'var(--font-body)', cursor:'pointer', opacity: subLoading ? 0.7 : 1}}>
+                    {subLoading ? "Suscribiendo..." : "Suscribirme gratis →"}
+                  </button>
+                </div>
+                <div style={{color:'rgba(255,255,255,0.3)', fontSize:11, marginTop:12}}>Sin spam. Cancela cuando quieras.</div>
+              </>
+            )}
+          </div>
+          {/* Footer normal */}
+          <div style={{padding:'20px 24px', textAlign:'center'}}>
+            <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:16, flexWrap:'wrap'}}>
+              <span style={{fontFamily:'var(--font-display)', fontSize:18, color:'var(--gold)'}}>MEDELLÍN VIBRA</span>
+              <a href="https://www.instagram.com/medellinvibra.co/" target="_blank" rel="noopener noreferrer" style={{display:'inline-flex', alignItems:'center', gap:6, color:'#C0392B', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
+                📸 @medellinvibra.co
+              </a>
+              <a href="https://www.facebook.com/profile.php?id=61591129902444" target="_blank" rel="noopener noreferrer" style={{display:'inline-flex', alignItems:'center', gap:6, color:'#1877F2', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
+                📘 Medellín Vibra
+              </a>
+              <a href="mailto:hola@medellinvibra.co" style={{display:'inline-flex', alignItems:'center', gap:6, color:'var(--gold)', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
+                ✉️ hola@medellinvibra.co
+              </a>
+              <span style={{fontSize:12, color:'var(--muted)'}}>{t.copyright}</span>
+            </div>
           </div>
         </footer>
 
