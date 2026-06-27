@@ -64,12 +64,13 @@ const getProximaFecha = (ev) => {
   if (ev.recurrencia === "semanal" && ev.diaSemana !== null && ev.diaSemana !== undefined) {
     const next = new Date(today);
     const diff = (ev.diaSemana - today.getDay() + 7) % 7;
-    next.setDate(today.getDate() + (diff === 0 ? 0 : diff));
+    // Si diff === 0 significa que hoy es ese día — mostrar el próximo (en 7 días)
+    next.setDate(today.getDate() + (diff === 0 ? 7 : diff));
     return next;
   }
   if (ev.recurrencia === "mensual" && ev.diaMes) {
     const next = new Date(today.getFullYear(), today.getMonth(), ev.diaMes);
-    if (next < today) next.setMonth(next.getMonth() + 1);
+    if (next <= today) next.setMonth(next.getMonth() + 1);
     return next;
   }
   return null;
