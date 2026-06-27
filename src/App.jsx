@@ -67,6 +67,21 @@ const style = `
     --border: rgba(0,0,0,0.08); --text: #1a1a1a; --muted: #888;
     --font-display: 'Bebas Neue', sans-serif; --font-body: 'DM Sans', sans-serif;
   }
+  .dark-mode {
+    --surface: #1e1e1e; --surface2: #2a2a2a; --dark: #0a0a0a;
+    --border: rgba(255,255,255,0.08); --text: #f0f0f0; --muted: #888;
+  }
+  .dark-mode body, body.dark-mode { background: #141414; color: var(--text); }
+  .dark-mode .app { background: #141414; }
+  .dark-mode .nav { background: rgba(20,20,20,0.95); }
+  .dark-mode .bottom-nav { background: rgba(20,20,20,0.97); }
+  .dark-mode .event-card { background: var(--surface); }
+  .dark-mode .filters-bar, .dark-mode .tags-bar { background: #1e1e1e; }
+  .dark-mode .filter-chip { background: #2a2a2a; }
+  .dark-mode .detail-panel { background: #1e1e1e; }
+  .dark-mode .auth-modal { background: #1e1e1e; }
+  .dark-mode .form-input, .dark-mode .form-select, .dark-mode .form-textarea { background: #2a2a2a; color: var(--text); }
+  .dark-mode .admin-event-row { background: #1e1e1e; }
   body { background: #F5F3EF; color: var(--text); font-family: var(--font-body); }
   .app { min-height: 100vh; display: flex; flex-direction: column; }
   .nav {
@@ -391,6 +406,7 @@ export default function App() {
   const [activeZona, setActiveZona] = useState("Todas");
   const [activeTagFilter, setActiveTagFilter] = useState(null);
   const [adminTagPicker, setAdminTagPicker] = useState(null);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("mv-dark") === "1");
   const [pendingEvents, setPendingEvents] = useState([]);
   const [adminSection, setAdminSection] = useState("pending"); // "pending" | "approved" | "stats"
   const [adminStats, setAdminStats] = useState(null);
@@ -934,6 +950,14 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    if (darkMode) { root.classList.add("dark-mode"); localStorage.setItem("mv-dark", "1"); }
+    else { root.classList.remove("dark-mode"); localStorage.setItem("mv-dark", "0"); }
+  }, [darkMode]);
+
+  const toggleDarkMode = () => setDarkMode(d => !d);
+
   const handleSubscribe = async () => {
     if (!subEmail || !subEmail.includes("@")) { showToast("⚠️ Ingresa un correo válido"); return; }
     setSubLoading(true);
@@ -975,6 +999,10 @@ export default function App() {
               <option value="pt">🇧🇷 PT</option>
               <option value="fr">🇫🇷 FR</option>
             </select>
+            <button onClick={toggleDarkMode} title={darkMode ? "Modo claro" : "Modo oscuro"}
+              style={{background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:8, padding:'6px 10px', cursor:'pointer', fontSize:16, lineHeight:1, color:'var(--text)'}}>
+              {darkMode ? "☀️" : "🌙"}
+            </button>
             {user ? (
               <>
                 <button className="btn-ghost" onClick={handleLogout}>{t.logout}</button>
