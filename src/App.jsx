@@ -1022,6 +1022,72 @@ export default function App() {
               </div>
             </div>
 
+            {/* BLOQUE ESTE FIN DE SEMANA */}
+            {(() => {
+              const today = new Date(); today.setHours(0,0,0,0);
+              const todayStr = today.toISOString().split('T')[0];
+              const day = today.getDay();
+              const diffToFri = (5 - day + 7) % 7;
+              // Si hoy es sáb o dom, mostrar el finde actual; si no, el próximo
+              const fri = new Date(today);
+              if (day === 6 || day === 0) {
+                // Estamos en fin de semana — mostrar desde hoy hasta el domingo
+                fri.setDate(today.getDate() - (day === 0 ? 1 : 0));
+              } else {
+                fri.setDate(today.getDate() + diffToFri);
+              }
+              const sun = new Date(fri); sun.setDate(fri.getDate() + (day === 0 ? 0 : 2));
+              const friStr = fri.toISOString().split('T')[0];
+              const sunStr = sun.toISOString().split('T')[0];
+              const findeEvents = events.filter(e =>
+                e.fechaReal <= sunStr && (e.fechaFin || e.fechaReal) >= friStr
+              ).slice(0, 6);
+              if (findeEvents.length === 0) return null;
+              const label = (day === 6 || day === 0) ? "Este Fin de Semana" : "El Próximo Fin de Semana";
+              return (
+                <div style={{background:'linear-gradient(135deg, #1a1a1a, #2a2020)', padding:'32px 24px', borderBottom:'1px solid var(--border)'}}>
+                  <div style={{maxWidth:1200, margin:'0 auto'}}>
+                    <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20}}>
+                      <div>
+                        <div style={{fontFamily:'var(--font-display)', fontSize:28, color:'white', letterSpacing:0.5}}>
+                          🎉 <span style={{color:'var(--gold)'}}>{label}</span>
+                        </div>
+                        <div style={{fontSize:13, color:'rgba(255,255,255,0.5)', marginTop:4}}>
+                          {findeEvents.length} plan{findeEvents.length !== 1 ? 'es' : ''} para no quedarte en casa
+                        </div>
+                      </div>
+                      <button onClick={() => setActiveDateFilter("FinDeSemana")}
+                        style={{background:'rgba(200,134,10,0.2)', border:'1px solid rgba(200,134,10,0.4)', color:'var(--gold)', borderRadius:100, padding:'8px 16px', fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-body)', whiteSpace:'nowrap'}}>
+                        Ver todos →
+                      </button>
+                    </div>
+                    <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:12}}>
+                      {findeEvents.map(ev => {
+                        const cfg = getCatConfig(ev.cat);
+                        return (
+                          <div key={ev.id} onClick={() => setSelectedEvent(ev)}
+                            style={{borderRadius:16, overflow:'hidden', cursor:'pointer', position:'relative', aspectRatio:'3/4', background:`linear-gradient(135deg, ${cfg.color}33, ${cfg.color}66)`}}
+                            onMouseEnter={e=>e.currentTarget.style.transform='scale(1.02)'}
+                            onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}
+                          >
+                            {ev.imageUrl && <img src={ev.imageUrl} alt={ev.title} style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover'}} />}
+                            <div style={{position:'absolute', inset:0, background:'linear-gradient(to top, rgba(0,0,0,0.85) 40%, transparent 70%)'}} />
+                            <div style={{position:'absolute', top:10, left:10, background:cfg.color, color:'white', padding:'3px 10px', borderRadius:100, fontSize:10, fontWeight:700}}>{ev.cat}</div>
+                            {ev.price === "Gratis" && <div style={{position:'absolute', top:10, right:10, background:'#059669', color:'white', padding:'3px 10px', borderRadius:100, fontSize:10, fontWeight:700}}>Gratis</div>}
+                            <div style={{position:'absolute', bottom:0, left:0, right:0, padding:'14px 12px'}}>
+                              <div style={{fontWeight:700, fontSize:13, color:'white', lineHeight:1.3, marginBottom:4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden'}}>{ev.title}</div>
+                              <div style={{fontSize:11, color:'rgba(255,255,255,0.7)'}}>{ev.date}</div>
+                              <div style={{fontSize:11, color:'rgba(255,255,255,0.6)', marginTop:2}}>📍 {ev.place?.split(',')[0]}</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             {(() => {
               const today = new Date(); today.setHours(0,0,0,0);
               const todayStr = today.toISOString().split('T')[0];
