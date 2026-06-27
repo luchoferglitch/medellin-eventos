@@ -487,17 +487,21 @@ export default function App() {
   };
 
   const SYNONYMS = {
-    "Música":      ["concierto","conciertos","show","banda","artista","música","musica"],
-    "Arte":        ["exposición","exposicion","galería","galeria","museo","pintura","cultura","arte"],
-    "Comedia":     ["humor","chistes","risa","stand up","standup","comedia"],
-    "Tech":        ["tecnología","tecnologia","innovación","innovacion","startup","digital","tech"],
-    "Baile":       ["danza","salsa","tango","rumba","baile","ballet"],
-    "Teatro":      ["obra","espectáculo","espectaculo","actuación","actuacion","escena","teatro"],
-    "Gastronomía": ["comida","restaurante","chef","cocina","food","gastronomía","gastronomia","festival"],
-    "Bienestar":   ["yoga","meditación","meditacion","salud","bienestar","taller"],
-    "Deportes":    ["carrera","fútbol","futbol","running","maratón","maraton","deporte","deportes"],
-    "Académicos":  ["congreso","seminario","simposio","conferencia","académico","academico"],
+    "Música":      ["concierto","conciertos","show","banda","artista","música","musica","rock","jazz","salsa","reggaeton","reggaetón","pop","electrónica","electronica","sinfónico","sinfonico","orquesta","ópera","opera","zarzuela","tributo","bolero","vallenato","cumbia","rap","hip hop","metal","punk","ska","trova"],
+    "Arte":        ["exposición","exposicion","galería","galeria","museo","pintura","cultura","arte","mural","fotografía","fotografia","escultura","instalación","instalacion","dibujo","ilustración","ilustracion"],
+    "Comedia":     ["humor","chistes","risa","stand up","standup","comedia","monólogo","monologo","comediante","improvisación","improvisacion"],
+    "Tech":        ["tecnología","tecnologia","innovación","innovacion","startup","digital","tech","programación","programacion","software","python","inteligencia artificial","ia","datos","data","ciberseguridad","hackathon","developer","desarrollador"],
+    "Baile":       ["danza","salsa","tango","rumba","baile","ballet","contemporáneo","contemporaneo","urbano","breakdance","folclor","folclore","coreografía","coreografia"],
+    "Teatro":      ["obra","espectáculo","espectaculo","actuación","actuacion","escena","teatro","dramaturgia","monólogo","monologo","musical","mimo","circo","performance","ópera","opera"],
+    "Gastronomía": ["comida","restaurante","chef","cocina","food","gastronomía","gastronomia","festival","feria","sabores","plato","receta","vino","cerveza","maridaje","foodie","brunch","degustación","degustacion"],
+    "Bienestar":   ["yoga","meditación","meditacion","salud","bienestar","taller","mindfulness","pilates","fitness","retiro","respiración","respiracion","sanación","sanacion","terapia","wellness"],
+    "Deportes":    ["carrera","fútbol","futbol","running","maratón","maraton","deporte","deportes","ciclismo","natación","natacion","atletismo","baloncesto","voleibol","tenis","escalada","trail","triatlón","triatlon","crossfit"],
+    "Académicos":  ["congreso","seminario","simposio","conferencia","académico","academico","feria","bienal","poesía","poesia","libro","lectura","literatura","escritura","educación","educacion","ciencia","investigación","investigacion","foro"],
   };
+
+  // Sinónimos de precio y fecha para búsqueda directa
+  const PRICE_SYNONYMS = ["gratis","gratuito","gratuita","sin costo","sin cobro","libre","entrada libre","entrada gratuita","free"];
+  const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 
   const getCatFromSynonym = (term) => {
     const t = term.toLowerCase();
@@ -527,15 +531,32 @@ export default function App() {
 
   const filtered = events.filter(e => {
     const matchCat = activeFilter === "Todos" || e.cat === activeFilter;
-    const s = search.toLowerCase();
+    const s = search.toLowerCase().trim();
     const synCat = getCatFromSynonym(s);
     const effectiveTagForSearch = e.tag || (isNewEvent(e) ? "Nuevo" : null);
+
+    // ¿Es una búsqueda de precio gratis?
+    const isSearchingFree = PRICE_SYNONYMS.some(p => p.includes(s) || s.includes(p));
+    // ¿Está buscando por mes?
+    const mesIdx = MESES.findIndex(m => s.includes(m));
+    const matchMes = mesIdx >= 0 && e.fechaReal
+      ? e.fechaReal.startsWith(`2026-${String(mesIdx + 1).padStart(2, '0')}`) ||
+        (e.fechaFin && e.fechaFin.startsWith(`2026-${String(mesIdx + 1).padStart(2, '0')}`))
+      : false;
+
     const matchSearch = !s ||
-      e.title.toLowerCase().includes(s) ||
-      e.place.toLowerCase().includes(s) ||
+      e.title?.toLowerCase().includes(s) ||
+      e.place?.toLowerCase().includes(s) ||
       e.desc?.toLowerCase().includes(s) ||
+      e.organizerName?.toLowerCase().includes(s) ||
+      e.zona?.toLowerCase().includes(s) ||
+      e.ticketPlatform?.toLowerCase().includes(s) ||
+      e.date?.toLowerCase().includes(s) ||
+      effectiveTagForSearch?.toLowerCase().includes(s) ||
       (synCat && e.cat === synCat) ||
-      effectiveTagForSearch?.toLowerCase().includes(s);
+      (isSearchingFree && e.price === "Gratis") ||
+      matchMes;
+
     let matchDate = true;
     if (activeDateFilter !== "Todos" && e.fechaReal) {
       const { today, weekendStart, weekendEnd, weekEnd, monthEnd } = getDateRange();
