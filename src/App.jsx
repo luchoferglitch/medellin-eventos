@@ -57,6 +57,27 @@ const isNewEvent = (event) => {
   return diffDays <= 7;
 };
 
+// Calcula la próxima fecha de un evento recurrente
+const getProximaFecha = (ev) => {
+  if (!ev.recurrencia) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  if (ev.recurrencia === "semanal" && ev.diaSemana !== null && ev.diaSemana !== undefined) {
+    const next = new Date(today);
+    const diff = (ev.diaSemana - today.getDay() + 7) % 7;
+    next.setDate(today.getDate() + (diff === 0 ? 0 : diff));
+    return next;
+  }
+  if (ev.recurrencia === "mensual" && ev.diaMes) {
+    const next = new Date(today.getFullYear(), today.getMonth(), ev.diaMes);
+    if (next < today) next.setMonth(next.getMonth() + 1);
+    return next;
+  }
+  return null;
+};
+
+const DIAS_SEMANA = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+const MESES_CORTO = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+
 const style = `
   @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&display=swap');
   @import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
@@ -497,6 +518,7 @@ export default function App() {
         organizerName: e.organizer_name, organizerContact: e.organizer_contact,
         imageUrl: e.image_url, fechaReal: e.fecha_real, fechaFin: e.fecha_fin, zona: e.zona,
         createdAt: e.created_at, lat: e.lat, lng: e.lng,
+        recurrencia: e.recurrencia, diaSemana: e.dia_semana, diaMes: e.dia_mes,
       })));
     }
     setLoading(false);
@@ -574,15 +596,34 @@ export default function App() {
       matchMes;
 
     let matchDate = true;
-    if (activeDateFilter !== "Todos" && e.fechaReal) {
-      const { today, weekendStart, weekendEnd, weekEnd, monthEnd } = getDateRange();
-      const fin = e.fechaFin || e.fechaReal;
-      if (activeDateFilter === "Hoy") matchDate = e.fechaReal <= today && fin >= today;
-      else if (activeDateFilter === "FinDeSemana") matchDate = e.fechaReal <= weekendEnd && fin >= weekendStart;
-      else if (activeDateFilter === "EstaSemana") matchDate = e.fechaReal <= weekEnd && fin >= today;
-      else if (activeDateFilter === "EsteMes") matchDate = e.fechaReal <= monthEnd && fin >= today;
-      else if (activeDateFilter === "Gratis") matchDate = e.price === "Gratis";
-      else if (activeDateFilter === "ConCobro") matchDate = e.price !== "Gratis";
+    if (activeDateFilter !== "Todos") {
+      if (e.recurrencia) {
+        // Eventos recurrentes siempre aparecen excepto en filtro de mes específico
+        matchDate = activeDateFilter !== "Gratis" && activeDateFilter !== "ConCobro";
+        if (activeDateFilter === "Gratis") matchDate = e.price === "Gratis";
+        else if (activeDateFilter === "ConCobro") matchDate = e.price !== "Gratis";
+        else {
+          // Para hoy/finde/semana verificar si la próxima ocurrencia cae en ese rango
+          const proxima = getProximaFecha(e);
+          if (proxima) {
+            const { today, weekendStart, weekendEnd, weekEnd, monthEnd } = getDateRange();
+            const proximaStr = proxima.toISOString().split('T')[0];
+            if (activeDateFilter === "Hoy") matchDate = proximaStr === today;
+            else if (activeDateFilter === "FinDeSemana") matchDate = proximaStr >= weekendStart && proximaStr <= weekendEnd;
+            else if (activeDateFilter === "EstaSemana") matchDate = proximaStr >= today && proximaStr <= weekEnd;
+            else if (activeDateFilter === "EsteMes") matchDate = proximaStr >= today && proximaStr <= monthEnd;
+          }
+        }
+      } else if (e.fechaReal) {
+        const { today, weekendStart, weekendEnd, weekEnd, monthEnd } = getDateRange();
+        const fin = e.fechaFin || e.fechaReal;
+        if (activeDateFilter === "Hoy") matchDate = e.fechaReal <= today && fin >= today;
+        else if (activeDateFilter === "FinDeSemana") matchDate = e.fechaReal <= weekendEnd && fin >= weekendStart;
+        else if (activeDateFilter === "EstaSemana") matchDate = e.fechaReal <= weekEnd && fin >= today;
+        else if (activeDateFilter === "EsteMes") matchDate = e.fechaReal <= monthEnd && fin >= today;
+        else if (activeDateFilter === "Gratis") matchDate = e.price === "Gratis";
+        else if (activeDateFilter === "ConCobro") matchDate = e.price !== "Gratis";
+      }
     }
     const matchZona = activeZona === "Todas" || e.zona === activeZona;
     const effectiveTag = e.tag || (isNewEvent(e) ? "Nuevo" : null);
@@ -620,7 +661,7 @@ export default function App() {
     showToast("✓ ¡Reserva confirmada! Revisa tu correo");
   };
 
-  const [form, setForm] = useState({ title:"", category:"Música", date:"", time:"", place:"", price:"", capacity:"", description:"", emoji:"🎵", tag:"", ticket_platform:"", ticket_link:"", organizer_name:"", organizer_contact:"", image_url:"" });
+  const [form, setForm] = useState({ title:"", category:"Música", date:"", time:"", place:"", price:"", capacity:"", description:"", emoji:"🎵", tag:"", ticket_platform:"", ticket_link:"", organizer_name:"", organizer_contact:"", image_url:"", recurrencia:"", dia_semana:"", dia_mes:"" });
   const [formLoading, setFormLoading] = useState(false);
 
   const handleFormChange = (field, value) => setForm(f => ({...f, [field]: value}));
@@ -638,6 +679,9 @@ export default function App() {
       tag: form.tag || null, ticket_platform: form.ticket_platform,
       ticket_link: form.ticket_link, color: "linear-gradient(135deg,#1a0a00,#2a1500)",
       organizer_name: form.organizer_name, organizer_contact: form.organizer_contact,
+      recurrencia: form.recurrencia || null,
+      dia_semana: form.dia_semana !== "" ? parseInt(form.dia_semana) : null,
+      dia_mes: form.dia_mes !== "" ? parseInt(form.dia_mes) : null,
       image_url: form.image_url || null,
       user_id: user.id,
       estado: esAdmin ? "aprobado" : "pendiente",
@@ -976,6 +1020,16 @@ export default function App() {
   const getUserInitial = () => (user?.user_metadata?.full_name || user?.email || "U")[0].toUpperCase();
   const getUserName = () => user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Usuario";
   const getEffectiveTag = (ev) => ev.tag || (isNewEvent(ev) ? "Nuevo" : null);
+
+  const getDisplayDate = (ev) => {
+    if (!ev.recurrencia) return ev.date;
+    const proxima = getProximaFecha(ev);
+    if (!proxima) return ev.date;
+    const dia = DIAS_SEMANA[proxima.getDay()];
+    const num = proxima.getDate();
+    const mes = MESES_CORTO[proxima.getMonth()];
+    return `${dia} ${num} ${mes}`;
+  };
   const featuredEvent = (() => {
     const today = new Date().toISOString().split('T')[0];
     const upcoming = events.filter(e => e.fechaReal >= today).slice(0, 5);
@@ -1278,7 +1332,7 @@ export default function App() {
                       <div className="event-card-body">
                         <div className="event-card-title">{ev.title}</div>
                         <div className="event-card-info">
-                          <div className="event-card-info-row"><Calendar size={13} color="var(--muted)" /> {ev.date} · {ev.time}</div>
+                          <div className="event-card-info-row"><Calendar size={13} color="var(--muted)" /> {getDisplayDate(ev)}{ev.time ? ` · ${ev.time}` : ''}{ev.recurrencia && <span style={{marginLeft:4, fontSize:10, background:'rgba(200,134,10,0.15)', color:'var(--gold)', padding:'1px 6px', borderRadius:100, fontWeight:700}}>🔄 {ev.recurrencia}</span>}</div>
                           <div className="event-card-info-row"><MapPin size={13} color="var(--muted)" /> {ev.place}</div>
                         </div>
                         <div className="event-card-footer">
@@ -1329,7 +1383,7 @@ export default function App() {
                           <div className={`event-card-price ${ev.price==="Gratis"?"free":""}`} style={{flexShrink:0, fontSize:13}}>{ev.price}</div>
                         </div>
                         <div style={{fontSize:12, color:'var(--muted)', marginTop:4, display:'flex', gap:12, flexWrap:'wrap'}}>
-                          <span><Calendar size={11} style={{display:'inline',marginRight:3}} />{ev.date}</span>
+                          <span><Calendar size={11} style={{display:'inline',marginRight:3}} />{getDisplayDate(ev)}{ev.recurrencia && <span style={{marginLeft:4, fontSize:10, color:'var(--gold)', fontWeight:700}}>🔄</span>}</span>
                           <span><MapPin size={11} style={{display:'inline',marginRight:3}} />{ev.place}</span>
                         </div>
                         <div style={{marginTop:6, display:'flex', gap:6, alignItems:'center'}}>
@@ -1411,7 +1465,7 @@ export default function App() {
                     <div className="event-card-body">
                       <div className="event-card-title">{ev.title}</div>
                       <div className="event-card-info">
-                        <div className="event-card-info-row"><Calendar size={13} color="var(--muted)" /> {ev.date}</div>
+                        <div className="event-card-info-row"><Calendar size={13} color="var(--muted)" /> {getDisplayDate(ev)}</div>
                         <div className="event-card-info-row"><MapPin size={13} color="var(--muted)" /> {ev.place}</div>
                       </div>
                       <div className="event-card-footer">
@@ -1962,6 +2016,33 @@ export default function App() {
                   <label className="form-label">Link de compra</label>
                   <input className="form-input" placeholder="https://..." value={form.ticket_link} onChange={e=>handleFormChange("ticket_link",e.target.value)} />
                 </div>
+              </div>
+
+              <div style={{borderTop:'1px solid var(--border)',margin:'16px 0',paddingTop:16}}>
+                <div style={{fontSize:12,fontWeight:700,color:'var(--gold)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:14}}>🔄 Recurrencia (opcional)</div>
+                <div className="form-group">
+                  <label className="form-label">¿Este evento se repite?</label>
+                  <select className="form-select" value={form.recurrencia} onChange={e=>handleFormChange("recurrencia",e.target.value)}>
+                    <option value="">No se repite</option>
+                    <option value="semanal">Semanal (mismo día cada semana)</option>
+                    <option value="mensual">Mensual (mismo día del mes)</option>
+                  </select>
+                </div>
+                {form.recurrencia === "semanal" && (
+                  <div className="form-group">
+                    <label className="form-label">¿Qué día de la semana?</label>
+                    <select className="form-select" value={form.dia_semana} onChange={e=>handleFormChange("dia_semana",e.target.value)}>
+                      <option value="">Selecciona un día</option>
+                      {["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"].map((d,i) => <option key={i} value={i}>{d}</option>)}
+                    </select>
+                  </div>
+                )}
+                {form.recurrencia === "mensual" && (
+                  <div className="form-group">
+                    <label className="form-label">¿Qué día del mes? (1-31)</label>
+                    <input className="form-input" type="number" min="1" max="31" placeholder="ej. 15" value={form.dia_mes} onChange={e=>handleFormChange("dia_mes",e.target.value)} />
+                  </div>
+                )}
               </div>
 
               <div className="form-actions">
