@@ -566,6 +566,7 @@ export default function App() {
       else if (activeDateFilter === "EstaSemana") matchDate = e.fechaReal <= weekEnd && fin >= today;
       else if (activeDateFilter === "EsteMes") matchDate = e.fechaReal <= monthEnd && fin >= today;
       else if (activeDateFilter === "Gratis") matchDate = e.price === "Gratis";
+      else if (activeDateFilter === "ConCobro") matchDate = e.price !== "Gratis";
     }
     const matchZona = activeZona === "Todas" || e.zona === activeZona;
     const effectiveTag = e.tag || (isNewEvent(e) ? "Nuevo" : null);
@@ -1061,9 +1062,9 @@ export default function App() {
               ))}
             </div>
             <div className="filters-bar" style={{borderBottom:'none',paddingBottom:8}}>
-              {[["Todos",t.filterAll],["Hoy",t.filterToday],["FinDeSemana",t.filterWeekend],["EstaSemana",t.filterWeek],["EsteMes",t.filterMonth],["Gratis",t.filterFree]].map(([val,label]) => (
+              {[["Todos",t.filterAll],["Hoy",t.filterToday],["FinDeSemana",t.filterWeekend],["EstaSemana",t.filterWeek],["EsteMes",t.filterMonth],["Gratis",t.filterFree],["ConCobro","💳 Con cobro"]].map(([val,label]) => (
                 <button key={val} className={`filter-chip ${activeDateFilter===val?"active":""}`} onClick={() => setActiveDateFilter(val)}>
-                  {val !== "Gratis" ? `📅 ${label}` : label}
+                  {val !== "Gratis" && val !== "ConCobro" ? `📅 ${label}` : label}
                 </button>
               ))}
             </div>
