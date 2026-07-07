@@ -5,6 +5,7 @@ import { Calendar, MapPin, Star, MessageCircle } from "lucide-react";
 import { translations } from "./translations";
 import EventoPage from "./EventoPage";
 import OrganizadorPage from "./OrganizadorPage";
+import OrganizadoresLanding from "./OrganizadoresLanding";
 
 import catMusica from "./assets/cat-musica.jpg";
 import catArte from "./assets/cat-arte.jpg";
@@ -1098,6 +1099,7 @@ export default function App() {
     <Routes>
       <Route path="/evento/:slug" element={<EventoPage />} />
       <Route path="/organizador/:slug" element={<OrganizadorPage />} />
+      <Route path="/para-organizadores" element={<OrganizadoresLanding />} />
       <Route path="*" element={<>
       <style>{style}</style>
       <div className="app">
