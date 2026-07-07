@@ -32,9 +32,9 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     weekendTitle: "Este",
     weekendTitleSpan: "Fin de Semana",
 
-    // Venues
-    venuesTitle: "Lugares",
-    venuesTitleSpan: "Destacados",
+    // Aliados
+    venuesTitle: "Aliados",
+    venuesTitleSpan: "Medellín Vibra",
 
     // Featured
     featuredTitle: "Evento",
@@ -149,8 +149,8 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     filterFree: "🎟️ Free",
     weekendTitle: "This",
     weekendTitleSpan: "Weekend",
-    venuesTitle: "Featured",
-    venuesTitleSpan: "Venues",
+    venuesTitle: "Partners",
+    venuesTitleSpan: "Medellín Vibra",
     featuredTitle: "Featured",
     featuredTitleSpan: "Event",
     featuredBadge: "🔥 Best seller",
@@ -247,8 +247,8 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     filterFree: "🎟️ Grátis",
     weekendTitle: "Este",
     weekendTitleSpan: "Fim de Semana",
-    venuesTitle: "Locais",
-    venuesTitleSpan: "Destacados",
+    venuesTitle: "Parceiros",
+    venuesTitleSpan: "Medellín Vibra",
     featuredTitle: "Evento",
     featuredTitleSpan: "Destaque",
     featuredBadge: "🔥 Mais vendido",
@@ -345,8 +345,8 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     filterFree: "🎟️ Gratuit",
     weekendTitle: "Ce",
     weekendTitleSpan: "Week-end",
-    venuesTitle: "Lieux",
-    venuesTitleSpan: "Phares",
+    venuesTitle: "Partenaires",
+    venuesTitleSpan: "Medellín Vibra",
     featuredTitle: "Événement",
     featuredTitleSpan: "À la une",
     featuredBadge: "🔥 Meilleure vente",
