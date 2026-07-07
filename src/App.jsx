@@ -349,6 +349,23 @@ const style = `
 
 const ADMINS = ["luchofer2001@gmail.com"];
 
+// ── Seguridad: Rate limiter y sanitización ──
+const rateLimiter = {};
+const checkRateLimit = (key, maxAttempts = 3, windowMs = 60000) => {
+  const now = Date.now();
+  if (!rateLimiter[key]) rateLimiter[key] = [];
+  rateLimiter[key] = rateLimiter[key].filter(t => now - t < windowMs);
+  if (rateLimiter[key].length >= maxAttempts) return false;
+  rateLimiter[key].push(now);
+  return true;
+};
+const sanitize = (str) => {
+  if (!str) return "";
+  return str.replace(/[<>]/g, "").replace(/javascript:/gi, "").replace(/on\w+=/gi, "").trim();
+};
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const isValidUrl = (url) => !url || url.startsWith("http://") || url.startsWith("https://");
+
 const CATS = ["Todos","Música","Arte","Comedia","Tech","Gastronomía","Baile","Deportes","Teatro","Bienestar","Académicos"];
 
 // ── Geocodificación: límites de la región y venues verificados ──
@@ -436,6 +453,7 @@ export default function App() {
   const [subNombre, setSubNombre] = useState("");
   const [subLoading, setSubLoading] = useState(false);
   const [subDone, setSubDone] = useState(false);
+  const [honeypot, setHoneypot] = useState(""); // anti-bot field
   const [geoCache, setGeoCache] = useState({});
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoProgress, setGeoProgress] = useState({ done: 0, total: 0 });
@@ -670,16 +688,29 @@ export default function App() {
   const handleCreateSubmit = async () => {
     if (!user) { setShowAuth(true); setShowCreate(false); return; }
     if (!form.title || !form.place || !form.date) { showToast("⚠️ Completa los campos obligatorios"); return; }
+    // Rate limiting: máximo 5 eventos por hora
+    if (!checkRateLimit("createEvent_" + user.id, 5, 3600000)) { showToast("⚠️ Has publicado demasiados eventos, intenta más tarde"); return; }
+    // Validar URLs
+    if (form.ticket_link && !isValidUrl(form.ticket_link)) { showToast("⚠️ El link de compra no es válido"); return; }
+    if (form.image_url && !isValidUrl(form.image_url)) { showToast("⚠️ El link de la imagen no es válido"); return; }
     setFormLoading(true);
     const esAdmin = ADMINS.includes(user.email);
     const { error } = await supabase.from("events").insert([{
-      title: form.title, category: form.category, date: form.date,
-      time: form.time, place: form.place, price: form.price || "Gratis",
+      title: sanitize(form.title).slice(0, 200),
+      category: form.category,
+      date: sanitize(form.date).slice(0, 100),
+      time: sanitize(form.time).slice(0, 50),
+      place: sanitize(form.place).slice(0, 300),
+      price: sanitize(form.price).slice(0, 50) || "Gratis",
       capacity: parseInt(form.capacity) || 0, attendees: 0,
-      description: form.description, emoji: form.emoji,
-      tag: form.tag || null, ticket_platform: form.ticket_platform,
-      ticket_link: form.ticket_link, color: "linear-gradient(135deg,#1a0a00,#2a1500)",
-      organizer_name: form.organizer_name, organizer_contact: form.organizer_contact,
+      description: sanitize(form.description).slice(0, 2000),
+      emoji: form.emoji,
+      tag: form.tag || null,
+      ticket_platform: sanitize(form.ticket_platform).slice(0, 100),
+      ticket_link: form.ticket_link,
+      color: "linear-gradient(135deg,#1a0a00,#2a1500)",
+      organizer_name: sanitize(form.organizer_name).slice(0, 150),
+      organizer_contact: sanitize(form.organizer_contact).slice(0, 150),
       recurrencia: form.recurrencia || null,
       dia_semana: form.dia_semana !== "" ? parseInt(form.dia_semana) : null,
       dia_mes: form.dia_mes !== "" ? parseInt(form.dia_mes) : null,
@@ -709,6 +740,7 @@ export default function App() {
   };
 
   const handleLogin = async () => {
+    if (!checkRateLimit("login", 5, 300000)) { setAuthError("Demasiados intentos. Espera 5 minutos."); return; }
     setAuthLoading(true); setAuthError(""); setAuthSuccess("");
     const { error } = await supabase.auth.signInWithPassword({ email: authEmail, password: authPassword });
     if (error) setAuthError(error.message === "Invalid login credentials" ? "Correo o contraseña incorrectos" : error.message);
@@ -718,6 +750,7 @@ export default function App() {
 
   const handleRegister = async () => {
     if (!authName) { setAuthError("Por favor escribe tu nombre"); return; }
+    if (!checkRateLimit("register", 3, 600000)) { setAuthError("Demasiados intentos. Espera 10 minutos."); return; }
     setAuthLoading(true); setAuthError(""); setAuthSuccess("");
     const { error } = await supabase.auth.signUp({
       email: authEmail, password: authPassword,
@@ -1004,9 +1037,16 @@ export default function App() {
   const toggleDarkMode = () => setDarkMode(d => !d);
 
   const handleSubscribe = async () => {
-    if (!subEmail || !subEmail.includes("@")) { showToast("⚠️ Ingresa un correo válido"); return; }
+    // Anti-bot: si el honeypot tiene valor, es un bot
+    if (honeypot) return;
+    // Validación de email
+    if (!subEmail || !isValidEmail(subEmail)) { showToast("⚠️ Ingresa un correo válido"); return; }
+    // Rate limiting: máximo 3 intentos por minuto
+    if (!checkRateLimit("subscribe", 3, 60000)) { showToast("⚠️ Demasiados intentos, espera un momento"); return; }
     setSubLoading(true);
-    const { error } = await supabase.from("subscribers").insert({ email: subEmail.trim().toLowerCase(), nombre: subNombre.trim() || null });
+    const cleanEmail = sanitize(subEmail).trim().toLowerCase();
+    const cleanNombre = sanitize(subNombre).trim().slice(0, 100) || null;
+    const { error } = await supabase.from("subscribers").insert({ email: cleanEmail, nombre: cleanNombre });
     setSubLoading(false);
     if (error) {
       if (error.code === "23505") showToast("📧 Ya estás suscrito");
@@ -1762,6 +1802,8 @@ export default function App() {
                 <div style={{fontFamily:'var(--font-display)', fontSize:26, color:'white', marginBottom:4}}>📬 AGENDA SEMANAL</div>
                 <div style={{color:'rgba(255,255,255,0.6)', fontSize:14, marginBottom:20}}>Recibe cada viernes los mejores eventos de Medellín</div>
                 <div style={{display:'flex', flexDirection:'column', gap:10, maxWidth:360, margin:'0 auto'}}>
+                  {/* Honeypot anti-bot — invisible para usuarios reales */}
+                  <input type="text" value={honeypot} onChange={e => setHoneypot(e.target.value)} style={{position:'absolute', left:'-9999px', opacity:0, height:0, width:0}} tabIndex={-1} autoComplete="off" />
                   <input type="text" placeholder="Tu nombre (opcional)" value={subNombre} onChange={e => setSubNombre(e.target.value)}
                     style={{padding:'12px 16px', borderRadius:10, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.08)', color:'white', fontSize:14, fontFamily:'var(--font-body)', outline:'none'}} />
                   <input type="email" placeholder="Tu correo electrónico" value={subEmail} onChange={e => setSubEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSubscribe()}
