@@ -1444,11 +1444,19 @@ export default function App() {
               )}
             </div>
 
-            {/* LUGARES DESTACADOS */}
-            <div style={{background:'var(--surface2)', padding:'32px 24px', borderTop:'1px solid var(--border)', borderBottom:'1px solid var(--border)'}}>
+            {/* ALIADOS MEDELLÍN VIBRA */}
+            <div style={{background:'linear-gradient(135deg, #1a1a1a, #2a1a00)', padding:'32px 24px', borderTop:'1px solid var(--border)', borderBottom:'1px solid var(--border)'}}>
               <div style={{maxWidth:1200, margin:'0 auto'}}>
-                <div className="section-header" style={{marginBottom:16}}>
-                  <div className="section-title">{t.venuesTitle} <span>{t.venuesTitleSpan}</span></div>
+                <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20}}>
+                  <div>
+                    <div style={{fontFamily:'var(--font-display)', fontSize:28, color:'white', letterSpacing:0.5}}>
+                      🤝 Aliados <span style={{color:'var(--gold)'}}>Medellín Vibra</span>
+                    </div>
+                    <div style={{fontSize:13, color:'rgba(255,255,255,0.5)', marginTop:4}}>Espacios y marcas que vibran con la ciudad</div>
+                  </div>
+                  <a href="mailto:hola@medellinvibra.co?subject=Quiero ser Aliado de Medellín Vibra" style={{background:'rgba(200,134,10,0.2)', border:'1px solid rgba(200,134,10,0.4)', color:'var(--gold)', borderRadius:100, padding:'8px 16px', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-body)', textDecoration:'none', whiteSpace:'nowrap'}}>
+                    Ser aliado →
+                  </a>
                 </div>
                 <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(160px, 1fr))', gap:12}}>
                   {[
@@ -1463,12 +1471,12 @@ export default function App() {
                     {name:"City Hall El Rodeo", emoji:"🎤", maps:"https://maps.google.com/?q=City+Hall+El+Rodeo+Medellin"},
                     {name:"MAMM — Museo de Arte Moderno", emoji:"🎨", maps:"https://maps.google.com/?q=MAMM+Museo+Arte+Moderno+Medellin"},
                   ].map(lugar => (
-                    <a key={lugar.name} href={lugar.maps} target="_blank" rel="noopener noreferrer" style={{display:'flex', flexDirection:'column', alignItems:'center', gap:8, background:'white', borderRadius:14, padding:'16px 12px', textDecoration:'none', border:'1px solid var(--border)', transition:'all 0.2s', textAlign:'center'}}
-                      onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--gold)';e.currentTarget.style.transform='translateY(-2px)';}}
-                      onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.transform='translateY(0)';}}
+                    <a key={lugar.name} href={lugar.maps} target="_blank" rel="noopener noreferrer" style={{display:'flex', flexDirection:'column', alignItems:'center', gap:8, background:'rgba(255,255,255,0.06)', borderRadius:14, padding:'16px 12px', textDecoration:'none', border:'1px solid rgba(255,255,255,0.08)', transition:'all 0.2s', textAlign:'center'}}
+                      onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--gold)';e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.background='rgba(255,255,255,0.1)';}}
+                      onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(255,255,255,0.08)';e.currentTarget.style.transform='translateY(0)';e.currentTarget.style.background='rgba(255,255,255,0.06)';}}
                     >
                       <span style={{fontSize:28}}>{lugar.emoji}</span>
-                      <span style={{fontSize:12, fontWeight:600, color:'var(--text)', lineHeight:1.3}}>{lugar.name}</span>
+                      <span style={{fontSize:12, fontWeight:600, color:'white', lineHeight:1.3}}>{lugar.name}</span>
                       <span style={{fontSize:11, color:'var(--gold)'}}>Ver en mapa ↗</span>
                     </a>
                   ))}
