@@ -366,6 +366,48 @@ const sanitize = (str) => {
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 const isValidUrl = (url) => !url || url.startsWith("http://") || url.startsWith("https://");
 
+// Generar archivo .ics para agregar al calendario
+const generateICS = (ev) => {
+  const formatDate = (dateStr) => {
+    if (!dateStr) return null;
+    const d = new Date(dateStr + "T00:00:00");
+    return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  };
+  const start = formatDate(ev.fechaReal);
+  if (!start) return;
+  const end = ev.fechaFin ? formatDate(ev.fechaFin) : start;
+  const title = (ev.title || "").replace(/[,;\\]/g, " ");
+  const desc = (ev.desc || ev.description || "").replace(/[,;\\]/g, " ").replace(/\n/g, "\\n").slice(0, 500);
+  const place = (ev.place || "").replace(/[,;\\]/g, " ");
+  const url = `https://www.medellinvibra.co/evento/${slugify(ev.title || title)}-${ev.id}`;
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Medellín Vibra//medellinvibra.co//ES",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    `DTSTART;VALUE=DATE:${start.split("T")[0]}`,
+    `DTEND;VALUE=DATE:${end.split("T")[0]}`,
+    `SUMMARY:${title}`,
+    `DESCRIPTION:${desc}\\n\\n${url}`,
+    `LOCATION:${place}`,
+    `URL:${url}`,
+    "STATUS:CONFIRMED",
+    `UID:${ev.id}@medellinvibra.co`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `${slugify(ev.title || title)}.ics`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
+};
+
 const CATS = ["Todos","Música","Arte","Comedia","Tech","Gastronomía","Baile","Deportes","Teatro","Bienestar","Académicos"];
 
 // ── Geocodificación: límites de la región y venues verificados ──
@@ -1982,6 +2024,12 @@ export default function App() {
                   style={{width:'100%', marginTop:10, padding:'13px', borderRadius:12, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontFamily:'var(--font-body)', fontSize:14, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6}}
                 >
                   🔗 Ver página del evento · Compartir link
+                </button>
+                <button
+                  onClick={() => generateICS(selectedEvent)}
+                  style={{width:'100%', marginTop:8, padding:'13px', borderRadius:12, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontFamily:'var(--font-body)', fontSize:14, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6}}
+                >
+                  📅 Agregar al calendario
                 </button>
                 <button onClick={()=>setSelectedEvent(null)} style={{width:'100%',marginTop:16,padding:'16px',borderRadius:12,border:'1px solid var(--border)',background:'var(--surface2)',color:'var(--muted)',fontFamily:'var(--font-body)',fontSize:15,fontWeight:600,cursor:'pointer'}}>
                   {t.close}

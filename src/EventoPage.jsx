@@ -23,6 +23,49 @@ const slugify = (str) =>
     .trim().replace(/\s+/g, "-")
     .slice(0, 80) || "";
 
+const generateICS = (ev) => {
+  const formatDate = (dateStr) => {
+    if (!dateStr) return null;
+    const d = new Date(dateStr + "T00:00:00");
+    return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  };
+  const fechaReal = ev.fechaReal || ev.fecha_real;
+  const fechaFin = ev.fechaFin || ev.fecha_fin;
+  const start = formatDate(fechaReal);
+  if (!start) return;
+  const end = fechaFin ? formatDate(fechaFin) : start;
+  const title = (ev.title || "").replace(/[,;\\]/g, " ");
+  const desc = (ev.desc || ev.description || "").replace(/[,;\\]/g, " ").replace(/\n/g, "\\n").slice(0, 500);
+  const place = (ev.place || "").replace(/[,;\\]/g, " ");
+  const url = `https://www.medellinvibra.co/evento/${slugify(ev.title || title)}-${ev.id}`;
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Medellín Vibra//medellinvibra.co//ES",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    `DTSTART;VALUE=DATE:${start.split("T")[0]}`,
+    `DTEND;VALUE=DATE:${end.split("T")[0]}`,
+    `SUMMARY:${title}`,
+    `DESCRIPTION:${desc}\\n\\n${url}`,
+    `LOCATION:${place}`,
+    `URL:${url}`,
+    "STATUS:CONFIRMED",
+    `UID:${ev.id}@medellinvibra.co`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `${slugify(ev.title || title)}.ics`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
+};
+
 const StarRating = ({ value, onChange, readonly = false }) => (
   <div style={{display:'flex', gap:4}}>
     {[1,2,3,4,5].map(star => (
@@ -248,8 +291,13 @@ export default function EventoPage() {
         </button>
 
         <button onClick={() => { const text = `${event.title} — ${event.date} en ${event.place}\n${canonicalUrl}`; if (navigator.share) navigator.share({ title: event.title, url: canonicalUrl }); else navigator.clipboard.writeText(text); }}
-          style={{width:'100%', padding:'13px', background:'white', color:'#1a1a1a', border:'1px solid #e5e1d8', borderRadius:14, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit', marginBottom:32}}>
+          style={{width:'100%', padding:'13px', background:'white', color:'#1a1a1a', border:'1px solid #e5e1d8', borderRadius:14, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit', marginBottom:12}}>
           📤 Compartir evento
+        </button>
+
+        <button onClick={() => generateICS(event)}
+          style={{width:'100%', padding:'13px', background:'white', color:'#1a1a1a', border:'1px solid #e5e1d8', borderRadius:14, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit', marginBottom:32, display:'flex', alignItems:'center', justifyContent:'center', gap:6}}>
+          📅 Agregar al calendario
         </button>
 
         {/* SECCIÓN DE RESEÑAS */}
