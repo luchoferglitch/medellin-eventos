@@ -49,6 +49,7 @@ export default async function handler(req) {
   <meta name="twitter:title" content="${title}" />
   <meta name="twitter:description" content="${description}" />
   <meta name="twitter:image" content="${image}" />
+  <link rel="canonical" href="${canonical}" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZRW8DCYBFS"></script>
