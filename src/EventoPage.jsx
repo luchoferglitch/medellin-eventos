@@ -23,47 +23,19 @@ const slugify = (str) =>
     .trim().replace(/\s+/g, "-")
     .slice(0, 80) || "";
 
-const generateICS = (ev) => {
-  const formatDate = (dateStr) => {
-    if (!dateStr) return null;
-    const d = new Date(dateStr + "T00:00:00");
-    return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-  };
+const addToCalendar = (ev) => {
   const fechaReal = ev.fechaReal || ev.fecha_real;
   const fechaFin = ev.fechaFin || ev.fecha_fin;
-  const start = formatDate(fechaReal);
-  if (!start) return;
-  const end = fechaFin ? formatDate(fechaFin) : start;
-  const title = (ev.title || "").replace(/[,;\\]/g, " ");
-  const desc = (ev.desc || ev.description || "").replace(/[,;\\]/g, " ").replace(/\n/g, "\\n").slice(0, 500);
-  const place = (ev.place || "").replace(/[,;\\]/g, " ");
-  const url = `https://www.medellinvibra.co/evento/${slugify(ev.title || title)}-${ev.id}`;
-  const ics = [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//Medellín Vibra//medellinvibra.co//ES",
-    "CALSCALE:GREGORIAN",
-    "METHOD:PUBLISH",
-    "BEGIN:VEVENT",
-    `DTSTART;VALUE=DATE:${start.split("T")[0]}`,
-    `DTEND;VALUE=DATE:${end.split("T")[0]}`,
-    `SUMMARY:${title}`,
-    `DESCRIPTION:${desc}\\n\\n${url}`,
-    `LOCATION:${place}`,
-    `URL:${url}`,
-    "STATUS:CONFIRMED",
-    `UID:${ev.id}@medellinvibra.co`,
-    "END:VEVENT",
-    "END:VCALENDAR",
-  ].join("\r\n");
-  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = `${slugify(ev.title || title)}.ics`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(link.href);
+  if (!fechaReal) return;
+  const start = fechaReal.replace(/-/g, "");
+  const end = fechaFin ? fechaFin.replace(/-/g, "") : start;
+  const title = encodeURIComponent(ev.title || "");
+  const place = encodeURIComponent(ev.place || "");
+  const desc = encodeURIComponent(
+    `${ev.desc || ev.description || ""}\n\n🎫 ${ev.price || ""}\n📍 ${ev.place || ""}\n\n👉 Ver en Medellín Vibra: https://www.medellinvibra.co/evento/${slugify(ev.title)}-${ev.id}`
+  );
+  const url = `https://calendar.google.com/calendar/event?action=TEMPLATE&text=${title}&dates=${start}/${end}&location=${place}&details=${desc}`;
+  window.open(url, "_blank");
 };
 
 const StarRating = ({ value, onChange, readonly = false }) => (
@@ -295,7 +267,7 @@ export default function EventoPage() {
           📤 Compartir evento
         </button>
 
-        <button onClick={() => generateICS(event)}
+        <button onClick={() => addToCalendar(event)}
           style={{width:'100%', padding:'13px', background:'white', color:'#1a1a1a', border:'1px solid #e5e1d8', borderRadius:14, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit', marginBottom:32, display:'flex', alignItems:'center', justifyContent:'center', gap:6}}>
           📅 Agregar al calendario
         </button>
