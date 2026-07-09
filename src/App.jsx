@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect, useRef, useCallback } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { supabase } from "./supabase";
-import { Calendar, MapPin, Star, MessageCircle } from "lucide-react";
+import { Calendar, MapPin, Star, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Handshake, Mail, Instagram, Facebook, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette } from "lucide-react";
 import { translations } from "./translations";
 import EventoPage from "./EventoPage";
 import OrganizadorPage from "./OrganizadorPage";
@@ -39,6 +39,7 @@ const TAGS_CONFIG = {
   "Últimas entradas": { emoji: "🎟️", color: "#DC2626", bg: "rgba(220,38,38,0.10)", border: "rgba(220,38,38,0.3)" },
   "Agotado":          { emoji: "🔥", color: "#7C3AED", bg: "rgba(124,58,237,0.10)", border: "rgba(124,58,237,0.3)" },
   "Nuevo":            { emoji: "🆕", color: "#059669", bg: "rgba(5,150,105,0.10)",  border: "rgba(5,150,105,0.3)"  },
+  "Próximo":          { emoji: "", color: "#C8860A", bg: "rgba(200,134,10,0.12)", border: "rgba(200,134,10,0.3)" },
 };
 
 const ADMIN_TAGS = ["Destacado", "Últimas entradas", "Agotado"]; // asignables manualmente
@@ -117,6 +118,21 @@ const style = `
   .nav-logo { font-family: var(--font-display); font-size: 26px; letter-spacing: 1px; color: var(--gold); }
   .nav-logo span { color: var(--red); }
   .nav-actions { display: flex; gap: 10px; align-items: center; }
+  .nav-links { display: none; }
+  @media (min-width: 768px) {
+    .nav-links { display: flex; gap: 4px; margin-left: 18px; flex: 1; }
+    .nav-link { background: none; border: none; cursor: pointer; font-family: var(--font-body); font-size: 13px; font-weight: 600; color: var(--muted); padding: 8px 12px; border-radius: 8px; transition: all 0.2s; }
+    .nav-link:hover { color: var(--gold); background: var(--surface2); }
+    .nav-link.active { color: var(--gold); }
+    .bottom-nav { display: none; }
+  }
+  @media (max-width: 640px) {
+    .nav { padding: 0 14px; }
+    .nav-logo { font-size: 20px; }
+    .nav-actions { gap: 6px; }
+    .nav-actions .btn-ghost { padding: 8px 10px; }
+    .nav-actions .btn-primary { padding: 8px 12px; white-space: nowrap; }
+  }
   .btn-ghost {
     background: none; border: 1px solid var(--border); color: var(--text);
     padding: 8px 16px; border-radius: 8px; cursor: pointer;
@@ -228,7 +244,7 @@ const style = `
     font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px;
   }
   .about-title { font-family: var(--font-display); font-size: 36px; color: var(--text); margin-bottom: 16px; letter-spacing: 0.5px; }
-  .about-text { font-size: 17px; line-height: 1.8; color: #555; max-width: 680px; margin: 0 auto; }
+  .about-text { font-size: 17px; line-height: 1.8; color: #555; max-width: 640px; margin: 0 auto; text-align: left; }
 
   .filters-bar { padding: 20px 24px; display: flex; gap: 8px; overflow-x: auto; border-bottom: 1px solid var(--border); background: white; }
   .filters-bar::-webkit-scrollbar { display: none; }
@@ -281,7 +297,7 @@ const style = `
   .detail-info-item { background: var(--surface2); border-radius: 12px; padding: 14px; border: 1px solid var(--border); }
   .detail-info-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
   .detail-info-value { font-weight: 600; font-size: 14px; color: var(--text); }
-  .detail-desc { color: #555; font-size: 15px; line-height: 1.7; margin-bottom: 28px; }
+  .detail-desc { color: #555; font-size: 15px; line-height: 1.7; margin-bottom: 28px; text-align: left; }
   .detail-map { height: 140px; border-radius: 14px; overflow: hidden; margin-bottom: 16px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; gap: 8px; transition: all 0.2s; }
   .detail-map:hover { border-color: var(--gold); color: var(--gold); background: rgba(200,134,10,0.05); }
   .detail-actions { display: flex; gap: 12px; }
@@ -307,10 +323,10 @@ const style = `
   .btn-cancel:hover { color: var(--text); border-color: var(--text); }
   .btn-submit { flex: 1; padding: 14px; border-radius: 10px; background: var(--gold); color: white; border: none; font-weight: 700; font-size: 15px; cursor: pointer; font-family: var(--font-body); transition: all 0.2s; }
   .btn-submit:hover { background: #a06d08; }
-  .bottom-nav { position: sticky; bottom: 0; background: rgba(255,255,255,0.97); backdrop-filter: blur(16px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 0 16px; box-shadow: 0 -4px 20px rgba(0,0,0,0.06); }
+  .bottom-nav { position: sticky; bottom: 0; z-index: 200; background: rgba(255,255,255,0.97); backdrop-filter: blur(16px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 0 16px; box-shadow: 0 -4px 20px rgba(0,0,0,0.06); }
   .bottom-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted); font-size: 11px; cursor: pointer; padding: 4px 16px; transition: color 0.2s; background: none; border: none; font-family: var(--font-body); }
   .bottom-nav-item.active { color: var(--gold); }
-  .bottom-nav-item span:first-child { font-size: 20px; }
+  .bottom-nav-item span:first-child { font-size: 20px; display: flex; align-items: center; justify-content: center; position: relative; }
   .map-container { position: relative; flex: 1; min-height: 0; }
   .map-wrap { height: 100%; width: 100%; }
   .map-popup { font-family: var(--font-body); min-width: 200px; }
@@ -1104,17 +1120,22 @@ export default function App() {
       <style>{style}</style>
       <div className="app">
         <nav className="nav">
-          <div className="nav-logo">MEDELLÍN VIBRA</div>
+          <div className="nav-logo" style={{cursor:'pointer'}} onClick={()=>setActiveTab("home")}>MEDELLÍN VIBRA</div>
+          <div className="nav-links">
+            {[[t.tabExplore,"explore"],["Mapa","map"],[t.tabSaved,"saved"]].map(([label,tab]) => (
+              <button key={tab} className={`nav-link ${activeTab===tab?"active":""}`} onClick={()=>setActiveTab(tab)}>{label}</button>
+            ))}
+          </div>
           <div className="nav-actions">
             <select value={lang} onChange={e=>setLang(e.target.value)} style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,padding:'6px 10px',fontFamily:'var(--font-body)',fontSize:13,color:'var(--text)',cursor:'pointer',outline:'none'}}>
-              <option value="es">🇨🇴 ES</option>
-              <option value="en">🇺🇸 EN</option>
-              <option value="pt">🇧🇷 PT</option>
-              <option value="fr">🇫🇷 FR</option>
+              <option value="es">ES</option>
+              <option value="en">EN</option>
+              <option value="pt">PT</option>
+              <option value="fr">FR</option>
             </select>
             <button onClick={toggleDarkMode} title={darkMode ? "Modo claro" : "Modo oscuro"}
-              style={{background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:8, padding:'6px 10px', cursor:'pointer', fontSize:16, lineHeight:1, color:'var(--text)'}}>
-              {darkMode ? "☀️" : "🌙"}
+              style={{background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:8, padding:'7px 10px', cursor:'pointer', display:'flex', alignItems:'center', color:'var(--text)'}}>
+              {darkMode ? <Sun size={16} /> : <Moon size={16} />}
             </button>
             {user ? (
               <>
@@ -1136,9 +1157,9 @@ export default function App() {
             <div className="hero">
               <div className="hero-bg" />
               <div className="hero-content">
-                <a href="https://www.google.com/maps/place/Medell%C3%ADn,+Antioquia/@6.2441988,-75.6357583,12z" target="_blank" rel="noopener noreferrer" className="hero-tag" style={{textDecoration:'none'}}>📍 Medellín, Colombia</a>
+                <a href="https://www.google.com/maps/place/Medell%C3%ADn,+Antioquia/@6.2441988,-75.6357583,12z" target="_blank" rel="noopener noreferrer" className="hero-tag" style={{textDecoration:'none'}}><MapPin size={12} style={{display:'inline', verticalAlign:'-2px', marginRight:4}} />Medellín, Colombia</a>
                 <h1 className="hero-title">DESCUBRE<br/><span className="accent">LO QUE</span><br/><span className="accent-red">VIBRA</span></h1>
-                <p className="hero-sub">Los mejores eventos de la ciudad de la eterna primavera. Música, arte, gastronomía y mucho más. <strong style={{color:'#F5A623'}}>Todo esto en el 2026.</strong></p>
+                <p className="hero-sub">Los mejores eventos de la ciudad de la eterna primavera. Música, arte, gastronomía y mucho más. <strong style={{color:'#F5A623'}}>Tu agenda cultural, actualizada cada semana.</strong></p>
 <div className="search-bar">
                   <input placeholder={t.searchPlaceholder} value={search} onChange={e => setSearch(e.target.value)} />
                   <button>{t.searchBtn}</button>
@@ -1191,7 +1212,7 @@ export default function App() {
                     <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20}}>
                       <div>
                         <div style={{fontFamily:'var(--font-display)', fontSize:28, color:'white', letterSpacing:0.5}}>
-                          🎉 <span style={{color:'var(--gold)'}}>{label}</span>
+                          <PartyPopper size={22} style={{display:'inline', verticalAlign:'-3px', marginRight:8, color:'var(--gold)'}} /><span style={{color:'var(--gold)'}}>{label}</span>
                         </div>
                         <div style={{fontSize:13, color:'rgba(255,255,255,0.5)', marginTop:4}}>
                           {findeEvents.length} plan{findeEvents.length !== 1 ? 'es' : ''} para no quedarte en casa
@@ -1218,7 +1239,7 @@ export default function App() {
                             <div style={{position:'absolute', bottom:0, left:0, right:0, padding:'14px 12px'}}>
                               <div style={{fontWeight:700, fontSize:13, color:'white', lineHeight:1.3, marginBottom:4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden'}}>{ev.title}</div>
                               <div style={{fontSize:11, color:'rgba(255,255,255,0.7)'}}>{ev.date}</div>
-                              <div style={{fontSize:11, color:'rgba(255,255,255,0.6)', marginTop:2}}>📍 {ev.place?.split(',')[0]}</div>
+                              <div style={{fontSize:11, color:'rgba(255,255,255,0.6)', marginTop:2, display:'flex', alignItems:'center', gap:3}}><MapPin size={10} />{ev.place?.split(',')[0]}</div>
                             </div>
                           </div>
                         );
@@ -1264,14 +1285,14 @@ export default function App() {
             })()}
 
             <div className="filters-bar" style={{borderBottom:'none',paddingBottom:4,paddingTop:12}}>
-              {[["Todas","🌎 Todas las zonas"],["Medellín","🏙️ Medellín"],["Área Metropolitana","🌆 Área Metropolitana"],["Oriente Cercano","🌿 Oriente Cercano"]].map(([val,label]) => (
+              {[["Todas","Todas las zonas"],["Medellín","Medellín"],["Área Metropolitana","Área Metropolitana"],["Oriente Cercano","Oriente Cercano"]].map(([val,label]) => (
                 <button key={val} className={`filter-chip ${activeZona===val?"active":""}`} onClick={() => setActiveZona(val)}>{label}</button>
               ))}
             </div>
             <div className="filters-bar" style={{borderBottom:'none',paddingBottom:8}}>
-              {[["Todos",t.filterAll],["Hoy",t.filterToday],["FinDeSemana",t.filterWeekend],["EstaSemana",t.filterWeek],["EsteMes",t.filterMonth],["Gratis",t.filterFree],["ConCobro","💳 Con cobro"]].map(([val,label]) => (
+              {[["Todos",t.filterAll],["Hoy",t.filterToday],["FinDeSemana",t.filterWeekend],["EstaSemana",t.filterWeek],["EsteMes",t.filterMonth],["Gratis",t.filterFree],["ConCobro","De pago"]].map(([val,label]) => (
                 <button key={val} className={`filter-chip ${activeDateFilter===val?"active":""}`} onClick={() => setActiveDateFilter(val)}>
-                  {val !== "Gratis" && val !== "ConCobro" ? `📅 ${label}` : label}
+                  {label}
                 </button>
               ))}
             </div>
@@ -1343,10 +1364,14 @@ export default function App() {
                     <div className="featured-content">
                       <span className="featured-badge">{t.featuredBadge}</span>
                       <div className="featured-title">{featuredEvent.title}</div>
-                      <div className="featured-meta">📅 {featuredEvent.date} · ⏰ {featuredEvent.time} · 📍 {featuredEvent.place}</div>
+                      <div className="featured-meta" style={{display:'flex', flexWrap:'wrap', alignItems:'center', gap:'6px 16px'}}>
+                        <span style={{display:'inline-flex', alignItems:'center', gap:5}}><Calendar size={13} />{featuredEvent.date}</span>
+                        {featuredEvent.time && featuredEvent.time !== "Por confirmar" && <span style={{display:'inline-flex', alignItems:'center', gap:5}}><Clock size={13} />{featuredEvent.time}</span>}
+                        <span style={{display:'inline-flex', alignItems:'center', gap:5}}><MapPin size={13} />{featuredEvent.place}</span>
+                      </div>
                       <div className="featured-actions">
-                        <button className="featured-price" onClick={e=>{e.stopPropagation();setSelectedEvent(featuredEvent);}}>Reservar · {featuredEvent.price}</button>
-                        <button className="featured-save" onClick={e=>{e.stopPropagation();toggleSave(featuredEvent.id);}}>{saved.includes(featuredEvent.id) ? t.saved : t.save}</button>
+                        <button className="featured-price" onClick={e=>{e.stopPropagation();setSelectedEvent(featuredEvent);}}>{featuredEvent.price === "Gratis" ? "Ver evento · Gratis" : featuredEvent.price === "Con cobro" ? "Reservar entradas" : `Reservar · ${featuredEvent.price}`}</button>
+                        <button className="featured-save" onClick={e=>{e.stopPropagation();toggleSave(featuredEvent.id);}}><Heart size={14} fill={saved.includes(featuredEvent.id) ? "#E8353A" : "none"} style={{marginRight:6, verticalAlign:'-2px'}} />{(saved.includes(featuredEvent.id) ? t.saved : t.save).replace("❤️ ","").replace("🤍 ","")}</button>
                       </div>
                     </div>
                   </div>
@@ -1371,7 +1396,7 @@ export default function App() {
                 </div>
               ) : filtered.length === 0 ? (
                 <div style={{textAlign:'center',padding:'60px 0',color:'var(--muted)'}}>
-                  <div style={{fontSize:48,marginBottom:12}}>🔍</div>
+                  <div style={{marginBottom:12}}><Search size={44} strokeWidth={1.5} /></div>
                   <div style={{fontSize:16}}>{t.noEvents}</div>
                 </div>
               ) : viewMode === "grid" ? (
@@ -1385,7 +1410,7 @@ export default function App() {
                           const effTag = getEffectiveTag(ev);
                           if (!effTag) return null;
                           const cfg = TAGS_CONFIG[effTag];
-                          return <span style={{position:'absolute',top:12,right:12,background:cfg?.color||'var(--red)',color:'white',padding:'3px 8px',borderRadius:'100px',fontSize:'10px',fontWeight:700,zIndex:1}}>{cfg?.emoji} {effTag}</span>;
+                          return <span style={{position:'absolute',top:12,right:12,background:cfg?.color||'var(--red)',color:'white',padding:'3px 8px',borderRadius:'100px',fontSize:'10px',fontWeight:700,zIndex:1}}>{effTag}</span>;
                         })()}
                       </div>
                       <div className="event-card-body">
@@ -1399,7 +1424,7 @@ export default function App() {
                           <div style={{display:'flex',gap:6,position:'relative'}}>
                             {isAdmin && (
                               <>
-                                <button className="btn-reserve" style={{color:'var(--gold)',borderColor:'rgba(200,134,10,0.3)',fontSize:11}} onClick={e=>{e.stopPropagation();setAdminTagPicker(adminTagPicker===ev.id?null:ev.id);}}>🏷️ Tag</button>
+                                <button className="btn-reserve" style={{color:'var(--gold)',borderColor:'rgba(200,134,10,0.3)',fontSize:11}} onClick={e=>{e.stopPropagation();setAdminTagPicker(adminTagPicker===ev.id?null:ev.id);}}><Tag size={11} style={{marginRight:3, verticalAlign:'-1px'}} />Tag</button>
                                 {adminTagPicker === ev.id && (
                                   <div className="admin-tag-picker" onClick={e=>e.stopPropagation()}>
                                     <div style={{fontSize:11,color:'var(--muted)',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6,padding:'0 4px'}}>Asignar tag</div>
@@ -1416,10 +1441,10 @@ export default function App() {
                                     {ev.tag && <div className="admin-tag-option" style={{color:'var(--muted)'}} onClick={()=>handleAdminSetTag(ev.id,null)}>✕ Quitar tag</div>}
                                   </div>
                                 )}
-                                <button className="btn-reserve" style={{color:'var(--red)',borderColor:'rgba(232,53,58,0.3)'}} onClick={e=>handleDeleteEvent(ev.id,e)}>🗑️</button>
+                                <button className="btn-reserve" style={{color:'var(--red)',borderColor:'rgba(232,53,58,0.3)'}} onClick={e=>handleDeleteEvent(ev.id,e)}><Trash2 size={14} /></button>
                               </>
                             )}
-                            <button className="btn-reserve" onClick={e=>{e.stopPropagation();toggleSave(ev.id);}}>{saved.includes(ev.id) ? "❤️" : "🤍"} {t.save.replace("🤍 ","")}</button>
+                            <button className="btn-reserve" style={{display:'inline-flex', alignItems:'center', gap:5}} onClick={e=>{e.stopPropagation();toggleSave(ev.id);}}><Heart size={13} fill={saved.includes(ev.id) ? "#E8353A" : "none"} color={saved.includes(ev.id) ? "#E8353A" : "currentColor"} />{t.save.replace("🤍 ","")}</button>
                           </div>
                         </div>
                       </div>
@@ -1451,11 +1476,11 @@ export default function App() {
                             const effTag = getEffectiveTag(ev);
                             if (!effTag) return null;
                             const cfg = TAGS_CONFIG[effTag];
-                            return <span style={{background:cfg?.color||'var(--red)', padding:'2px 8px', borderRadius:100, fontSize:11, color:'white', fontWeight:700}}>{cfg?.emoji} {effTag}</span>;
+                            return <span style={{background:cfg?.color||'var(--red)', padding:'2px 8px', borderRadius:100, fontSize:11, color:'white', fontWeight:700}}>{effTag}</span>;
                           })()}
                         </div>
                       </div>
-                      <button className="btn-reserve" style={{flexShrink:0}} onClick={e=>{e.stopPropagation();toggleSave(ev.id);}}>{saved.includes(ev.id) ? "❤️" : "🤍"}</button>
+                      <button className="btn-reserve" style={{flexShrink:0, display:'inline-flex', alignItems:'center'}} onClick={e=>{e.stopPropagation();toggleSave(ev.id);}}><Heart size={15} fill={saved.includes(ev.id) ? "#E8353A" : "none"} color={saved.includes(ev.id) ? "#E8353A" : "currentColor"} /></button>
                     </div>
                   ))}
                 </div>
@@ -1468,7 +1493,7 @@ export default function App() {
                 <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20}}>
                   <div>
                     <div style={{fontFamily:'var(--font-display)', fontSize:28, color:'white', letterSpacing:0.5}}>
-                      🤝 Aliados <span style={{color:'var(--gold)'}}>Medellín Vibra</span>
+                      <Handshake size={24} style={{display:'inline', verticalAlign:'-3px', marginRight:8, color:'var(--gold)'}} />Aliados <span style={{color:'var(--gold)'}}>Medellín Vibra</span>
                     </div>
                     <div style={{fontSize:13, color:'rgba(255,255,255,0.5)', marginTop:4}}>Espacios y marcas que vibran con la ciudad</div>
                   </div>
@@ -1478,22 +1503,22 @@ export default function App() {
                 </div>
                 <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(160px, 1fr))', gap:12}}>
                   {[
-                    {name:"Teatro Pablo Tobón Uribe", emoji:"🎭", maps:"https://maps.google.com/?q=Teatro+Pablo+Tobon+Uribe+Medellin"},
-                    {name:"La Macarena", emoji:"🎵", maps:"https://maps.google.com/?q=La+Macarena+Medellin"},
-                    {name:"Parque Norte", emoji:"🎡", maps:"https://maps.google.com/?q=Parque+Norte+Medellin"},
-                    {name:"Plaza Mayor", emoji:"🏛️", maps:"https://maps.google.com/?q=Plaza+Mayor+Medellin"},
-                    {name:"Teatro Metropolitano", emoji:"🎼", maps:"https://maps.google.com/?q=Teatro+Metropolitano+Medellin"},
-                    {name:"Estadio Atanasio Girardot", emoji:"⚽", maps:"https://maps.google.com/?q=Estadio+Atanasio+Girardot+Medellin"},
-                    {name:"Parque Explora", emoji:"🔭", maps:"https://maps.google.com/?q=Parque+Explora+Medellin"},
-                    {name:"El Tesoro Parque Comercial", emoji:"🛍️", maps:"https://maps.google.com/?q=El+Tesoro+Parque+Comercial+Medellin"},
-                    {name:"City Hall El Rodeo", emoji:"🎤", maps:"https://maps.google.com/?q=City+Hall+El+Rodeo+Medellin"},
-                    {name:"MAMM — Museo de Arte Moderno", emoji:"🎨", maps:"https://maps.google.com/?q=MAMM+Museo+Arte+Moderno+Medellin"},
+                    {name:"Teatro Pablo Tobón Uribe", Icon:Drama, maps:"https://maps.google.com/?q=Teatro+Pablo+Tobon+Uribe+Medellin"},
+                    {name:"La Macarena", Icon:Music, maps:"https://maps.google.com/?q=La+Macarena+Medellin"},
+                    {name:"Parque Norte", Icon:FerrisWheel, maps:"https://maps.google.com/?q=Parque+Norte+Medellin"},
+                    {name:"Plaza Mayor", Icon:Landmark, maps:"https://maps.google.com/?q=Plaza+Mayor+Medellin"},
+                    {name:"Teatro Metropolitano", Icon:Music4, maps:"https://maps.google.com/?q=Teatro+Metropolitano+Medellin"},
+                    {name:"Estadio Atanasio Girardot", Icon:Trophy, maps:"https://maps.google.com/?q=Estadio+Atanasio+Girardot+Medellin"},
+                    {name:"Parque Explora", Icon:Telescope, maps:"https://maps.google.com/?q=Parque+Explora+Medellin"},
+                    {name:"El Tesoro Parque Comercial", Icon:ShoppingBag, maps:"https://maps.google.com/?q=El+Tesoro+Parque+Comercial+Medellin"},
+                    {name:"City Hall El Rodeo", Icon:Mic, maps:"https://maps.google.com/?q=City+Hall+El+Rodeo+Medellin"},
+                    {name:"MAMM — Museo de Arte Moderno", Icon:Palette, maps:"https://maps.google.com/?q=MAMM+Museo+Arte+Moderno+Medellin"},
                   ].map(lugar => (
                     <a key={lugar.name} href={lugar.maps} target="_blank" rel="noopener noreferrer" style={{display:'flex', flexDirection:'column', alignItems:'center', gap:8, background:'rgba(255,255,255,0.06)', borderRadius:14, padding:'16px 12px', textDecoration:'none', border:'1px solid rgba(255,255,255,0.08)', transition:'all 0.2s', textAlign:'center'}}
                       onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--gold)';e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.background='rgba(255,255,255,0.1)';}}
                       onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(255,255,255,0.08)';e.currentTarget.style.transform='translateY(0)';e.currentTarget.style.background='rgba(255,255,255,0.06)';}}
                     >
-                      <span style={{fontSize:28}}>{lugar.emoji}</span>
+                      <lugar.Icon size={26} color="var(--gold)" strokeWidth={1.75} />
                       <span style={{fontSize:12, fontWeight:600, color:'white', lineHeight:1.3}}>{lugar.name}</span>
                       <span style={{fontSize:11, color:'var(--gold)'}}>Ver en mapa ↗</span>
                     </a>
@@ -1551,7 +1576,7 @@ export default function App() {
           <div className="main" style={{paddingTop:48,textAlign:'center'}}>
             {!user ? (
               <div>
-                <div style={{fontSize:64,marginBottom:16}}>👤</div>
+                <div style={{marginBottom:16}}><User size={56} strokeWidth={1.25} /></div>
                 <div style={{color:'var(--muted)',marginBottom:24}}>{t.loginToSave}</div>
                 <button className="btn-primary" onClick={()=>{setAuthTab("login");setShowAuth(true);}}>{t.login}</button>
               </div>
@@ -1604,7 +1629,7 @@ export default function App() {
               {!geoLoading && markersRef.current.length === 0 && filtered.length > 0 && (
                 <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', zIndex:999, pointerEvents:'none'}}>
                   <div style={{background:'white', border:'1px solid var(--border)', borderRadius:16, padding:'20px 28px', textAlign:'center', boxShadow:'0 4px 20px rgba(0,0,0,0.1)'}}>
-                    <div style={{fontSize:32, marginBottom:8}}>🗺️</div>
+                    <div style={{marginBottom:8}}><MapIcon size={30} color="var(--gold)" /></div>
                     <div style={{fontWeight:700, marginBottom:4}}>Geocodificando ubicaciones</div>
                     <div style={{fontSize:13, color:'var(--muted)'}}>Los pins aparecerán en unos segundos…</div>
                   </div>
@@ -1645,7 +1670,7 @@ export default function App() {
             {adminSection === "pending" && (
               pendingEvents.length === 0
                 ? <div style={{textAlign:'center', padding:'48px 0', color:'var(--muted)'}}>
-                    <div style={{fontSize:48, marginBottom:12}}>🎉</div>
+                    <div style={{marginBottom:12}}><PartyPopper size={44} strokeWidth={1.5} /></div>
                     <div style={{fontWeight:700, marginBottom:4}}>Sin eventos pendientes</div>
                     <div style={{fontSize:13}}>Todo está al día</div>
                   </div>
@@ -1819,13 +1844,13 @@ export default function App() {
           <div style={{background:'var(--dark)', padding:'32px 24px', textAlign:'center'}}>
             {subDone ? (
               <div>
-                <div style={{fontSize:40, marginBottom:12}}>🎉</div>
+                <div style={{marginBottom:12}}><PartyPopper size={36} color="var(--gold)" /></div>
                 <div style={{fontFamily:'var(--font-display)', fontSize:24, color:'var(--gold)', marginBottom:8}}>¡YA ESTÁS SUSCRITO!</div>
                 <div style={{color:'rgba(255,255,255,0.7)', fontSize:14}}>Cada viernes te mandamos los mejores eventos de la semana.</div>
               </div>
             ) : (
               <>
-                <div style={{fontFamily:'var(--font-display)', fontSize:26, color:'white', marginBottom:4}}>📬 AGENDA SEMANAL</div>
+                <div style={{fontFamily:'var(--font-display)', fontSize:26, color:'white', marginBottom:4}}><Mail size={22} style={{display:'inline', verticalAlign:'-2px', marginRight:8, color:'var(--gold)'}} />AGENDA SEMANAL</div>
                 <div style={{color:'rgba(255,255,255,0.6)', fontSize:14, marginBottom:20}}>Recibe cada viernes los mejores eventos de Medellín</div>
                 <div style={{display:'flex', flexDirection:'column', gap:10, maxWidth:360, margin:'0 auto'}}>
                   {/* Honeypot anti-bot — invisible para usuarios reales */}
@@ -1848,13 +1873,13 @@ export default function App() {
             <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:16, flexWrap:'wrap'}}>
               <span style={{fontFamily:'var(--font-display)', fontSize:18, color:'var(--gold)'}}>MEDELLÍN VIBRA</span>
               <a href="https://www.instagram.com/medellinvibra.co/" target="_blank" rel="noopener noreferrer" style={{display:'inline-flex', alignItems:'center', gap:6, color:'#C0392B', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
-                📸 @medellinvibra.co
+                <Instagram size={14} />@medellinvibra.co
               </a>
               <a href="https://www.facebook.com/profile.php?id=61591129902444" target="_blank" rel="noopener noreferrer" style={{display:'inline-flex', alignItems:'center', gap:6, color:'#1877F2', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
-                📘 Medellín Vibra
+                <Facebook size={14} />Medellín Vibra
               </a>
               <a href="mailto:hola@medellinvibra.co" style={{display:'inline-flex', alignItems:'center', gap:6, color:'var(--gold)', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
-                ✉️ hola@medellinvibra.co
+                <Mail size={14} />hola@medellinvibra.co
               </a>
               <span style={{fontSize:12, color:'var(--muted)'}}>{t.copyright}</span>
             </div>
@@ -1862,14 +1887,14 @@ export default function App() {
         </footer>
 
         <nav className="bottom-nav">
-          {[[" 🏠",t.tabHome,"home"],["🔍",t.tabExplore,"explore"],["🗺️","Mapa","map"],[saved.length > 0 ? "❤️" : "🤍",t.tabSaved,"saved"],["👤",t.tabProfile,"profile"]].map(([icon,label,tab])=>(
+          {[[Home,t.tabHome,"home"],[Search,t.tabExplore,"explore"],[MapIcon,"Mapa","map"],[Heart,t.tabSaved,"saved"],[User,t.tabProfile,"profile"]].map(([Icon,label,tab])=>(
             <button key={tab} className={`bottom-nav-item ${activeTab===tab?"active":""}`} onClick={()=>setActiveTab(tab)}>
-              <span>{icon}</span><span>{label}</span>
+              <span><Icon size={20} fill={tab==="saved" && saved.length > 0 ? "#E8353A" : "none"} color={tab==="saved" && saved.length > 0 ? "#E8353A" : "currentColor"} /></span><span>{label}</span>
             </button>
           ))}
           {isAdmin && (
             <button className={`bottom-nav-item ${activeTab==="admin"?"active":""}`} onClick={()=>setActiveTab("admin")}>
-              <span>⚙️{pendingEvents.length > 0 && <span className="admin-badge">{pendingEvents.length}</span>}</span>
+              <span><Settings size={20} />{pendingEvents.length > 0 && <span className="admin-badge">{pendingEvents.length}</span>}</span>
               <span>Admin</span>
             </button>
           )}
@@ -1953,13 +1978,13 @@ export default function App() {
                   />
                   <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedEvent.place)}`} target="_blank" rel="noopener noreferrer"
                     style={{display:'flex', alignItems:'center', gap:6, marginTop:8, color:'var(--gold)', fontSize:13, fontWeight:600, textDecoration:'none'}}>
-                    📍 Abrir en Google Maps · {selectedEvent.place} ↗
+                    <MapPin size={14} />Abrir en Google Maps · {selectedEvent.place} ↗
                   </a>
                 </div>
                 {selectedEvent.ticketPlatform && (
                   <div style={{marginBottom:12,display:'flex',alignItems:'center',gap:8,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 14px',cursor: selectedEvent.link ? 'pointer' : 'default'}}
                     onClick={() => selectedEvent.link && window.open(selectedEvent.link, '_blank')}>
-                    <span style={{fontSize:16}}>🎟️</span>
+                    <Ticket size={18} color="var(--gold)" style={{flexShrink:0}} />
                     <div>
                       <div style={{fontSize:11,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'0.5px'}}>{t.officialTickets}</div>
                       <div style={{fontWeight:700,fontSize:14,color:'var(--gold)'}}>{selectedEvent.ticketPlatform} {selectedEvent.link && '↗'}</div>
@@ -1990,22 +2015,22 @@ export default function App() {
                     const texto = `🎉 *${selectedEvent.title}*\n📅 ${selectedEvent.date} · ${selectedEvent.time}\n📍 ${selectedEvent.place}\n💰 ${selectedEvent.price}\n\n👉 Más info en medellinvibra.co`;
                     window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
                   }}><MessageCircle size={20} /></button>
-                  <button className="btn-share" onClick={()=>toggleSave(selectedEvent.id)}>{saved.includes(selectedEvent.id) ? "❤️" : "🤍"}</button>
+                  <button className="btn-share" style={{display:'inline-flex', alignItems:'center', justifyContent:'center'}} onClick={()=>toggleSave(selectedEvent.id)}><Heart size={20} fill={saved.includes(selectedEvent.id) ? "#E8353A" : "none"} color={saved.includes(selectedEvent.id) ? "#E8353A" : "currentColor"} /></button>
                   {isAdmin && (
-                    <button className="btn-share" style={{color:'var(--red)',borderColor:'rgba(232,53,58,0.3)'}} onClick={e=>{handleDeleteEvent(selectedEvent.id,e);setSelectedEvent(null);}}>🗑️</button>
+                    <button className="btn-share" style={{color:'var(--red)',borderColor:'rgba(232,53,58,0.3)'}} onClick={e=>{handleDeleteEvent(selectedEvent.id,e);setSelectedEvent(null);}}><Trash2 size={18} /></button>
                   )}
                 </div>
                 <button
                   onClick={() => { setSelectedEvent(null); navigate(`/evento/${slugify(selectedEvent.title)}-${selectedEvent.id}`); }}
                   style={{width:'100%', marginTop:10, padding:'13px', borderRadius:12, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontFamily:'var(--font-body)', fontSize:14, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6}}
                 >
-                  🔗 Ver página del evento · Compartir link
+                  <Link2 size={15} />Ver página del evento · Compartir link
                 </button>
                 <button
                   onClick={() => addToCalendar(selectedEvent)}
                   style={{width:'100%', marginTop:8, padding:'13px', borderRadius:12, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontFamily:'var(--font-body)', fontSize:14, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6}}
                 >
-                  📅 Agregar al calendario
+                  <CalendarPlus size={15} />Agregar al calendario
                 </button>
                 <button onClick={()=>setSelectedEvent(null)} style={{width:'100%',marginTop:16,padding:'16px',borderRadius:12,border:'1px solid var(--border)',background:'var(--surface2)',color:'var(--muted)',fontFamily:'var(--font-body)',fontSize:15,fontWeight:600,cursor:'pointer'}}>
                   {t.close}
@@ -2070,7 +2095,7 @@ export default function App() {
               </div>
 
               <div style={{borderTop:'1px solid var(--border)',margin:'16px 0',paddingTop:16}}>
-                <div style={{fontSize:12,fontWeight:700,color:'var(--gold)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:14}}>👤 Información del organizador</div>
+                <div style={{fontSize:12,fontWeight:700,color:'var(--gold)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:14}}><User size={12} style={{marginRight:4, verticalAlign:'-2px'}} />Información del organizador</div>
                 <div className="form-group">
                   <label className="form-label">Nombre del organizador</label>
                   <input className="form-input" placeholder="ej. Productora XYZ" value={form.organizer_name} onChange={e=>handleFormChange("organizer_name",e.target.value)} />
