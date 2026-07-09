@@ -22,7 +22,7 @@
         {
           "type": "header",
           "key": "user-agent",
-          "value": ".*(facebookexternalhit|twitterbot|whatsapp|linkedinbot|telegrambot|slackbot|googlebot|bingbot|applebot|discordbot|pinterest).*"
+          "value": "(?i).*(facebookexternalhit|facebookcatalog|twitterbot|whatsapp|linkedinbot|telegrambot|slackbot|googlebot|bingbot|applebot|discordbot|pinterest).*"
         }
       ],
       "destination": "/api/og?slug=:slug"
