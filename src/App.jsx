@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect, useRef, useCallback } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { supabase } from "./supabase";
-import { Calendar, MapPin, Star, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Handshake, Mail, Instagram, Facebook, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette } from "lucide-react";
+import { Calendar, MapPin, Star, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Handshake, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette } from "lucide-react";
 import { translations } from "./translations";
 import EventoPage from "./EventoPage";
 import OrganizadorPage from "./OrganizadorPage";
@@ -17,6 +17,14 @@ import catTeatro from "./assets/cat-teatro.jpg";
 import catGastronomia from "./assets/cat-gastronomia.jpg";
 import catBienestar from "./assets/cat-bienestar.jpg";
 import catAcademicos from "./assets/cat-academicos.jpg";
+
+// Iconos de marca (retirados de lucide-react; trazos originales MIT)
+const InstagramIcon = ({ size = 14, style }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+);
+const FacebookIcon = ({ size = 14, style }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+);
 
 const CAT_CONFIG = {
   "Música":      { img: catMusica,      color: "#7C3AED" },
@@ -1873,10 +1881,10 @@ export default function App() {
             <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:16, flexWrap:'wrap'}}>
               <span style={{fontFamily:'var(--font-display)', fontSize:18, color:'var(--gold)'}}>MEDELLÍN VIBRA</span>
               <a href="https://www.instagram.com/medellinvibra.co/" target="_blank" rel="noopener noreferrer" style={{display:'inline-flex', alignItems:'center', gap:6, color:'#C0392B', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
-                <Instagram size={14} />@medellinvibra.co
+                <InstagramIcon size={14} />@medellinvibra.co
               </a>
               <a href="https://www.facebook.com/profile.php?id=61591129902444" target="_blank" rel="noopener noreferrer" style={{display:'inline-flex', alignItems:'center', gap:6, color:'#1877F2', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
-                <Facebook size={14} />Medellín Vibra
+                <FacebookIcon size={14} />Medellín Vibra
               </a>
               <a href="mailto:hola@medellinvibra.co" style={{display:'inline-flex', alignItems:'center', gap:6, color:'var(--gold)', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
                 <Mail size={14} />hola@medellinvibra.co
