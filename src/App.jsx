@@ -206,7 +206,7 @@ const style = `
   }
   .hero-bg {
     position: absolute; inset: 0;
-    background-image: url('https://i.imgur.com/gcIvQUD.jpg');
+    background-image: url('https://jtbqaqugnqkympwnfsod.supabase.co/storage/v1/object/public/event-images/evento-default-fallback');
     background-color: #1a2a3a;
     background-size: cover; background-position: center;
   }
