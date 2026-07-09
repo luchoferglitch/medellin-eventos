@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "./supabase";
+import { Calendar, Clock, MapPin, Banknote, User, Share2, CalendarPlus, Search, Star, PartyPopper, Drama } from "lucide-react";
 
 const CAT_COLORS = {
   "Música": "#7C3AED", "Arte": "#EA580C", "Comedia": "#D97706",
@@ -159,18 +160,43 @@ export default function EventoPage() {
     setMeta('meta[name="twitter:title"]', `${e.title} — Medellín Vibra`);
     setMeta('meta[name="twitter:description"]', desc);
     setMeta('meta[name="twitter:image"]', img);
+
+    // JSON-LD Event (schema.org) — habilita resultados enriquecidos de eventos en Google
+    const oldLd = document.getElementById("event-jsonld");
+    if (oldLd) oldLd.remove();
+    if (e.fecha_real) {
+      const ld = {
+        "@context": "https://schema.org",
+        "@type": "Event",
+        name: e.title,
+        startDate: e.fecha_real,
+        ...(e.fecha_fin ? { endDate: e.fecha_fin } : {}),
+        eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+        eventStatus: "https://schema.org/EventScheduled",
+        location: { "@type": "Place", name: e.place, address: { "@type": "PostalAddress", addressLocality: "Medellín", addressRegion: "Antioquia", addressCountry: "CO" } },
+        ...(e.image_url ? { image: [e.image_url] } : {}),
+        ...(e.description ? { description: e.description.slice(0, 300) } : {}),
+        ...(e.organizer_name ? { organizer: { "@type": "Organization", name: e.organizer_name } } : {}),
+        ...(e.price === "Gratis" ? { isAccessibleForFree: true, offers: { "@type": "Offer", price: "0", priceCurrency: "COP", availability: "https://schema.org/InStock", url } } : {}),
+      };
+      const s = document.createElement("script");
+      s.type = "application/ld+json";
+      s.id = "event-jsonld";
+      s.textContent = JSON.stringify(ld);
+      document.head.appendChild(s);
+    }
   };
 
   if (loading) return (
     <div style={{minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#f5f3ef', fontFamily:'sans-serif'}}>
-      <div style={{textAlign:'center'}}><div style={{fontSize:48, marginBottom:16}}>🎭</div><div style={{color:'#888', fontSize:15}}>Cargando evento…</div></div>
+      <div style={{textAlign:'center'}}><div style={{marginBottom:16}}><Drama size={44} color="#C8860A" strokeWidth={1.5} /></div><div style={{color:'#888', fontSize:15}}>Cargando evento…</div></div>
     </div>
   );
 
   if (notFound) return (
     <div style={{minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#f5f3ef', fontFamily:'sans-serif'}}>
       <div style={{textAlign:'center'}}>
-        <div style={{fontSize:64, marginBottom:16}}>🔍</div>
+        <div style={{marginBottom:16}}><Search size={56} color="#bbb" strokeWidth={1.5} /></div>
         <div style={{fontWeight:700, fontSize:22, marginBottom:8}}>Evento no encontrado</div>
         <div style={{color:'#888', marginBottom:24}}>Este evento no existe o ya fue archivado.</div>
         <button onClick={() => navigate("/")} style={{background:'#C8860A', color:'white', border:'none', padding:'12px 24px', borderRadius:100, fontWeight:700, cursor:'pointer', fontSize:15}}>Ver todos los eventos →</button>
@@ -197,24 +223,26 @@ export default function EventoPage() {
       {/* Hero */}
       <div style={{height:280, background:`linear-gradient(135deg, ${catColor}22, ${catColor}44)`, position:'relative', overflow:'hidden', display:'flex', alignItems:'center', justifyContent:'center'}}>
         {event.imageUrl ? (
-          <><img src={event.imageUrl} alt={event.title} style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover'}} /><div style={{position:'absolute', inset:0, background:'linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.7) 100%)'}} /></>
+          <><img src={event.imageUrl} alt="" aria-hidden="true" style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', filter:'blur(24px) brightness(0.55)', transform:'scale(1.12)'}} /><img src={event.imageUrl} alt={event.title} style={{position:'relative', maxWidth:'100%', maxHeight:'100%', objectFit:'contain', zIndex:1}} /><div style={{position:'absolute', inset:0, background:'linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.30) 100%)', zIndex:1, pointerEvents:'none'}} /></>
         ) : (<span style={{fontSize:100, zIndex:1}}>{event.emoji || "🎭"}</span>)}
-        {tagCfg && <div style={{position:'absolute', top:16, right:16, background:tagCfg.color, color:'white', padding:'5px 12px', borderRadius:100, fontSize:12, fontWeight:700, zIndex:2}}>{tagCfg.emoji} {event.tag}</div>}
+        {tagCfg && <div style={{position:'absolute', top:16, right:16, background:tagCfg.color, color:'white', padding:'5px 12px', borderRadius:100, fontSize:12, fontWeight:700, zIndex:2}}>{event.tag}</div>}
         {avgRating && <div style={{position:'absolute', bottom:16, right:16, background:'rgba(0,0,0,0.6)', color:'white', padding:'6px 12px', borderRadius:100, fontSize:13, fontWeight:700, zIndex:2, display:'flex', alignItems:'center', gap:4}}><span style={{color:'#C8860A'}}>★</span> {avgRating} <span style={{opacity:0.7, fontSize:11}}>({reviews.length})</span></div>}
       </div>
 
       {/* Contenido */}
-      <div style={{maxWidth:680, margin:'0 auto', padding:'0 20px 60px'}}>
+      <div style={{maxWidth:680, margin:'0 auto', padding:'0 20px 60px', textAlign:'left'}}>
         <div style={{marginTop:24, marginBottom:8}}>
           <span style={{background:catColor, color:'white', padding:'4px 12px', borderRadius:100, fontSize:12, fontWeight:700}}>{event.cat}</span>
         </div>
         <h1 style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:36, lineHeight:1.1, color:'#1a1a1a', margin:'8px 0 20px'}}>{event.title}</h1>
 
         <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:20}}>
-          {[["📅 Fecha", event.date],["⏰ Hora", event.time || "Por confirmar"],["📍 Lugar", event.place],["💰 Precio", event.price]].map(([label, value]) => (
+          {[["Fecha", event.date, Calendar],["Hora", event.time, Clock],["Lugar", event.place, MapPin],["Precio", event.price, Banknote]]
+            .filter(([, value]) => value && value !== "Por confirmar")
+            .map(([label, value, Icono]) => (
             <div key={label} style={{background:'white', border:'1px solid #e5e1d8', borderRadius:12, padding:'14px 16px'}}>
-              <div style={{fontSize:11, color:'#888', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:4}}>{label}</div>
-              <div style={{fontSize:14, fontWeight:600, color: label.includes("Precio") && value === "Gratis" ? "#059669" : label.includes("Precio") ? "#C8860A" : "#1a1a1a"}}>{value}</div>
+              <div style={{fontSize:11, color:'#888', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:4, display:'flex', alignItems:'center', gap:5}}><Icono size={12} />{label}</div>
+              <div style={{fontSize:14, fontWeight:600, color: label === "Precio" && value === "Gratis" ? "#059669" : label === "Precio" ? "#C8860A" : "#1a1a1a"}}>{value}</div>
             </div>
           ))}
         </div>
@@ -229,13 +257,13 @@ export default function EventoPage() {
         <div style={{marginBottom:16}}>
           <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.place)}`} target="_blank" rel="noopener noreferrer"
             style={{display:'flex', alignItems:'center', gap:8, background:'white', border:'1px solid #e5e1d8', borderRadius:12, padding:'14px 16px', textDecoration:'none', color:'#C8860A', fontWeight:600, fontSize:14}}>
-            📍 Ver ubicación en Google Maps · {event.place} ↗
+            <MapPin size={15} style={{flexShrink:0}} />Ver ubicación en Google Maps · {event.place} ↗
           </a>
         </div>
 
         {event.organizerName && (
           <div style={{background:'white', border:'1px solid #e5e1d8', borderRadius:14, padding:'16px 20px', marginBottom:16, display:'flex', gap:14, alignItems:'center'}}>
-            <div style={{width:44, height:44, borderRadius:'50%', background:'#f5f3ef', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0}}>👤</div>
+            <div style={{width:44, height:44, borderRadius:'50%', background:'#f5f3ef', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}><User size={20} color="#C8860A" /></div>
             <div>
               <div style={{fontSize:11, color:'#888', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:2}}>Organizador</div>
               <div style={{fontWeight:700, fontSize:14}}>{event.organizerName}</div>
@@ -249,7 +277,7 @@ export default function EventoPage() {
         {event.ticketPlatform && (
           <div style={{background:'white', border:'1px solid #e5e1d8', borderRadius:14, padding:'16px 20px', marginBottom:20, display:'flex', gap:14, alignItems:'center', cursor: event.link ? 'pointer' : 'default'}}
             onClick={() => event.link && window.open(event.link, "_blank")}>
-            <div style={{width:44, height:44, borderRadius:'50%', background:'#f5f3ef', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0}}>🎟️</div>
+            <div style={{width:44, height:44, borderRadius:'50%', background:'#f5f3ef', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C8860A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg></div>
             <div>
               <div style={{fontSize:11, color:'#888', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:2}}>Plataforma de tickets</div>
               <div style={{fontWeight:700, fontSize:14, color:'#C8860A'}}>{event.ticketPlatform} {event.link && "↗"}</div>
@@ -259,17 +287,17 @@ export default function EventoPage() {
 
         <button onClick={() => event.link ? window.open(event.link, "_blank") : navigate("/")}
           style={{width:'100%', padding:'16px', background:'#C8860A', color:'white', border:'none', borderRadius:14, fontWeight:700, fontSize:16, cursor:'pointer', fontFamily:'inherit', marginBottom:12}}>
-          {event.price === "Gratis" ? "🎟️ Registro gratuito" : event.link ? `Comprar entradas · ${event.price} →` : "Ver más eventos →"}
+          {event.price === "Gratis" ? "Registro gratuito →" : event.link ? `Comprar entradas · ${event.price} →` : "Ver más eventos →"}
         </button>
 
         <button onClick={() => { const text = `${event.title} — ${event.date} en ${event.place}\n${canonicalUrl}`; if (navigator.share) navigator.share({ title: event.title, url: canonicalUrl }); else navigator.clipboard.writeText(text); }}
           style={{width:'100%', padding:'13px', background:'white', color:'#1a1a1a', border:'1px solid #e5e1d8', borderRadius:14, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit', marginBottom:12}}>
-          📤 Compartir evento
+          <Share2 size={15} style={{display:'inline', verticalAlign:'-2px', marginRight:6}} />Compartir evento
         </button>
 
         <button onClick={() => addToCalendar(event)}
           style={{width:'100%', padding:'13px', background:'white', color:'#1a1a1a', border:'1px solid #e5e1d8', borderRadius:14, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit', marginBottom:32, display:'flex', alignItems:'center', justifyContent:'center', gap:6}}>
-          📅 Agregar al calendario
+          <CalendarPlus size={15} />Agregar al calendario
         </button>
 
         {/* SECCIÓN DE RESEÑAS */}
@@ -289,7 +317,7 @@ export default function EventoPage() {
           {/* Formulario de reseña */}
           {!user ? (
             <div style={{background:'white', border:'1px solid #e5e1d8', borderRadius:14, padding:'20px', textAlign:'center', marginBottom:20}}>
-              <div style={{fontSize:32, marginBottom:8}}>⭐</div>
+              <div style={{marginBottom:8}}><Star size={30} color="#C8860A" /></div>
               <div style={{fontWeight:700, marginBottom:6}}>¿Fuiste a este evento?</div>
               <div style={{color:'#888', fontSize:14, marginBottom:16}}>Inicia sesión para dejar tu reseña</div>
               <button onClick={() => navigate("/")} style={{background:'#C8860A', color:'white', border:'none', padding:'10px 24px', borderRadius:100, fontWeight:700, cursor:'pointer', fontFamily:'inherit', fontSize:14}}>
@@ -298,7 +326,7 @@ export default function EventoPage() {
             </div>
           ) : reviewDone && !myReview ? (
             <div style={{background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:14, padding:'16px 20px', marginBottom:20, textAlign:'center'}}>
-              <div style={{fontSize:24, marginBottom:4}}>🎉</div>
+              <div style={{marginBottom:4}}><PartyPopper size={22} color="#059669" /></div>
               <div style={{fontWeight:700, color:'#059669'}}>¡Gracias por tu reseña!</div>
             </div>
           ) : (

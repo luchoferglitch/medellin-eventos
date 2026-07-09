@@ -1,6 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "./supabase";
+import { Search, Mail, Smartphone, Map as MapIcon, Globe, BarChart3, Share2, CalendarPlus, Star, PartyPopper, CalendarDays, Eye, Users } from "lucide-react";
+
+// Iconos de marca (retirados de lucide-react; trazos originales MIT)
+const InstagramIcon = ({ size = 14, style }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+);
+const FacebookIcon = ({ size = 14, style }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+);
+
 
 export default function OrganizadoresLanding() {
   const navigate = useNavigate();
@@ -10,6 +20,22 @@ export default function OrganizadoresLanding() {
   const [formMensaje, setFormMensaje] = useState("");
   const [enviado, setEnviado] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  const [stats, setStats] = useState(null);
+
+  // Misma fuente de datos que el home — los números siempre coinciden
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const { count: eventos } = await supabase.from("events").select("*", { count: "exact", head: true }).eq("estado", "aprobado");
+        const { count: visitas } = await supabase.from("page_views").select("*", { count: "exact", head: true });
+        const { count: suscriptores } = await supabase.from("subscribers").select("*", { count: "exact", head: true });
+        const { data: orgs } = await supabase.from("events").select("organizer_name");
+        const organizadores = new Set(orgs?.filter(e => e.organizer_name).map(e => e.organizer_name)).size;
+        setStats({ eventos, visitas, suscriptores, organizadores });
+      } catch (err) { console.log("Stats error:", err); }
+    };
+    fetchStats();
+  }, []);
 
   const handleContacto = async () => {
     if (!formEmail || !formNombre) return;
@@ -55,16 +81,16 @@ export default function OrganizadoresLanding() {
 
       {/* STATS */}
       <div style={{background:'white', borderBottom:'1px solid #e5e1d8', padding:'40px 24px'}}>
-        <div style={{maxWidth:800, margin:'0 auto', display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:20, textAlign:'center'}}>
+        <div style={{maxWidth:800, margin:'0 auto', display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(130px, 1fr))', gap:20, textAlign:'center'}}>
           {[
-            ["100+", "Eventos activos", "🎪"],
-            ["4,000+", "Visitas mensuales", "👀"],
-            ["500+", "Suscriptores", "📬"],
-            ["50+", "Organizadores", "👤"],
-          ].map(([num, label, emoji]) => (
+            [stats?.eventos, "Eventos activos", CalendarDays],
+            [stats?.visitas, "Visitas al sitio", Eye],
+            [stats?.suscriptores, "Suscriptores", Mail],
+            [stats?.organizadores, "Organizadores", Users],
+          ].filter(([num]) => stats === null || (num != null && num > 0)).map(([num, label, Icono]) => (
             <div key={label}>
-              <div style={{fontSize:14, marginBottom:6}}>{emoji}</div>
-              <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:36, color:'#C8860A'}}>{num}</div>
+              <div style={{marginBottom:6, display:'flex', justifyContent:'center'}}><Icono size={18} color="#C8860A" /></div>
+              <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:36, color:'#C8860A'}}>{num == null ? "…" : num.toLocaleString("es-CO")}</div>
               <div style={{fontSize:13, color:'#888', fontWeight:600}}>{label}</div>
             </div>
           ))}
@@ -83,18 +109,18 @@ export default function OrganizadoresLanding() {
         </div>
         <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(250px, 1fr))', gap:20}}>
           {[
-            ["🔍", "SEO optimizado", "Cada evento tiene su propia página indexada en Google. Cuando alguien busca tu evento, nos encuentra."],
-            ["📬", "Newsletter semanal", "Cada viernes enviamos los mejores eventos de la semana a nuestra base de suscriptores activos."],
-            ["📱", "App instalable (PWA)", "Los usuarios instalan Medellín Vibra como app en su celular y regresan cada semana a buscar planes."],
-            ["🗺️", "Mapa interactivo", "Tu evento aparece geolocalizado en un mapa de Medellín con pins por categoría."],
-            ["🌎", "Multiidioma", "Tu evento se muestra en español, inglés, portugués y francés — ideal para atraer turistas."],
-            ["📊", "Estadísticas", "Como aliado tendrás acceso a métricas de visualización de tus eventos."],
-            ["📤", "Compartir fácil", "Cada evento genera una vista previa con imagen al compartir por WhatsApp, Facebook o Twitter."],
-            ["📅", "Agregar al calendario", "Los usuarios agregan tu evento directo a Google Calendar con un click."],
-            ["⭐", "Reseñas", "Los asistentes pueden dejar reseñas con estrellas, generando confianza y comunidad alrededor de tu marca."],
-          ].map(([emoji, title, desc]) => (
+            [Search, "SEO optimizado", "Cada evento tiene su propia página indexada en Google. Cuando alguien busca tu evento, nos encuentra."],
+            [Mail, "Newsletter semanal", "Cada viernes enviamos los mejores eventos de la semana a nuestra base de suscriptores activos."],
+            [Smartphone, "App instalable (PWA)", "Los usuarios instalan Medellín Vibra como app en su celular y regresan cada semana a buscar planes."],
+            [MapIcon, "Mapa interactivo", "Tu evento aparece geolocalizado en un mapa de Medellín con pins por categoría."],
+            [Globe, "Multiidioma", "Tu evento se muestra en español, inglés, portugués y francés — ideal para atraer turistas."],
+            [BarChart3, "Estadísticas", "Como aliado tendrás acceso a métricas de visualización de tus eventos."],
+            [Share2, "Compartir fácil", "Cada evento genera una vista previa con imagen al compartir por WhatsApp, Facebook o Twitter."],
+            [CalendarPlus, "Agregar al calendario", "Los usuarios agregan tu evento directo a Google Calendar con un click."],
+            [Star, "Reseñas", "Los asistentes pueden dejar reseñas con estrellas, generando confianza y comunidad alrededor de tu marca."],
+          ].map(([Icono, title, desc]) => (
             <div key={title} style={{background:'white', border:'1px solid #e5e1d8', borderRadius:16, padding:'24px 20px'}}>
-              <div style={{fontSize:28, marginBottom:12}}>{emoji}</div>
+              <div style={{marginBottom:12}}><Icono size={26} color="#C8860A" strokeWidth={1.75} /></div>
               <div style={{fontWeight:700, fontSize:15, marginBottom:6, color:'#1a1a1a'}}>{title}</div>
               <div style={{fontSize:13, color:'#666', lineHeight:1.6}}>{desc}</div>
             </div>
@@ -155,7 +181,7 @@ export default function OrganizadoresLanding() {
 
             {/* Plan Aliado */}
             <div style={{background:'linear-gradient(135deg, #1a1a1a, #2a1500)', border:'2px solid #C8860A', borderRadius:20, padding:'32px 24px', display:'flex', flexDirection:'column', position:'relative'}}>
-              <div style={{position:'absolute', top:-12, left:'50%', transform:'translateX(-50%)', background:'#C8860A', color:'white', padding:'4px 16px', borderRadius:100, fontSize:12, fontWeight:700}}>⭐ RECOMENDADO</div>
+              <div style={{position:'absolute', top:-12, left:'50%', transform:'translateX(-50%)', background:'#C8860A', color:'white', padding:'4px 16px', borderRadius:100, fontSize:12, fontWeight:700}}>★ RECOMENDADO</div>
               <div style={{fontSize:13, fontWeight:700, color:'#C8860A', textTransform:'uppercase', letterSpacing:1, marginBottom:8}}>Aliado Medellín Vibra</div>
               <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:44, color:'white', marginBottom:4}}>PREMIUM</div>
               <div style={{fontSize:13, color:'rgba(255,255,255,0.5)', marginBottom:24}}>Para empresas y marcas</div>
@@ -165,7 +191,7 @@ export default function OrganizadoresLanding() {
                   "Logo y enlace en sección Aliados",
                   "Mención en newsletter semanal",
                   "Publicación en redes sociales",
-                  "Eventos con tag ⭐ Destacado",
+                  "Eventos con tag ★ Destacado",
                   "Página de organizador verificada",
                   "Soporte prioritario",
                   "Estadísticas de tus eventos",
@@ -213,7 +239,7 @@ export default function OrganizadoresLanding() {
       <div style={{background:'white', borderTop:'1px solid #e5e1d8', padding:'60px 24px'}}>
         <div style={{maxWidth:800, margin:'0 auto', textAlign:'center'}}>
           <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:32, color:'#1a1a1a', marginBottom:32}}>
-            Organizadores que ya <span style={{color:'#C8860A'}}>vibran</span> con nosotros
+            Eventos de estos organizadores ya <span style={{color:'#C8860A'}}>vibran</span> en la plataforma
           </div>
           <div style={{display:'flex', flexWrap:'wrap', gap:16, justifyContent:'center'}}>
             {[
@@ -243,7 +269,7 @@ export default function OrganizadoresLanding() {
 
           {enviado ? (
             <div style={{background:'rgba(255,255,255,0.08)', border:'1px solid rgba(200,134,10,0.3)', borderRadius:16, padding:'32px 24px'}}>
-              <div style={{fontSize:48, marginBottom:12}}>🎉</div>
+              <div style={{marginBottom:12}}><PartyPopper size={44} color="#C8860A" strokeWidth={1.5} /></div>
               <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:28, color:'#C8860A', marginBottom:8}}>¡MENSAJE ENVIADO!</div>
               <div style={{color:'rgba(255,255,255,0.7)', fontSize:14}}>Te contactaremos pronto para conversar sobre tu alianza con Medellín Vibra.</div>
             </div>
@@ -274,9 +300,9 @@ export default function OrganizadoresLanding() {
         <a href="/" style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:22, color:'#C8860A', textDecoration:'none', letterSpacing:1}}>MEDELLÍN VIBRA</a>
         <div style={{color:'#555', fontSize:12, marginTop:8}}>La agenda cultural de Medellín · © {new Date().getFullYear()} medellinvibra.co</div>
         <div style={{display:'flex', gap:16, justifyContent:'center', marginTop:12}}>
-          <a href="https://www.instagram.com/medellinvibra.co/" target="_blank" rel="noopener noreferrer" style={{color:'#888', fontSize:13, textDecoration:'none'}}>📸 Instagram</a>
-          <a href="https://www.facebook.com/profile.php?id=61591129902444" target="_blank" rel="noopener noreferrer" style={{color:'#888', fontSize:13, textDecoration:'none'}}>📘 Facebook</a>
-          <a href="mailto:hola@medellinvibra.co" style={{color:'#888', fontSize:13, textDecoration:'none'}}>✉️ Correo</a>
+          <a href="https://www.instagram.com/medellinvibra.co/" target="_blank" rel="noopener noreferrer" style={{color:'#888', fontSize:13, textDecoration:'none', display:'inline-flex', alignItems:'center', gap:5}}><InstagramIcon size={13} />Instagram</a>
+          <a href="https://www.facebook.com/profile.php?id=61591129902444" target="_blank" rel="noopener noreferrer" style={{color:'#888', fontSize:13, textDecoration:'none', display:'inline-flex', alignItems:'center', gap:5}}><FacebookIcon size={13} />Facebook</a>
+          <a href="mailto:hola@medellinvibra.co" style={{color:'#888', fontSize:13, textDecoration:'none', display:'inline-flex', alignItems:'center', gap:5}}><Mail size={13} />Correo</a>
         </div>
       </div>
     </div>
