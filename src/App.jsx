@@ -1,7 +1,7 @@
-﻿import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { supabase } from "./supabase";
-import { Calendar, MapPin, Star, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Handshake, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette } from "lucide-react";
+import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Handshake, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette } from "lucide-react";
 import { translations } from "./translations";
 import EventoPage from "./EventoPage";
 import OrganizadorPage from "./OrganizadorPage";
@@ -496,11 +496,13 @@ export default function App() {
   const [subDone, setSubDone] = useState(false);
   const [honeypot, setHoneypot] = useState(""); // anti-bot field
   const [geoCache, setGeoCache] = useState({});
+  const [hourTick, setHourTick] = useState(0);
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoProgress, setGeoProgress] = useState({ done: 0, total: 0 });
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
+  const [markerCount, setMarkerCount] = useState(0);
   const leafletRef = useRef(null); // event id with open picker
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -529,30 +531,19 @@ export default function App() {
   const [lang, setLang] = useState("es");
   const t = translations[lang];
 
+  // Actualiza el evento destacado rotativo cada hora (evita leer Date.now() durante el render)
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) fetchFavorites(session.user);
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (_event === "PASSWORD_RECOVERY") setShowResetPassword(true);
-      if (session?.user) fetchFavorites(session.user);
-      else setSaved([]);
-    });
-    fetchEvents();
-    fetchStats();
-    supabase.from("page_views").insert({}).then(() => {});
-    return () => subscription.unsubscribe();
+    const updateTick = () => setHourTick(Math.floor(Date.now() / 3600000));
+    updateTick();
+    const interval = setInterval(updateTick, 60000);
+    return () => clearInterval(interval);
   }, []);
 
-  const handleResetPassword = async () => {
-    if (!newPassword || newPassword.length < 6) { showToast("⚠️ La contraseña debe tener al menos 6 caracteres"); return; }
-    setResetLoading(true);
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    setResetLoading(false);
-    if (error) showToast("⚠️ Error: " + error.message);
-    else { setShowResetPassword(false); setNewPassword(""); showToast("✓ ¡Contraseña actualizada exitosamente!"); }
+  const fetchFavorites = async (currentUser) => {
+    if (!currentUser) { setSaved([]); return; }
+    const { data, error } = await supabase.from("favorites").select("event_id").eq("user_id", currentUser.id);
+    if (error) { console.log("Error fetching favorites:", error); return; }
+    if (data) setSaved(data.map(f => Number(f.event_id)));
   };
 
   const fetchStats = async () => {
@@ -583,6 +574,33 @@ export default function App() {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) fetchFavorites(session.user);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (_event === "PASSWORD_RECOVERY") setShowResetPassword(true);
+      if (session?.user) fetchFavorites(session.user);
+      else setSaved([]);
+    });
+    fetchEvents();
+    fetchStats();
+    supabase.from("page_views").insert({}).then(() => {});
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleResetPassword = async () => {
+    if (!newPassword || newPassword.length < 6) { showToast("⚠️ La contraseña debe tener al menos 6 caracteres"); return; }
+    setResetLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setResetLoading(false);
+    if (error) showToast("⚠️ Error: " + error.message);
+    else { setShowResetPassword(false); setNewPassword(""); showToast("✓ ¡Contraseña actualizada exitosamente!"); }
+  };
+
 
   const SYNONYMS = {
     "Música":      ["concierto","conciertos","show","banda","artista","música","musica","rock","jazz","salsa","reggaeton","reggaetón","pop","electrónica","electronica","sinfónico","sinfonico","orquesta","ópera","opera","zarzuela","tributo","bolero","vallenato","cumbia","rap","hip hop","metal","punk","ska","trova"],
@@ -692,13 +710,6 @@ export default function App() {
   });
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
-
-  const fetchFavorites = async (currentUser) => {
-    if (!currentUser) { setSaved([]); return; }
-    const { data, error } = await supabase.from("favorites").select("event_id").eq("user_id", currentUser.id);
-    if (error) { console.log("Error fetching favorites:", error); return; }
-    if (data) setSaved(data.map(f => Number(f.event_id)));
-  };
 
   const toggleSave = async (id) => {
     if (!user) { setShowAuth(true); return; }
@@ -983,6 +994,7 @@ export default function App() {
     // Limpiar markers anteriores
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
+    setMarkerCount(0);
 
     const eventsToShow = filtered.filter(e => e.place);
     if (eventsToShow.length === 0) return;
@@ -1005,6 +1017,7 @@ export default function App() {
       `, { maxWidth: 240 });
       marker.addTo(map);
       markersRef.current.push(marker);
+      setMarkerCount(markersRef.current.length);
     };
 
     // Ajustar el encuadre del mapa para que se vean todos los pines
@@ -1116,7 +1129,7 @@ export default function App() {
     const today = new Date().toISOString().split('T')[0];
     const upcoming = events.filter(e => e.fechaReal >= today).slice(0, 5);
     if (upcoming.length === 0) return events[0];
-    return upcoming[Math.floor(Date.now() / 3600000) % upcoming.length];
+    return upcoming[hourTick % upcoming.length];
   })();
 
   return (
@@ -1195,7 +1208,6 @@ export default function App() {
             {/* BLOQUE ESTE FIN DE SEMANA */}
             {(() => {
               const today = new Date(); today.setHours(0,0,0,0);
-              const todayStr = today.toISOString().split('T')[0];
               const day = today.getDay();
               const diffToFri = (5 - day + 7) % 7;
               // Si hoy es sáb o dom, mostrar el finde actual; si no, el próximo
@@ -1634,7 +1646,7 @@ export default function App() {
             {/* Mapa Leaflet */}
             <div className="map-container" style={{flex:1, position:'relative', height:'calc(100vh - 200px)'}}>
               <div ref={mapRef} className="map-wrap" style={{height:'100%', width:'100%', minHeight:'400px'}} />
-              {!geoLoading && markersRef.current.length === 0 && filtered.length > 0 && (
+              {!geoLoading && markerCount === 0 && filtered.length > 0 && (
                 <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', zIndex:999, pointerEvents:'none'}}>
                   <div style={{background:'white', border:'1px solid var(--border)', borderRadius:16, padding:'20px 28px', textAlign:'center', boxShadow:'0 4px 20px rgba(0,0,0,0.1)'}}>
                     <div style={{marginBottom:8}}><MapIcon size={30} color="var(--gold)" /></div>

@@ -70,28 +70,6 @@ export default function EventoPage() {
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    const fetchEvent = async () => {
-      setLoading(true);
-      const parts = slug.split("-");
-      const id = parts[parts.length - 1];
-      let query;
-      if (!isNaN(id) && id.length > 0) {
-        query = supabase.from("events").select("*").eq("id", id).eq("estado", "aprobado").single();
-      } else {
-        const { data: all } = await supabase.from("events").select("*").eq("estado", "aprobado");
-        const match = all?.find(e => slugify(e.title) === slug || slug.endsWith(slugify(e.title)));
-        if (match) { setEvent(mapEvent(match)); updateMetaTags(match); setLoading(false); return; }
-        setNotFound(true); setLoading(false); return;
-      }
-      const { data, error } = await query;
-      if (error || !data) { setNotFound(true); }
-      else { setEvent(mapEvent(data)); updateMetaTags(data); fetchReviews(data.id); }
-      setLoading(false);
-    };
-    fetchEvent();
-  }, [slug]);
-
   const fetchReviews = async (eventId) => {
     const { data } = await supabase
       .from("reviews")
@@ -100,36 +78,6 @@ export default function EventoPage() {
       .order("created_at", { ascending: false });
     if (data) setReviews(data);
   };
-
-  useEffect(() => {
-    if (user && event) {
-      const mine = reviews.find(r => r.user_id === user.id);
-      if (mine) { setMyReview(mine); setRating(mine.rating); setComment(mine.comment || ""); }
-    }
-  }, [user, reviews, event]);
-
-  const handleSubmitReview = async () => {
-    if (!rating) return;
-    setReviewLoading(true);
-    const payload = { event_id: event.id, user_id: user.id, rating, comment: comment.trim() || null };
-    let error;
-    if (myReview) {
-      ({ error } = await supabase.from("reviews").update({ rating, comment: comment.trim() || null }).eq("id", myReview.id));
-    } else {
-      ({ error } = await supabase.from("reviews").insert(payload));
-    }
-    setReviewLoading(false);
-    if (!error) { setReviewDone(true); fetchReviews(event.id); }
-  };
-
-  const handleDeleteReview = async () => {
-    if (!myReview) return;
-    await supabase.from("reviews").delete().eq("id", myReview.id);
-    setMyReview(null); setRating(0); setComment(""); setReviewDone(false);
-    fetchReviews(event.id);
-  };
-
-  const avgRating = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : null;
 
   const mapEvent = (e) => ({
     id: e.id, emoji: e.emoji, title: e.title, cat: e.category,
@@ -186,6 +134,59 @@ export default function EventoPage() {
       document.head.appendChild(s);
     }
   };
+
+  useEffect(() => {
+    const fetchEvent = async () => {
+      setLoading(true);
+      const parts = slug.split("-");
+      const id = parts[parts.length - 1];
+      let query;
+      if (!isNaN(id) && id.length > 0) {
+        query = supabase.from("events").select("*").eq("id", id).eq("estado", "aprobado").single();
+      } else {
+        const { data: all } = await supabase.from("events").select("*").eq("estado", "aprobado");
+        const match = all?.find(e => slugify(e.title) === slug || slug.endsWith(slugify(e.title)));
+        if (match) { setEvent(mapEvent(match)); updateMetaTags(match); setLoading(false); return; }
+        setNotFound(true); setLoading(false); return;
+      }
+      const { data, error } = await query;
+      if (error || !data) { setNotFound(true); }
+      else { setEvent(mapEvent(data)); updateMetaTags(data); fetchReviews(data.id); }
+      setLoading(false);
+    };
+    fetchEvent();
+  }, [slug]);
+
+
+  useEffect(() => {
+    if (user && event) {
+      const mine = reviews.find(r => r.user_id === user.id);
+      if (mine) { setMyReview(mine); setRating(mine.rating); setComment(mine.comment || ""); }
+    }
+  }, [user, reviews, event]);
+
+  const handleSubmitReview = async () => {
+    if (!rating) return;
+    setReviewLoading(true);
+    const payload = { event_id: event.id, user_id: user.id, rating, comment: comment.trim() || null };
+    let error;
+    if (myReview) {
+      ({ error } = await supabase.from("reviews").update({ rating, comment: comment.trim() || null }).eq("id", myReview.id));
+    } else {
+      ({ error } = await supabase.from("reviews").insert(payload));
+    }
+    setReviewLoading(false);
+    if (!error) { setReviewDone(true); fetchReviews(event.id); }
+  };
+
+  const handleDeleteReview = async () => {
+    if (!myReview) return;
+    await supabase.from("reviews").delete().eq("id", myReview.id);
+    setMyReview(null); setRating(0); setComment(""); setReviewDone(false);
+    fetchReviews(event.id);
+  };
+
+  const avgRating = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : null;
 
   if (loading) return (
     <div style={{minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#f5f3ef', fontFamily:'sans-serif'}}>

@@ -12,7 +12,7 @@ function slugify(str) {
     .slice(0, 80) || "";
 }
 
-export default async function handler(req) {
+export default async function handler(_req) {
   // Traer eventos aprobados
   const eventsRes = await fetch(
     `${SUPABASE_URL}/rest/v1/events?estado=eq.aprobado&select=id,title,organizer_name,fecha_real&order=fecha_real.asc`,
