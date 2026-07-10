@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { supabase } from "./supabase";
-import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Handshake, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette } from "lucide-react";
+import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette } from "lucide-react";
 import { translations } from "./translations";
 import EventoPage from "./EventoPage";
 import OrganizadorPage from "./OrganizadorPage";
@@ -1507,19 +1507,16 @@ export default function App() {
               )}
             </div>
 
-            {/* ALIADOS MEDELLÍN VIBRA */}
+            {/* LUGARES PARA EXPLORAR */}
             <div style={{background:'linear-gradient(135deg, #1a1a1a, #2a1a00)', padding:'32px 24px', borderTop:'1px solid var(--border)', borderBottom:'1px solid var(--border)'}}>
               <div style={{maxWidth:1200, margin:'0 auto'}}>
                 <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20}}>
                   <div>
                     <div style={{fontFamily:'var(--font-display)', fontSize:28, color:'white', letterSpacing:0.5}}>
-                      <Handshake size={24} style={{display:'inline', verticalAlign:'-3px', marginRight:8, color:'var(--gold)'}} />Aliados <span style={{color:'var(--gold)'}}>Medellín Vibra</span>
+                      <MapPin size={24} style={{display:'inline', verticalAlign:'-3px', marginRight:8, color:'var(--gold)'}} />Lugares para <span style={{color:'var(--gold)'}}>explorar</span>
                     </div>
-                    <div style={{fontSize:13, color:'rgba(255,255,255,0.5)', marginTop:4}}>Espacios y marcas que vibran con la ciudad</div>
+                    <div style={{fontSize:13, color:'rgba(255,255,255,0.5)', marginTop:4}}>Los espacios más visitados de Medellín</div>
                   </div>
-                  <a href="mailto:hola@medellinvibra.co?subject=Quiero ser Aliado de Medellín Vibra" style={{background:'rgba(200,134,10,0.2)', border:'1px solid rgba(200,134,10,0.4)', color:'var(--gold)', borderRadius:100, padding:'8px 16px', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-body)', textDecoration:'none', whiteSpace:'nowrap'}}>
-                    Ser aliado →
-                  </a>
                 </div>
                 <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(160px, 1fr))', gap:12}}>
                   {[
