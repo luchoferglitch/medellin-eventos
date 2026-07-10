@@ -63,12 +63,18 @@ export default function EventoPage() {
   const [comment, setComment] = useState("");
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewDone, setReviewDone] = useState(false);
+  const [hotelRecomendado, setHotelRecomendado] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user || null));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setUser(session?.user || null));
     return () => subscription.unsubscribe();
-  }, []);
+  }, [])
+
+  useEffect(() => {
+    supabase.from("hoteles_recomendados").select("*").eq("activo", true).order("orden", { ascending: true }).limit(1)
+      .then(({ data }) => { if (data && data.length > 0) setHotelRecomendado(data[0]); });
+  }, []);;
 
   const fetchReviews = async (eventId) => {
     const { data } = await supabase
@@ -382,6 +388,18 @@ export default function EventoPage() {
           )}
         </div>
       </div>
+
+      {hotelRecomendado && (
+        <div style={{maxWidth:720, margin:'0 auto', padding:'0 24px'}}>
+          <div style={{background:'white', border:'1px solid #e5e1d8', borderRadius:14, padding:'18px 20px', marginTop:20, marginBottom:8, display:'flex', alignItems:'center', justifyContent:'space-between', gap:16, flexWrap:'wrap'}}>
+            <div>
+              <div style={{fontSize:11, color:'#888', fontWeight:700, textTransform:'uppercase', letterSpacing:0.5, marginBottom:4}}>Hotel recomendado en Medellín</div>
+              <div style={{fontWeight:700, fontSize:17}}>{hotelRecomendado.nombre}</div>
+            </div>
+            <a href={hotelRecomendado.link_reservas} target="_blank" rel="noopener noreferrer" style={{background:'#C8860A', color:'white', padding:'10px 22px', borderRadius:100, fontWeight:700, fontSize:14, textDecoration:'none', whiteSpace:'nowrap'}}>Reservar →</a>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <div style={{background:'#1a1a1a', padding:'20px 24px', textAlign:'center', marginTop:32}}>
