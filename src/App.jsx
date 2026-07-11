@@ -649,6 +649,33 @@ export default function App() {
     };
   };
 
+  // Distancia en km entre dos puntos (formula de Haversine)
+  const distanciaKm = (lat1, lng1, lat2, lng2) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  };
+
+  const activarCercaDeMi = () => {
+    if (cercaDeMi) { setCercaDeMi(false); setMiUbicacion(null); return; }
+    if (!navigator.geolocation) { showToast("Tu navegador no permite compartir ubicación"); return; }
+    setBuscandoUbicacion(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setMiUbicacion({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setCercaDeMi(true);
+        setBuscandoUbicacion(false);
+      },
+      () => {
+        showToast("No pudimos acceder a tu ubicación. Revisa los permisos del navegador.");
+        setBuscandoUbicacion(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   const filtered = events.filter(e => {
     const matchCat = activeFilter === "Todos" || e.cat === activeFilter;
     const s = search.toLowerCase().trim();
@@ -720,33 +747,6 @@ export default function App() {
   });
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
-
-  // Distancia en km entre dos puntos (formula de Haversine)
-  const distanciaKm = (lat1, lng1, lat2, lng2) => {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLng = (lng2 - lng1) * Math.PI / 180;
-    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-  };
-
-  const activarCercaDeMi = () => {
-    if (cercaDeMi) { setCercaDeMi(false); setMiUbicacion(null); return; }
-    if (!navigator.geolocation) { showToast("Tu navegador no permite compartir ubicación"); return; }
-    setBuscandoUbicacion(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setMiUbicacion({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setCercaDeMi(true);
-        setBuscandoUbicacion(false);
-      },
-      () => {
-        showToast("No pudimos acceder a tu ubicación. Revisa los permisos del navegador.");
-        setBuscandoUbicacion(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  };
 
   const toggleSave = async (id) => {
     if (!user) { setShowAuth(true); return; }
