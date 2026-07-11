@@ -1485,6 +1485,9 @@ export default function App() {
                         <div className="event-card-info">
                           <div className="event-card-info-row"><Calendar size={13} color="var(--muted)" /> {getDisplayDate(ev)}{ev.time ? ` · ${ev.time}` : ''}{ev.recurrencia && <span style={{marginLeft:4, fontSize:10, background:'rgba(200,134,10,0.15)', color:'var(--gold)', padding:'1px 6px', borderRadius:100, fontWeight:700}}>🔄 {ev.recurrencia}</span>}</div>
                           <div className="event-card-info-row"><MapPin size={13} color="var(--muted)" /> {ev.place}</div>
+                          {cercaDeMi && miUbicacion && ev.lat != null && ev.lng != null && (
+                            <div className="event-card-info-row" style={{color:'var(--gold)', fontWeight:700}}>📍 {distanciaKm(miUbicacion.lat, miUbicacion.lng, ev.lat, ev.lng).toFixed(1)} km de ti</div>
+                          )}
                         </div>
                         <div className="event-card-footer">
                           <div className={`event-card-price ${ev.price==="Gratis"?"free":""}`}>{ev.price}</div>
