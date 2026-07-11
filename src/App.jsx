@@ -503,6 +503,10 @@ export default function App() {
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
   const [markerCount, setMarkerCount] = useState(0);
+  const [cercaDeMi, setCercaDeMi] = useState(false);
+  const [miUbicacion, setMiUbicacion] = useState(null);
+  const [radioKm, setRadioKm] = useState(20);
+  const [buscandoUbicacion, setBuscandoUbicacion] = useState(false);
   const leafletRef = useRef(null); // event id with open picker
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -706,10 +710,43 @@ export default function App() {
     const matchZona = activeZona === "Todas" || e.zona === activeZona;
     const effectiveTag = e.tag || (isNewEvent(e) ? "Nuevo" : null);
     const matchTag = !activeTagFilter || effectiveTag === activeTagFilter;
-    return matchCat && matchSearch && matchDate && matchZona && matchTag;
+    const matchDistancia = !cercaDeMi || !miUbicacion || (e.lat != null && e.lng != null && distanciaKm(miUbicacion.lat, miUbicacion.lng, e.lat, e.lng) <= radioKm);
+    return matchCat && matchSearch && matchDate && matchZona && matchTag && matchDistancia;
+  }).sort((a, b) => {
+    if (!cercaDeMi || !miUbicacion) return 0;
+    const da = (a.lat != null && a.lng != null) ? distanciaKm(miUbicacion.lat, miUbicacion.lng, a.lat, a.lng) : Infinity;
+    const db = (b.lat != null && b.lng != null) ? distanciaKm(miUbicacion.lat, miUbicacion.lng, b.lat, b.lng) : Infinity;
+    return da - db;
   });
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
+
+  // Distancia en km entre dos puntos (formula de Haversine)
+  const distanciaKm = (lat1, lng1, lat2, lng2) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  };
+
+  const activarCercaDeMi = () => {
+    if (cercaDeMi) { setCercaDeMi(false); setMiUbicacion(null); return; }
+    if (!navigator.geolocation) { showToast("Tu navegador no permite compartir ubicación"); return; }
+    setBuscandoUbicacion(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setMiUbicacion({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setCercaDeMi(true);
+        setBuscandoUbicacion(false);
+      },
+      () => {
+        showToast("No pudimos acceder a tu ubicación. Revisa los permisos del navegador.");
+        setBuscandoUbicacion(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const toggleSave = async (id) => {
     if (!user) { setShowAuth(true); return; }
@@ -1308,6 +1345,16 @@ export default function App() {
               {[["Todas","Todas las zonas"],["Medellín","Medellín"],["Área Metropolitana","Área Metropolitana"],["Oriente Cercano","Oriente Cercano"]].map(([val,label]) => (
                 <button key={val} className={`filter-chip ${activeZona===val?"active":""}`} onClick={() => setActiveZona(val)}>{label}</button>
               ))}
+              <button className={`filter-chip ${cercaDeMi?"active":""}`} onClick={activarCercaDeMi} disabled={buscandoUbicacion} style={{whiteSpace:'nowrap'}}>
+                {buscandoUbicacion ? "Buscando ubicación..." : cercaDeMi ? "✕ Cerca de mí" : "📍 Cerca de mí"}
+              </button>
+              {cercaDeMi && (
+                <select value={radioKm} onChange={(e) => setRadioKm(Number(e.target.value))} className="filter-chip" style={{cursor:'pointer'}}>
+                  <option value={10}>10 km</option>
+                  <option value={20}>20 km</option>
+                  <option value={50}>50 km</option>
+                </select>
+              )}
             </div>
             <div className="filters-bar" style={{borderBottom:'none',paddingBottom:8}}>
               {[["Todos",t.filterAll],["Hoy",t.filterToday],["FinDeSemana",t.filterWeekend],["EstaSemana",t.filterWeek],["EsteMes",t.filterMonth],["Gratis",t.filterFree],["ConCobro","De pago"]].map(([val,label]) => (
