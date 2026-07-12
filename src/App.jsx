@@ -6,6 +6,7 @@ import { translations } from "./translations";
 import EventoPage from "./EventoPage";
 import OrganizadorPage from "./OrganizadorPage";
 import OrganizadoresLanding from "./OrganizadoresLanding";
+import FaqPage from "./FaqPage";
 
 import catMusica from "./assets/cat-musica.jpg";
 import catArte from "./assets/cat-arte.jpg";
@@ -1174,6 +1175,7 @@ export default function App() {
       <Route path="/evento/:slug" element={<EventoPage />} />
       <Route path="/organizador/:slug" element={<OrganizadorPage />} />
       <Route path="/para-organizadores" element={<OrganizadoresLanding />} />
+      <Route path="/preguntas-frecuentes" element={<FaqPage />} />
       <Route path="*" element={<>
       <style>{style}</style>
       <div className="app">
@@ -1948,6 +1950,9 @@ export default function App() {
               <a href="mailto:hola@medellinvibra.co" style={{display:'inline-flex', alignItems:'center', gap:6, color:'var(--gold)', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
                 <Mail size={14} />hola@medellinvibra.co
               </a>
+              <button onClick={() => navigate('/preguntas-frecuentes')} style={{background:'none', border:'none', color:'var(--gold)', fontWeight:600, fontSize:13, fontFamily:'var(--font-body)', cursor:'pointer', padding:0}}>
+                Preguntas frecuentes
+              </button>
               <span style={{fontSize:12, color:'var(--muted)'}}>{t.copyright}</span>
             </div>
           </div>

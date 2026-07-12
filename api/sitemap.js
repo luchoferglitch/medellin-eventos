@@ -34,6 +34,14 @@ export default async function handler(_req) {
     <lastmod>${today}</lastmod>
   </url>`,
 
+    // FAQ (AEO/SEO)
+    ` <url>
+    <loc>${BASE_URL}/preguntas-frecuentes</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>${today}</lastmod>
+  </url>`,
+
     // Páginas de eventos
     ...events.map(e => `  <url>
     <loc>${BASE_URL}/evento/${slugify(e.title)}-${e.id}</loc>
