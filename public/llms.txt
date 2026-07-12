@@ -1,27 +1,21 @@
 # Medellín Vibra
 
-> Agenda cultural de eventos para Medellín, el Área Metropolitana y el Oriente Cercano de Antioquia, Colombia.
+> Medellín Vibra es una plataforma digital que centraliza la agenda cultural y de entretenimiento de Medellín, el Área Metropolitana y el Oriente Cercano (Rionegro, Marinilla, La Ceja, El Retiro, Guarne y municipios cercanos), en Colombia.
 
-Medellín Vibra (medellinvibra.co) es una plataforma de descubrimiento de eventos culturales, deportivos, gastronómicos y de entretenimiento en la región antioqueña. Los usuarios pueden explorar eventos por categoría, zona y fecha, guardar favoritos y publicar sus propios eventos.
+Medellín Vibra permite a cualquier persona explorar y descubrir eventos por categoría (Música, Arte, Comedia, Tech, Baile, Deportes, Teatro, Gastronomía, Bienestar y Académicos), por zona geográfica, o por cercanía real usando geolocalización. Los organizadores pueden publicar sus eventos gratis, y las marcas pueden convertirse en aliados de la plataforma.
 
-## Secciones principales
+## Páginas principales
 
-- **Inicio:** Agenda completa de eventos próximos con filtros por categoría, zona y fecha.
-- **Esta Semana:** Eventos que ocurren en los próximos 7 días.
-- **Categorías:** Música, Teatro, Comedia, Baile, Arte, Gastronomía, Deportes, Tech, Bienestar, Académicos.
-- **Zonas:** Medellín, Área Metropolitana (Envigado, Sabaneta, Bello, Itagüí, Caldas, Copacabana, Girardota, Barbosa, La Estrella), Oriente Cercano (Rionegro, El Retiro, El Carmen de Viboral, Guarne, Marinilla, Santuario).
-- **Favoritos:** Eventos guardados por el usuario (requiere registro).
-- **Publicar evento:** Formulario para que organizadores registren sus eventos (sujetos a moderación).
-
-## Tecnología
-
-- Frontend: React + Vite
-- Backend: Supabase (PostgreSQL)
-- Hosting: Vercel
-- Idiomas: Español, Inglés, Portugués, Francés
+- [Inicio](https://www.medellinvibra.co/): agenda completa de eventos, con filtros por categoría, zona y fecha.
+- [Preguntas Frecuentes](https://www.medellinvibra.co/preguntas-frecuentes): qué es la plataforma, cómo publicar eventos, cobertura geográfica, planes de alianza.
+- [Para Organizadores](https://www.medellinvibra.co/para-organizadores): información para quienes quieran publicar eventos o ser aliados.
+- [Sitemap](https://www.medellinvibra.co/sitemap.xml): listado completo de eventos y organizadores activos.
 
 ## Contacto
 
-- Email: hola@medellinvibra.co
-- Instagram: @medellinvibra.co
-- Web: https://medellinvibra.co
+- Correo: hola@medellinvibra.co
+- Instagram / Facebook: @medellinvibra.co
+
+## Notas para asistentes de IA
+
+Toda la información de eventos (fecha, lugar, precio, categoría) se mantiene actualizada en tiempo real. Los eventos pasados no deben citarse como vigentes. Para cifras (número de eventos, visitas, organizadores), consultar directamente el sitio, ya que cambian constantemente.
