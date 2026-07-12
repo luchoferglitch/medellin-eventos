@@ -1233,7 +1233,88 @@ export default function App() {
               </div>
             </div>
 
-            <div className="about-section">
+            <div className="filters-bar" style={{borderBottom:'none',paddingBottom:4,paddingTop:12}}>
+              {[["Todas","Todas las zonas"],["Medellín","Medellín"],["Área Metropolitana","Área Metropolitana"],["Oriente Cercano","Oriente Cercano"]].map(([val,label]) => (
+                <button key={val} className={`filter-chip ${activeZona===val?"active":""}`} onClick={() => setActiveZona(val)}>{label}</button>
+              ))}
+              <button className={`filter-chip ${cercaDeMi?"active":""}`} onClick={activarCercaDeMi} disabled={buscandoUbicacion} style={{whiteSpace:'nowrap'}}>
+                {buscandoUbicacion ? "Buscando ubicación..." : cercaDeMi ? "✕ Cerca de mí" : "📍 Cerca de mí"}
+              </button>
+              {cercaDeMi && (
+                <select value={radioKm} onChange={(e) => setRadioKm(Number(e.target.value))} className="filter-chip" style={{cursor:'pointer'}}>
+                  <option value={10}>10 km</option>
+                  <option value={20}>20 km</option>
+                  <option value={50}>50 km</option>
+                </select>
+              )}
+            </div>
+            <div className="filters-bar" style={{borderBottom:'none',paddingBottom:8}}>
+              {[["Todos",t.filterAll],["Hoy",t.filterToday],["FinDeSemana",t.filterWeekend],["EstaSemana",t.filterWeek],["EsteMes",t.filterMonth],["Gratis",t.filterFree],["ConCobro","De pago"]].map(([val,label]) => (
+                <button key={val} className={`filter-chip ${activeDateFilter===val?"active":""}`} onClick={() => setActiveDateFilter(val)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="filters-bar">
+              {CATS.map(c => {
+                const count = c === "Todos" ? events.length : events.filter(e => e.cat === c).length;
+                return (
+                  <button key={c} className={`filter-chip ${activeFilter===c?"active":""}`} onClick={() => setActiveFilter(c)}>
+                    {c} {count > 0 && <span style={{fontSize:11,opacity:0.8,marginLeft:4}}>({count})</span>}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* BARRA DE TAGS */}
+            {(() => {
+              const tagCounts = Object.keys(TAGS_CONFIG).reduce((acc, tag) => {
+                acc[tag] = events.filter(e => {
+                  const eff = e.tag || (isNewEvent(e) ? "Nuevo" : null);
+                  return eff === tag;
+                }).length;
+                return acc;
+              }, {});
+              const hasAny = Object.values(tagCounts).some(c => c > 0);
+              if (!hasAny) return null;
+              return (
+                <div className="tags-bar">
+                  <button
+                    className="tag-chip"
+                    onClick={() => setActiveTagFilter(null)}
+                    style={{
+                      background: !activeTagFilter ? "var(--gold)" : "var(--surface2)",
+                      color: !activeTagFilter ? "white" : "var(--muted)",
+                      border: `1px solid ${!activeTagFilter ? "var(--gold)" : "var(--border)"}`,
+                    }}
+                  >
+                    Todos los tags
+                  </button>
+                  {Object.entries(TAGS_CONFIG).map(([tag, cfg]) => {
+                    if (tagCounts[tag] === 0) return null;
+                    const isActive = activeTagFilter === tag;
+                    return (
+                      <button
+                        key={tag}
+                        className="tag-chip"
+                        onClick={() => setActiveTagFilter(isActive ? null : tag)}
+                        style={{
+                          background: isActive ? cfg.color : cfg.bg,
+                          color: isActive ? "white" : cfg.color,
+                          border: `1px solid ${isActive ? cfg.color : cfg.border}`,
+                        }}
+                      >
+                        {cfg.emoji} {tag}
+                        <span style={{opacity:0.7, fontWeight:400, marginLeft:2}}>({tagCounts[tag]})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+
+            
+<div className="about-section">
               <div className="about-inner">
                 <div className="about-tag">{t.aboutTag}</div>
                 <div className="about-title">{t.aboutTitle}</div>
@@ -1339,86 +1420,6 @@ export default function App() {
                       ))}
                     </div>
                   </div>
-                </div>
-              );
-            })()}
-
-            <div className="filters-bar" style={{borderBottom:'none',paddingBottom:4,paddingTop:12}}>
-              {[["Todas","Todas las zonas"],["Medellín","Medellín"],["Área Metropolitana","Área Metropolitana"],["Oriente Cercano","Oriente Cercano"]].map(([val,label]) => (
-                <button key={val} className={`filter-chip ${activeZona===val?"active":""}`} onClick={() => setActiveZona(val)}>{label}</button>
-              ))}
-              <button className={`filter-chip ${cercaDeMi?"active":""}`} onClick={activarCercaDeMi} disabled={buscandoUbicacion} style={{whiteSpace:'nowrap'}}>
-                {buscandoUbicacion ? "Buscando ubicación..." : cercaDeMi ? "✕ Cerca de mí" : "📍 Cerca de mí"}
-              </button>
-              {cercaDeMi && (
-                <select value={radioKm} onChange={(e) => setRadioKm(Number(e.target.value))} className="filter-chip" style={{cursor:'pointer'}}>
-                  <option value={10}>10 km</option>
-                  <option value={20}>20 km</option>
-                  <option value={50}>50 km</option>
-                </select>
-              )}
-            </div>
-            <div className="filters-bar" style={{borderBottom:'none',paddingBottom:8}}>
-              {[["Todos",t.filterAll],["Hoy",t.filterToday],["FinDeSemana",t.filterWeekend],["EstaSemana",t.filterWeek],["EsteMes",t.filterMonth],["Gratis",t.filterFree],["ConCobro","De pago"]].map(([val,label]) => (
-                <button key={val} className={`filter-chip ${activeDateFilter===val?"active":""}`} onClick={() => setActiveDateFilter(val)}>
-                  {label}
-                </button>
-              ))}
-            </div>
-            <div className="filters-bar">
-              {CATS.map(c => {
-                const count = c === "Todos" ? events.length : events.filter(e => e.cat === c).length;
-                return (
-                  <button key={c} className={`filter-chip ${activeFilter===c?"active":""}`} onClick={() => setActiveFilter(c)}>
-                    {c} {count > 0 && <span style={{fontSize:11,opacity:0.8,marginLeft:4}}>({count})</span>}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* BARRA DE TAGS */}
-            {(() => {
-              const tagCounts = Object.keys(TAGS_CONFIG).reduce((acc, tag) => {
-                acc[tag] = events.filter(e => {
-                  const eff = e.tag || (isNewEvent(e) ? "Nuevo" : null);
-                  return eff === tag;
-                }).length;
-                return acc;
-              }, {});
-              const hasAny = Object.values(tagCounts).some(c => c > 0);
-              if (!hasAny) return null;
-              return (
-                <div className="tags-bar">
-                  <button
-                    className="tag-chip"
-                    onClick={() => setActiveTagFilter(null)}
-                    style={{
-                      background: !activeTagFilter ? "var(--gold)" : "var(--surface2)",
-                      color: !activeTagFilter ? "white" : "var(--muted)",
-                      border: `1px solid ${!activeTagFilter ? "var(--gold)" : "var(--border)"}`,
-                    }}
-                  >
-                    Todos los tags
-                  </button>
-                  {Object.entries(TAGS_CONFIG).map(([tag, cfg]) => {
-                    if (tagCounts[tag] === 0) return null;
-                    const isActive = activeTagFilter === tag;
-                    return (
-                      <button
-                        key={tag}
-                        className="tag-chip"
-                        onClick={() => setActiveTagFilter(isActive ? null : tag)}
-                        style={{
-                          background: isActive ? cfg.color : cfg.bg,
-                          color: isActive ? "white" : cfg.color,
-                          border: `1px solid ${isActive ? cfg.color : cfg.border}`,
-                        }}
-                      >
-                        {cfg.emoji} {tag}
-                        <span style={{opacity:0.7, fontWeight:400, marginLeft:2}}>({tagCounts[tag]})</span>
-                      </button>
-                    );
-                  })}
                 </div>
               );
             })()}
