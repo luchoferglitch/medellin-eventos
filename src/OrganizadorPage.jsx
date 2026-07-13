@@ -39,6 +39,9 @@ export default function OrganizadorPage() {
         if (matched.length > 0) {
           setOrganizerName(matched[0].organizer_name);
           document.title = `${matched[0].organizer_name} — Medellín Vibra`;
+          let canonicalEl = document.querySelector('link[rel="canonical"]');
+          if (!canonicalEl) { canonicalEl = document.createElement("link"); canonicalEl.setAttribute("rel", "canonical"); document.head.appendChild(canonicalEl); }
+          canonicalEl.setAttribute("href", window.location.href);
         }
       }
       setLoading(false);

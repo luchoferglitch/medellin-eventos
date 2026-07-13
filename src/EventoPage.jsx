@@ -115,6 +115,11 @@ export default function EventoPage() {
     setMeta('meta[name="twitter:description"]', desc);
     setMeta('meta[name="twitter:image"]', img);
 
+    // Canonical dinamico: cada evento debe apuntar a su propia URL, no al home
+    let canonicalEl = document.querySelector('link[rel="canonical"]');
+    if (!canonicalEl) { canonicalEl = document.createElement("link"); canonicalEl.setAttribute("rel", "canonical"); document.head.appendChild(canonicalEl); }
+    canonicalEl.setAttribute("href", url);
+
     // JSON-LD Event (schema.org) — habilita resultados enriquecidos de eventos en Google
     const oldLd = document.getElementById("event-jsonld");
     if (oldLd) oldLd.remove();

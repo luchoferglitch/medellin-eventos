@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Mail } from "lucide-react";
 
@@ -59,6 +60,13 @@ const jsonLd = {
 
 export default function FaqPage() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Preguntas Frecuentes — Medellín Vibra";
+    let canonicalEl = document.querySelector('link[rel="canonical"]');
+    if (!canonicalEl) { canonicalEl = document.createElement("link"); canonicalEl.setAttribute("rel", "canonical"); document.head.appendChild(canonicalEl); }
+    canonicalEl.setAttribute("href", "https://www.medellinvibra.co/preguntas-frecuentes");
+  }, []);
 
   return (
     <div style={{minHeight:'100vh', background:'#f5f3ef', fontFamily:'var(--font-body, sans-serif)'}}>

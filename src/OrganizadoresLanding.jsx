@@ -14,6 +14,13 @@ const FacebookIcon = ({ size = 14, style }) => (
 
 export default function OrganizadoresLanding() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Para Organizadores — Medellín Vibra";
+    let canonicalEl = document.querySelector('link[rel="canonical"]');
+    if (!canonicalEl) { canonicalEl = document.createElement("link"); canonicalEl.setAttribute("rel", "canonical"); document.head.appendChild(canonicalEl); }
+    canonicalEl.setAttribute("href", "https://www.medellinvibra.co/para-organizadores");
+  }, []);
   const [formNombre, setFormNombre] = useState("");
   const [formEmail, setFormEmail] = useState("");
   const [formEmpresa, setFormEmpresa] = useState("");

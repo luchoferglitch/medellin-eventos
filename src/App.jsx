@@ -536,6 +536,14 @@ export default function App() {
   const [lang, setLang] = useState("es");
   const t = translations[lang];
 
+  // Restaura el canonical y el titulo al inicio (por si se navego desde una pagina de evento)
+  useEffect(() => {
+    document.title = "Medellín Vibra — Agenda cultural de Medellín";
+    let canonicalEl = document.querySelector('link[rel="canonical"]');
+    if (!canonicalEl) { canonicalEl = document.createElement("link"); canonicalEl.setAttribute("rel", "canonical"); document.head.appendChild(canonicalEl); }
+    canonicalEl.setAttribute("href", "https://www.medellinvibra.co/");
+  }, []);
+
   // Actualiza el evento destacado rotativo cada hora (evita leer Date.now() durante el render)
   useEffect(() => {
     const updateTick = () => setHourTick(Math.floor(Date.now() / 3600000));
