@@ -56,6 +56,7 @@ export default function EventoPage() {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [isArchived, setIsArchived] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [user, setUser] = useState(null);
   const [myReview, setMyReview] = useState(null);
@@ -163,24 +164,34 @@ export default function EventoPage() {
   };
 
   useEffect(() => {
+    const handleFoundRow = (data) => {
+      if (!data || data.estado === "pendiente") { setNotFound(true); return; }
+      if (data.estado === "archivado") {
+        setEvent(mapEvent(data));
+        setIsArchived(true);
+        updateMetaTags(data);
+        return;
+      }
+      setEvent(mapEvent(data));
+      updateMetaTags(data);
+      fetchReviews(data.id);
+    };
+
     const fetchEvent = async () => {
       setLoading(true);
       const parts = slug.split("-");
       const id = parts[parts.length - 1];
-      let query;
       if (!isNaN(id) && id.length > 0) {
-        query = supabase.from("events").select("*").eq("id", id).eq("estado", "aprobado").single();
+        const { data, error } = await supabase.from("events").select("*").eq("id", id).single();
+        if (error || !data) { setNotFound(true); } else { handleFoundRow(data); }
       } else {
-        const { data: all } = await supabase.from("events").select("*").eq("estado", "aprobado");
+        const { data: all } = await supabase.from("events").select("*");
         const match = all?.find(e => slugify(e.title) === slug || slug.endsWith(slugify(e.title)));
-        if (match) { setEvent(mapEvent(match)); updateMetaTags(match); setLoading(false); return; }
-        setNotFound(true); setLoading(false); return;
+        handleFoundRow(match);
       }
-      const { data, error } = await query;
-      if (error || !data) { setNotFound(true); }
-      else { setEvent(mapEvent(data)); updateMetaTags(data); fetchReviews(data.id); }
       setLoading(false);
     };
+
     fetchEvent();
   }, [slug]);
 
@@ -240,6 +251,12 @@ export default function EventoPage() {
     <div style={{minHeight:'100vh', background:'#f5f3ef', fontFamily:"'DM Sans', sans-serif"}}>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+
+      {isArchived && (
+        <div style={{background:'#1a1a1a', color:'white', textAlign:'center', padding:'14px 20px', fontSize:14}}>
+          📅 Este evento ya finalizó ({event.date}). <a href="/" style={{color:'#C8860A', fontWeight:700, textDecoration:'none'}}>Descubre los próximos eventos en Medellín →</a>
+        </div>
+      )}
 
       {/* Header */}
       <div style={{background:'white', borderBottom:'1px solid #e5e1d8', padding:'14px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:100}}>
