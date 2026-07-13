@@ -119,19 +119,35 @@ export default function EventoPage() {
     const oldLd = document.getElementById("event-jsonld");
     if (oldLd) oldLd.remove();
     if (e.fecha_real) {
+      const organizerName = e.organizer_name || "Medellín Vibra";
+      const organizerUrl = e.organizer_name
+        ? `https://www.medellinvibra.co/organizador/${slugify(e.organizer_name)}`
+        : "https://www.medellinvibra.co";
+      const priceMatch = (e.price || "").match(/[0-9][0-9.,]*/);
+      const offerPrice = e.price === "Gratis" ? "0" : (priceMatch ? priceMatch[0].replace(/\./g, "").replace(/,/g, "") : undefined);
+      const validFrom = e.created_at ? new Date(e.created_at).toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
       const ld = {
         "@context": "https://schema.org",
         "@type": "Event",
         name: e.title,
         startDate: e.fecha_real,
-        ...(e.fecha_fin ? { endDate: e.fecha_fin } : {}),
+        endDate: e.fecha_fin || e.fecha_real,
         eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
         eventStatus: "https://schema.org/EventScheduled",
         location: { "@type": "Place", name: e.place, address: { "@type": "PostalAddress", addressLocality: "Medellín", addressRegion: "Antioquia", addressCountry: "CO" } },
         ...(e.image_url ? { image: [e.image_url] } : {}),
         ...(e.description ? { description: e.description.slice(0, 300) } : {}),
-        ...(e.organizer_name ? { organizer: { "@type": "Organization", name: e.organizer_name } } : {}),
-        ...(e.price === "Gratis" ? { isAccessibleForFree: true, offers: { "@type": "Offer", price: "0", priceCurrency: "COP", availability: "https://schema.org/InStock", url } } : {}),
+        performer: { "@type": "PerformingGroup", name: organizerName },
+        organizer: { "@type": "Organization", name: organizerName, url: organizerUrl },
+        offers: {
+          "@type": "Offer",
+          url,
+          priceCurrency: "COP",
+          availability: "https://schema.org/InStock",
+          validFrom,
+          ...(offerPrice ? { price: offerPrice } : {}),
+        },
+        ...(e.price === "Gratis" ? { isAccessibleForFree: true } : {}),
       };
       const s = document.createElement("script");
       s.type = "application/ld+json";
