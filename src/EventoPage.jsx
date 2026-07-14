@@ -129,8 +129,9 @@ export default function EventoPage() {
       const organizerUrl = e.organizer_name
         ? `https://www.medellinvibra.co/organizador/${slugify(e.organizer_name)}`
         : "https://www.medellinvibra.co";
+      const esGratis = (e.price || "").toLowerCase().startsWith("gratis");
       const priceMatch = (e.price || "").match(/[0-9][0-9.,]*/);
-      const offerPrice = e.price === "Gratis" ? "0" : (priceMatch ? priceMatch[0].replace(/\./g, "").replace(/,/g, "") : undefined);
+      const offerPrice = esGratis ? "0" : (priceMatch ? priceMatch[0].replace(/\./g, "").replace(/,/g, "") : undefined);
       const validFrom = e.created_at ? new Date(e.created_at).toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
       const ld = {
         "@context": "https://schema.org",
@@ -153,7 +154,7 @@ export default function EventoPage() {
           validFrom,
           ...(offerPrice ? { price: offerPrice } : {}),
         },
-        ...(e.price === "Gratis" ? { isAccessibleForFree: true } : {}),
+        ...(esGratis ? { isAccessibleForFree: true } : {}),
       };
       const s = document.createElement("script");
       s.type = "application/ld+json";
