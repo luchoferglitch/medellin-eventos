@@ -806,7 +806,7 @@ export default function App() {
     if (form.image_url && !isValidUrl(form.image_url)) { showToast("⚠️ El link de la imagen no es válido"); return; }
     setFormLoading(true);
     const esAdmin = ADMINS.includes(user.email);
-    const { error } = await supabase.from("events").insert([{
+    const { data: nuevoEvento, error } = await supabase.from("events").insert([{
       title: sanitize(form.title).slice(0, 200),
       category: form.category,
       date: sanitize(form.date).slice(0, 100),
@@ -828,7 +828,7 @@ export default function App() {
       image_url: form.image_url || null,
       user_id: user.id,
       estado: esAdmin ? "aprobado" : "pendiente",
-    }]);
+    }]).select();
     setFormLoading(false);
     if (error) { showToast("⚠️ Error al publicar: " + error.message); return; }
     setShowCreate(false);
@@ -845,7 +845,7 @@ export default function App() {
           "Content-Type": "application/json",
           "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0YnFhcXVnbnFreW1wd25mc29kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODUzMzQsImV4cCI6MjA5MzA2MTMzNH0.3tHT9CVRhboFrC3pTNMMQ-i2GeEPv_nUkG4d-hPuSdc"
         },
-        body: JSON.stringify({ title: form.title, organizer: form.organizer_name, contact: form.organizer_contact, place: form.place, date: form.date }),
+        body: JSON.stringify({ id: nuevoEvento?.[0]?.id, title: form.title, organizer: form.organizer_name, contact: form.organizer_contact, place: form.place, date: form.date }),
       });
     }
   };
