@@ -10,6 +10,11 @@ const InstagramIcon = ({ size = 14, style }) => (
 const FacebookIcon = ({ size = 14, style }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
 );
+const WhatsAppIcon = ({ size = 14, style }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}><path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 3.09L3 21"/><path d="M9 10a0.5 0.5 0 0 0 1 0V9a0.5 0.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a0.5 0.5 0 0 0 0-1h-1a0.5 0.5 0 0 0 0 1"/></svg>
+);
+const WHATSAPP_NUMBER = "573113151542";
+const whatsappLink = (msg) => `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
 
 
 export default function OrganizadoresLanding() {
@@ -82,6 +87,7 @@ export default function OrganizadoresLanding() {
           <div style={{display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap'}}>
             <a href="#planes" style={{background:'#C8860A', color:'white', padding:'14px 32px', borderRadius:100, fontSize:16, fontWeight:700, textDecoration:'none', fontFamily:'inherit'}}>Ver planes →</a>
             <button onClick={() => navigate("/?crear=true")} style={{background:'transparent', color:'white', padding:'14px 32px', borderRadius:100, fontSize:16, fontWeight:600, border:'1px solid rgba(255,255,255,0.2)', cursor:'pointer', fontFamily:'inherit'}}>Publicar gratis</button>
+            <a href={whatsappLink("Hola! Quiero publicar un evento en Medellin Vibra")} target="_blank" rel="noopener noreferrer" style={{background:'#25D366', color:'white', padding:'14px 32px', borderRadius:100, fontSize:16, fontWeight:700, textDecoration:'none', fontFamily:'inherit', display:'inline-flex', alignItems:'center', gap:8}}><WhatsAppIcon size={18} />Publica por WhatsApp</a>
           </div>
         </div>
       </div>
@@ -295,7 +301,7 @@ export default function OrganizadoresLanding() {
                 {enviando ? "Enviando..." : "Enviar mensaje →"}
               </button>
               <div style={{color:'rgba(255,255,255,0.3)', fontSize:12, marginTop:4}}>
-                También puedes escribirnos a <a href="mailto:hola@medellinvibra.co" style={{color:'#C8860A', textDecoration:'none'}}>hola@medellinvibra.co</a>
+                También puedes escribirnos a <a href="mailto:hola@medellinvibra.co" style={{color:'#C8860A', textDecoration:'none'}}>hola@medellinvibra.co</a> o por <a href={whatsappLink("Hola! Quiero conversar sobre ser aliado de Medellin Vibra")} target="_blank" rel="noopener noreferrer" style={{color:'#25D366', textDecoration:'none', fontWeight:700}}>WhatsApp</a>
               </div>
             </div>
           )}
@@ -310,6 +316,7 @@ export default function OrganizadoresLanding() {
           <a href="https://www.instagram.com/medellinvibra.co/" target="_blank" rel="noopener noreferrer" style={{color:'#888', fontSize:13, textDecoration:'none', display:'inline-flex', alignItems:'center', gap:5}}><InstagramIcon size={13} />Instagram</a>
           <a href="https://www.facebook.com/profile.php?id=61591129902444" target="_blank" rel="noopener noreferrer" style={{color:'#888', fontSize:13, textDecoration:'none', display:'inline-flex', alignItems:'center', gap:5}}><FacebookIcon size={13} />Facebook</a>
           <a href="mailto:hola@medellinvibra.co" style={{color:'#888', fontSize:13, textDecoration:'none', display:'inline-flex', alignItems:'center', gap:5}}><Mail size={13} />Correo</a>
+          <a href={whatsappLink("Hola! Quiero publicar un evento en Medellin Vibra")} target="_blank" rel="noopener noreferrer" style={{color:'#888', fontSize:13, textDecoration:'none', display:'inline-flex', alignItems:'center', gap:5}}><WhatsAppIcon size={13} />WhatsApp</a>
         </div>
       </div>
     </div>
