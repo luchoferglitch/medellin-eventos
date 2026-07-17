@@ -81,7 +81,7 @@ export default function OrganizadoresLanding() {
           </p>
           <div style={{display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap'}}>
             <a href="#planes" style={{background:'#C8860A', color:'white', padding:'14px 32px', borderRadius:100, fontSize:16, fontWeight:700, textDecoration:'none', fontFamily:'inherit'}}>Ver planes →</a>
-            <button onClick={() => navigate("/")} style={{background:'transparent', color:'white', padding:'14px 32px', borderRadius:100, fontSize:16, fontWeight:600, border:'1px solid rgba(255,255,255,0.2)', cursor:'pointer', fontFamily:'inherit'}}>Publicar gratis</button>
+            <button onClick={() => navigate("/?crear=true")} style={{background:'transparent', color:'white', padding:'14px 32px', borderRadius:100, fontSize:16, fontWeight:600, border:'1px solid rgba(255,255,255,0.2)', cursor:'pointer', fontFamily:'inherit'}}>Publicar gratis</button>
           </div>
         </div>
       </div>
@@ -181,7 +181,7 @@ export default function OrganizadoresLanding() {
                   </div>
                 ))}
               </div>
-              <button onClick={() => navigate("/")} style={{marginTop:20, width:'100%', padding:'14px', background:'white', color:'#1a1a1a', border:'1px solid #e5e1d8', borderRadius:12, fontWeight:700, fontSize:15, cursor:'pointer', fontFamily:'inherit'}}>
+              <button onClick={() => navigate("/?crear=true")} style={{marginTop:20, width:'100%', padding:'14px', background:'white', color:'#1a1a1a', border:'1px solid #e5e1d8', borderRadius:12, fontWeight:700, fontSize:15, cursor:'pointer', fontFamily:'inherit'}}>
                 Publicar ahora →
               </button>
             </div>

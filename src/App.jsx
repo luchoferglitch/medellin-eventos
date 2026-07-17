@@ -591,12 +591,25 @@ export default function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("crear") === "true") {
+        window.history.replaceState({}, "", window.location.pathname);
+        if (session?.user) { setShowCreate(true); }
+        else { localStorage.setItem("pendingCreate", "1"); setAuthTab("register"); setShowAuth(true); }
+      }
       if (session?.user) fetchFavorites(session.user);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (_event === "PASSWORD_RECOVERY") setShowResetPassword(true);
-      if (session?.user) fetchFavorites(session.user);
+      if (session?.user) {
+        fetchFavorites(session.user);
+        if (localStorage.getItem("pendingCreate") === "1") {
+          localStorage.removeItem("pendingCreate");
+          setShowAuth(false);
+          setShowCreate(true);
+        }
+      }
       else setSaved([]);
     });
     fetchEvents();
@@ -1213,8 +1226,9 @@ export default function App() {
               </>
             ) : (
               <>
+                <button className="btn-primary" onClick={() => { localStorage.setItem("pendingCreate", "1"); setAuthTab("register"); setShowAuth(true); }}>{t.createEvent}</button>
                 <button className="btn-ghost" onClick={() => { setAuthTab("login"); setShowAuth(true); }}>{t.login}</button>
-                <button className="btn-primary" onClick={() => { setAuthTab("register"); setShowAuth(true); }}>{t.register}</button>
+                <button className="btn-ghost" onClick={() => { setAuthTab("register"); setShowAuth(true); }}>{t.register}</button>
               </>
             )}
           </div>
