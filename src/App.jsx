@@ -1409,7 +1409,7 @@ export default function App() {
             </div>
             <div className="filters-bar" style={{borderBottom:'none',paddingBottom:8}}>
               {[["Todos",t.filterAll],["Hoy",t.filterToday],["FinDeSemana",t.filterWeekend],["EstaSemana",t.filterWeek],["EsteMes",t.filterMonth],["Gratis",t.filterFree],["ConCobro","De pago"]].map(([val,label]) => (
-                <button key={val} className={`filter-chip ${val==="Hoy"?"filter-chip-hoy":""} ${activeDateFilter===val?"active":""}`} onClick={() => val==="Hoy" ? navigate("/hoy") : setActiveDateFilter(val)}>
+                <button key={val} className={`filter-chip ${val==="Hoy"?"filter-chip-hoy":""} ${activeDateFilter===val?"active":""}`} onClick={() => val==="Hoy" ? navigate("/hoy") : val==="FinDeSemana" ? navigate("/finde") : val==="EstaSemana" ? navigate("/esta-semana") : setActiveDateFilter(val)}>
                   {label}
                 </button>
               ))}
