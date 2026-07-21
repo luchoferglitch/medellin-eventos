@@ -1,4 +1,4 @@
-const SUPABASE_URL = "https://jtbqaqugnqkympwnfsod.supabase.co";
+﻿const SUPABASE_URL = "https://jtbqaqugnqkympwnfsod.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0YnFhcXVnbnFreW1wd25mc29kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODUzMzQsImV4cCI6MjA5MzA2MTMzNH0.3tHT9CVRhboFrC3pTNMMQ-i2GeEPv_nUkG4d-hPuSdc";
 const BASE_URL = "https://www.medellinvibra.co";
 
@@ -45,6 +45,20 @@ export default async function handler(_req) {
     // Página HOY (URL propia, contenido dinámico)
 `  <url>
     <loc>${BASE_URL}/hoy</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <lastmod>${today}</lastmod>
+  </url>`,
+
+    // Páginas Esta Semana y Fin de Semana
+`  <url>
+    <loc>${BASE_URL}/esta-semana</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <lastmod>${today}</lastmod>
+  </url>`,
+`  <url>
+    <loc>${BASE_URL}/finde</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
     <lastmod>${today}</lastmod>

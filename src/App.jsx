@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+﻿import { useState, useEffect, useRef, useCallback } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { supabase } from "./supabase";
 import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette } from "lucide-react";
@@ -8,6 +8,8 @@ import OrganizadorPage from "./OrganizadorPage";
 import OrganizadoresLanding from "./OrganizadoresLanding";
 import FaqPage from "./FaqPage";
 import HoyPage from "./HoyPage";
+import EstaSemanaPage from "./EstaSemanaPage";
+import FindePage from "./FindePage";
 
 import catMusica from "./assets/cat-musica.jpg";
 import catArte from "./assets/cat-arte.jpg";
@@ -1318,6 +1320,8 @@ export default function App() {
       <Route path="/para-organizadores" element={<OrganizadoresLanding />} />
       <Route path="/preguntas-frecuentes" element={<FaqPage />} />
       <Route path="/hoy" element={<HoyPage />} />
+        <Route path="/esta-semana" element={<EstaSemanaPage />} />
+        <Route path="/finde" element={<FindePage />} />
       <Route path="*" element={<>
       <style>{style}</style>
       <div className="app">
