@@ -498,6 +498,9 @@ export default function App() {
   const [adminSection, setAdminSection] = useState("pending"); // "pending" | "approved" | "stats"
   const [adminStats, setAdminStats] = useState(null);
   const [subEmail, setSubEmail] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
+  const [showStickyFooter, setShowStickyFooter] = useState(false);
+  const [alreadySubscribed, setAlreadySubscribed] = useState(false);
   const [subNombre, setSubNombre] = useState("");
   const [subLoading, setSubLoading] = useState(false);
   const [subDone, setSubDone] = useState(false);
@@ -1217,6 +1220,54 @@ export default function App() {
 
   const toggleDarkMode = () => setDarkMode(d => !d);
 
+  // Coordinación de CTAs de suscripción
+  useEffect(() => {
+    // Comprobar si el usuario ya se suscribió o cerró los CTAs antes
+    const subscribedStorage = localStorage.getItem("mv_subscribed") === "1";
+    const popupDismissed = localStorage.getItem("mv_popup_dismissed") === "1";
+    const stickyDismissed = localStorage.getItem("mv_sticky_dismissed") === "1";
+    setAlreadySubscribed(subscribedStorage);
+
+    // Sticky footer: solo primera visita, 3s después de carga, auto-oculta a los 12s
+    if (!subscribedStorage && !stickyDismissed) {
+      const timerShow = setTimeout(() => setShowStickyFooter(true), 3000);
+      const timerHide = setTimeout(() => {
+        setShowStickyFooter(false);
+        localStorage.setItem("mv_sticky_dismissed", "1");
+      }, 15000);
+      return () => { clearTimeout(timerShow); clearTimeout(timerHide); };
+    }
+  }, []);
+
+  useEffect(() => {
+    // Pop-up al 30% de scroll — solo si no se ha suscrito ni cerrado
+    if (alreadySubscribed || localStorage.getItem("mv_popup_dismissed") === "1") return;
+    const onScroll = () => {
+      const pct = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+      if (pct > 0.3) {
+        setShowPopup(true);
+        setShowStickyFooter(false); // no coincidir con el sticky
+        window.removeEventListener("scroll", onScroll);
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [alreadySubscribed]);
+
+  const dismissPopup = () => {
+    setShowPopup(false);
+    localStorage.setItem("mv_popup_dismissed", "1");
+  };
+  const dismissSticky = () => {
+    setShowStickyFooter(false);
+    localStorage.setItem("mv_sticky_dismissed", "1");
+  };
+  const markSubscribed = () => {
+    localStorage.setItem("mv_subscribed", "1");
+    setAlreadySubscribed(true);
+    setShowPopup(false);
+    setShowStickyFooter(false);
+  };
   const handleSubscribe = async () => {
     // Anti-bot: si el honeypot tiene valor, es un bot
     if (honeypot) return;
@@ -1236,6 +1287,7 @@ export default function App() {
       setSubDone(true);
       setSubEmail("");
       setSubNombre("");
+      markSubscribed();
     }
   };
 
@@ -1324,6 +1376,18 @@ export default function App() {
               </div>
             </div>
 
+            {!alreadySubscribed && (
+              <div style={{background:'linear-gradient(90deg, #fef4dc 0%, #fef4dc 50%, #fbe3a3 100%)', border:'1px solid #f5d47a', borderRadius:12, padding:'14px 18px', margin:'16px auto 4px', maxWidth:1080, display:'flex', flexWrap:'wrap', alignItems:'center', gap:12, justifyContent:'space-between'}}>
+                <div style={{flex:'1 1 260px', minWidth:0}}>
+                  <div style={{fontSize:14, fontWeight:700, color:'#5a3f00'}}>No te pierdas nada. Suscríbete al newsletter.</div>
+                  <div style={{fontSize:13, color:'#7a5a1a', marginTop:2}}>Los mejores eventos filtrados por tu zona, cada viernes en tu correo. 100% gratis.</div>
+                </div>
+                <form onSubmit={(e) => { e.preventDefault(); handleSubscribe(); }} style={{display:'flex', gap:8, flex:'1 1 260px', minWidth:0}}>
+                  <input type="email" placeholder="Tu correo" value={subEmail} onChange={(e) => setSubEmail(e.target.value)} style={{flex:1, minWidth:0, padding:'10px 14px', border:'1px solid #d4a747', borderRadius:8, fontSize:14, background:'white'}} />
+                  <button type="submit" style={{background:'#C8860A', color:'white', border:'none', borderRadius:8, padding:'10px 20px', fontWeight:700, cursor:'pointer', whiteSpace:'nowrap', fontSize:14}}>Suscribirme</button>
+                </form>
+              </div>
+            )}
             <div className="filters-bar" style={{borderBottom:'none',paddingBottom:4,paddingTop:12}}>
               {[["Todas","Todas las zonas"],["Medellín","Medellín"],["Área Metropolitana","Área Metropolitana"],["Oriente Cercano","Oriente Cercano"]].map(([val,label]) => (
                 <button key={val} className={`filter-chip ${activeZona===val?"active":""}`} onClick={() => setActiveZona(val)}>{label}</button>
@@ -2348,6 +2412,39 @@ export default function App() {
           </div>
         )}
 
+        {/* Pop-up al 30% de scroll */}
+        {showPopup && !alreadySubscribed && (
+          <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999, padding:20}} onClick={dismissPopup}>
+            <div onClick={(e) => e.stopPropagation()} style={{background:'white', borderRadius:16, maxWidth:440, width:'100%', padding:28, position:'relative', boxShadow:'0 20px 60px rgba(0,0,0,0.3)'}}>
+              <button onClick={dismissPopup} style={{position:'absolute', top:12, right:12, background:'none', border:'none', fontSize:24, cursor:'pointer', color:'#888'}} aria-label="Cerrar">×</button>
+              <div style={{fontSize:38, textAlign:'center', marginBottom:12}}>📩</div>
+              <h3 style={{margin:'0 0 8px', fontSize:22, color:'#1a1a1a', textAlign:'center'}}>No te pierdas nada</h3>
+              <p style={{margin:'0 0 20px', color:'#555', textAlign:'center', fontSize:14}}>Todos los eventos filtrados por tu zona, cada viernes en tu correo. Gratis, sin spam.</p>
+              <form onSubmit={(e) => { e.preventDefault(); handleSubscribe(); }} style={{display:'flex', flexDirection:'column', gap:10}}>
+                <input type="email" placeholder="Tu correo" value={subEmail} onChange={(e) => setSubEmail(e.target.value)} style={{padding:'12px 14px', border:'1px solid #d8d3c5', borderRadius:8, fontSize:15}} required />
+                <button type="submit" style={{background:'#C8860A', color:'white', border:'none', borderRadius:8, padding:'12px 20px', fontWeight:700, fontSize:15, cursor:'pointer'}}>Suscribirme gratis</button>
+              </form>
+              <div style={{marginTop:14, textAlign:'center'}}>
+                <button onClick={dismissPopup} style={{background:'none', border:'none', color:'#888', fontSize:13, cursor:'pointer', textDecoration:'underline'}}>Ahora no</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Sticky footer — primera visita */}
+        {showStickyFooter && !alreadySubscribed && (
+          <div style={{position:'fixed', bottom:0, left:0, right:0, background:'#1a1a1a', color:'white', padding:'14px 20px', display:'flex', alignItems:'center', gap:12, zIndex:9998, boxShadow:'0 -4px 20px rgba(0,0,0,0.2)', flexWrap:'wrap'}}>
+            <div style={{flex:'1 1 240px', minWidth:0}}>
+              <div style={{fontWeight:700, fontSize:14}}>💌 Recibe los planes de la semana</div>
+              <div style={{fontSize:12, color:'#bbb'}}>Newsletter gratis cada viernes</div>
+            </div>
+            <form onSubmit={(e) => { e.preventDefault(); handleSubscribe(); }} style={{display:'flex', gap:8, flex:'1 1 240px'}}>
+              <input type="email" placeholder="Tu correo" value={subEmail} onChange={(e) => setSubEmail(e.target.value)} style={{flex:1, minWidth:0, padding:'8px 12px', border:'none', borderRadius:6, fontSize:13}} required />
+              <button type="submit" style={{background:'#C8860A', color:'white', border:'none', borderRadius:6, padding:'8px 16px', fontWeight:700, cursor:'pointer', fontSize:13, whiteSpace:'nowrap'}}>Suscribirme</button>
+            </form>
+            <button onClick={dismissSticky} style={{background:'none', border:'none', color:'#888', fontSize:22, cursor:'pointer', padding:'0 4px'}} aria-label="Cerrar">×</button>
+          </div>
+        )}
         {toast && <div className="toast">{toast}</div>}
       </div>
     </>} />
