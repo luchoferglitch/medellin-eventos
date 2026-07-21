@@ -268,6 +268,12 @@ const style = `
   .filter-chip-hoy.active { background: #a06f08; box-shadow: 0 4px 12px rgba(200, 134, 10, 0.5); }
   .filter-chip-hoy:hover:not(.active) { background: #b47709; color: white !important; }
   @keyframes pulse-hoy { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .filter-chip-semana { background: #4F46E5; color: white !important; border-color: #4F46E5 !important; font-weight: 700; padding: 10px 22px; font-size: 14px; box-shadow: 0 2px 8px rgba(79,70,229,0.3); }
+  .filter-chip-semana::before { content: "◈"; display: inline-block; margin-right: 6px; color: white; }
+  .filter-chip-semana:hover:not(.active) { background: #4338CA; color: white !important; }
+  .filter-chip-finde { background: #059669; color: white !important; border-color: #059669 !important; font-weight: 700; padding: 10px 22px; font-size: 14px; box-shadow: 0 2px 8px rgba(5,150,105,0.3); }
+  .filter-chip-finde::before { content: "✦"; display: inline-block; margin-right: 6px; color: white; }
+  .filter-chip-finde:hover:not(.active) { background: #047857; color: white !important; }
   .main { flex: 1; padding: 32px 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
   .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; }
   .section-title { font-family: var(--font-display); font-size: 28px; letter-spacing: 0.5px; color: var(--text); }
@@ -1409,7 +1415,7 @@ export default function App() {
             </div>
             <div className="filters-bar" style={{borderBottom:'none',paddingBottom:8}}>
               {[["Todos",t.filterAll],["Hoy",t.filterToday],["FinDeSemana",t.filterWeekend],["EstaSemana",t.filterWeek],["EsteMes",t.filterMonth],["Gratis",t.filterFree],["ConCobro","De pago"]].map(([val,label]) => (
-                <button key={val} className={`filter-chip ${val==="Hoy"?"filter-chip-hoy":""} ${activeDateFilter===val?"active":""}`} onClick={() => val==="Hoy" ? navigate("/hoy") : val==="FinDeSemana" ? navigate("/finde") : val==="EstaSemana" ? navigate("/esta-semana") : setActiveDateFilter(val)}>
+                <button key={val} className={`filter-chip ${val==="Hoy"?"filter-chip-hoy":""} ${val==="EstaSemana"?"filter-chip-semana":""} ${val==="FinDeSemana"?"filter-chip-finde":""} ${activeDateFilter===val?"active":""}`} onClick={() => val==="Hoy" ? navigate("/hoy") : val==="FinDeSemana" ? navigate("/finde") : val==="EstaSemana" ? navigate("/esta-semana") : setActiveDateFilter(val)}>
                   {label}
                 </button>
               ))}
