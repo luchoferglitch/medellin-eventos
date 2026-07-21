@@ -5,7 +5,7 @@
 const SUPABASE_URL = "https://jtbqaqugnqkympwnfsod.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0YnFhcXVnbnFreW1wd25mc29kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODUzMzQsImV4cCI6MjA5MzA2MTMzNH0.3tHT9CVRhboFrC3pTNMMQ-i2GeEPv_nUkG4d-hPuSdc";
 const DOMINIO = "https://www.medellinvibra.co";
-const IMAGEN_DEFAULT = "https://jtbqaqugnqkympwnfsod.supabase.co/storage/v1/object/public/event-images/evento-default-fallback";
+const IMAGEN_DEFAULT = "https://pub-c5ba255ea192436da56e91e3ef3ecfa5.r2.dev/default-fallback-medellin";
 
 export const config = { runtime: "edge" };
 

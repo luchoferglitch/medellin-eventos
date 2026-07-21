@@ -103,7 +103,7 @@ export default function EventoPage() {
       el.setAttribute("content", content);
     };
     const url = window.location.href;
-    const img = e.image_url || "https://jtbqaqugnqkympwnfsod.supabase.co/storage/v1/object/public/event-images/evento-default-fallback";
+    const img = e.image_url || "https://pub-c5ba255ea192436da56e91e3ef3ecfa5.r2.dev/default-fallback-medellin";
     const desc = e.description ? e.description.slice(0, 155) : `${e.category} en ${e.place} · ${e.date} · ${e.price}`;
     setMeta('meta[name="description"]', desc);
     setMeta('meta[property="og:title"]', `${e.title} — Medellín Vibra`);
