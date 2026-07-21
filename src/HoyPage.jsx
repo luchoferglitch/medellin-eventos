@@ -58,7 +58,7 @@ export default function HoyPage() {
       const hoy = new Date().toISOString().split("T")[0];
       const { data, error } = await supabase
         .from("events")
-        .select("id, title, category, zona, place, time, price, image_url, ticket_link, lat, lng, description, fecha_real, fecha_fin")
+        .select("id, title, category, zona, place, time, price, image_url, ticket_link, lat, lng, description, fecha_real, fecha_fin, organizer_name")
         .eq("estado", "aprobado")
         .lte("fecha_real", hoy)
         .gte("fecha_fin", hoy);
@@ -149,8 +149,8 @@ export default function HoyPage() {
         .hoy-radio-select { padding: 10px 14px; border-radius: 100px; border: 1px solid #C8860A; background: white; color: #C8860A; font-weight: 600; font-size: 14px; cursor: pointer; }
         .hoy-main { max-width: 900px; margin: 0 auto; padding: 0 20px 60px; }
         .hoy-zona-title { font-size: 22px; color: #1a1a1a; margin: 32px 0 16px; border-left: 4px solid #C8860A; padding-left: 12px; }
-        .hoy-card { background: white; border-radius: 12px; overflow: hidden; margin-bottom: 16px; border: 1px solid #ece8dd; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; display: flex; }
-        .hoy-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+        .hoy-card { background: white; border-radius: 12px; overflow: hidden; margin-bottom: 16px; border: 1px solid #ece8dd; transition: box-shadow 0.15s; display: flex; }
+        .hoy-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.05); }
         .hoy-card-img { width: 140px; min-width: 140px; height: 140px; object-fit: cover; background: #eee; }
         .hoy-card-body { padding: 16px 18px; flex: 1; min-width: 0; }
         .hoy-card-cat { font-size: 12px; color: #888; margin-bottom: 4px; }
@@ -159,6 +159,14 @@ export default function HoyPage() {
         .hoy-card-price { display: inline-block; margin-top: 6px; font-weight: 700; font-size: 14px; }
         .hoy-card-price.gratis { color: #059669; }
         .hoy-card-price.pago { color: #C8860A; }
+        .hoy-card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .hoy-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 100px; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; }
+        .hoy-btn-detalle { background: white; color: #555; border-color: #d8d3c5; }
+        .hoy-btn-detalle:hover { border-color: #C8860A; color: #C8860A; }
+        .hoy-btn-ticket { background: #C8860A; color: white; }
+        .hoy-btn-ticket:hover { background: #a06f08; }
+        .hoy-btn-organizer { background: #f5f3ef; color: #555; border-color: #ece8dd; }
+        .hoy-btn-organizer:hover { border-color: #C8860A; color: #C8860A; background: white; }
         .hoy-empty { text-align: center; padding: 60px 20px; color: #888; }
         .hoy-empty h2 { color: #555; margin: 0 0 8px; font-size: 22px; }
         .hoy-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1a1a1a; color: white; padding: 12px 20px; border-radius: 12px; font-size: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); z-index: 100; }
@@ -230,7 +238,6 @@ export default function HoyPage() {
                 <div
                   key={ev.id}
                   className="hoy-card"
-                  onClick={() => navigate(`/evento/${slugify(ev.title)}-${ev.id}`)}
                 >
                   <img
                     className="hoy-card-img"
@@ -257,6 +264,32 @@ export default function HoyPage() {
                         {ev.price}
                       </div>
                     )}
+                    <div className="hoy-card-actions">
+                      <button
+                        className="hoy-btn hoy-btn-detalle"
+                        onClick={() => navigate(`/evento/${slugify(ev.title)}-${ev.id}`)}
+                      >
+                        Ver detalle
+                      </button>
+                      {ev.ticket_link && (
+                        <a
+                          className="hoy-btn hoy-btn-ticket"
+                          href={ev.ticket_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Comprar boleta
+                        </a>
+                      )}
+                      {ev.organizer_name && (
+                        <button
+                          className="hoy-btn hoy-btn-organizer"
+                          onClick={() => navigate(`/organizador/${slugify(ev.organizer_name)}`)}
+                        >
+                          {ev.organizer_name}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
