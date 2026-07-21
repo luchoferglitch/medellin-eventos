@@ -260,6 +260,11 @@ const style = `
   .filter-chip { flex-shrink: 0; padding: 8px 16px; border-radius: 100px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); font-size: 13px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
   .filter-chip.active { background: var(--gold); color: white; border-color: var(--gold); font-weight: 600; }
   .filter-chip:hover:not(.active) { border-color: var(--gold); color: var(--gold); }
+  .filter-chip-hoy { background: var(--gold); color: white !important; border-color: var(--gold) !important; font-weight: 700; padding: 10px 22px; font-size: 14px; box-shadow: 0 2px 8px rgba(200, 134, 10, 0.3); position: relative; }
+  .filter-chip-hoy::before { content: "●"; display: inline-block; margin-right: 6px; color: white; animation: pulse-hoy 2s ease-in-out infinite; }
+  .filter-chip-hoy.active { background: #a06f08; box-shadow: 0 4px 12px rgba(200, 134, 10, 0.5); }
+  .filter-chip-hoy:hover:not(.active) { background: #b47709; color: white !important; }
+  @keyframes pulse-hoy { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
   .main { flex: 1; padding: 32px 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
   .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; }
   .section-title { font-family: var(--font-display); font-size: 28px; letter-spacing: 0.5px; color: var(--text); }
@@ -1272,7 +1277,7 @@ export default function App() {
             </div>
             <div className="filters-bar" style={{borderBottom:'none',paddingBottom:8}}>
               {[["Todos",t.filterAll],["Hoy",t.filterToday],["FinDeSemana",t.filterWeekend],["EstaSemana",t.filterWeek],["EsteMes",t.filterMonth],["Gratis",t.filterFree],["ConCobro","De pago"]].map(([val,label]) => (
-                <button key={val} className={`filter-chip ${activeDateFilter===val?"active":""}`} onClick={() => setActiveDateFilter(val)}>
+                <button key={val} className={`filter-chip ${val==="Hoy"?"filter-chip-hoy":""} ${activeDateFilter===val?"active":""}`} onClick={() => setActiveDateFilter(val)}>
                   {label}
                 </button>
               ))}
