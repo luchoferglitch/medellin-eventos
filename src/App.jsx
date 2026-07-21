@@ -802,6 +802,68 @@ export default function App() {
 
   const handleFormChange = (field, value) => setForm(f => ({...f, [field]: value}));
 
+  const [subiendoImagen, setSubiendoImagen] = useState(false);
+
+  // Comprime una imagen en el navegador antes de subir
+  const comprimirImagen = (file, maxWidth = 1000, quality = 0.78) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("No se pudo comprimir")), "image/jpeg", quality);
+      };
+      img.onerror = () => reject(new Error("No se pudo cargar la imagen"));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error("No se pudo leer el archivo"));
+    reader.readAsDataURL(file);
+  });
+
+  const handleImagenUpload = async (fileInputEvent) => {
+    const file = fileInputEvent.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { showToast("⚠️ El archivo debe ser una imagen"); return; }
+    if (file.size > 10 * 1024 * 1024) { showToast("⚠️ La imagen supera 10 MB (elige una más pequeña)"); return; }
+
+    setSubiendoImagen(true);
+    try {
+      // Comprimir en el navegador (max 1000px, q 0.78)
+      let blob = await comprimirImagen(file, 1000, 0.78);
+      // Si sigue muy grande, comprimir más agresivo
+      if (blob.size > 480 * 1024) blob = await comprimirImagen(file, 900, 0.65);
+      if (blob.size > 480 * 1024) blob = await comprimirImagen(file, 800, 0.55);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { showToast("⚠️ Necesitas iniciar sesión"); setSubiendoImagen(false); return; }
+
+      const formData = new FormData();
+      formData.append("file", blob, "evento.jpg");
+      formData.append("hint", form.title || "evento");
+
+      const resp = await fetch("https://jtbqaqugnqkympwnfsod.supabase.co/functions/v1/upload-imagen", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${session.access_token}` },
+        body: formData,
+      });
+      const data = await resp.json();
+      if (!resp.ok) { showToast("⚠️ " + (data.error || "Error al subir")); setSubiendoImagen(false); return; }
+
+      setForm(f => ({ ...f, image_url: data.url }));
+      showToast(`✓ Imagen subida (${Math.round(blob.size/1024)} KB)`);
+    } catch (err) {
+      showToast("⚠️ " + err.message);
+    } finally {
+      setSubiendoImagen(false);
+    }
+  };
+
   const handleCreateSubmit = async () => {
     if (!user) { setShowAuth(true); setShowCreate(false); return; }
     if (!form.title || !form.place || !form.date) { showToast("⚠️ Completa los campos obligatorios"); return; }
@@ -2191,9 +2253,21 @@ export default function App() {
               </div>
 
               <div className="form-group">
-                <label className="form-label">🖼️ URL de la imagen del evento</label>
-                <input className="form-input" placeholder="https://... (pega el link de la foto del evento)" value={form.image_url} onChange={e=>handleFormChange("image_url",e.target.value)} />
-                <div style={{fontSize:11,color:'var(--muted)',marginTop:4}}>Si no tienes imagen, se usará la foto de la categoría automáticamente.</div>
+                <label className="form-label">🖼️ Imagen del evento</label>
+                {form.image_url ? (
+                  <div style={{position:'relative', width:'100%', maxWidth:400}}>
+                    <img src={form.image_url} alt="Preview" style={{width:'100%', height:'auto', borderRadius:8, border:'1px solid var(--border)'}} />
+                    <button type="button" onClick={() => handleFormChange("image_url", "")} style={{position:'absolute', top:8, right:8, background:'rgba(0,0,0,0.7)', color:'white', border:'none', borderRadius:'50%', width:28, height:28, cursor:'pointer', fontWeight:700}}>×</button>
+                  </div>
+                ) : (
+                  <label style={{display:'flex', alignItems:'center', justifyContent:'center', padding:'20px', border:'2px dashed var(--border)', borderRadius:8, cursor: subiendoImagen ? 'wait' : 'pointer', background:'var(--surface2)', textAlign:'center', flexDirection:'column', gap:6, opacity: subiendoImagen ? 0.6 : 1}}>
+                    <input type="file" accept="image/*" onChange={handleImagenUpload} disabled={subiendoImagen} style={{display:'none'}} />
+                    <div style={{fontSize:24}}>{subiendoImagen ? '⏳' : '📷'}</div>
+                    <div style={{fontWeight:600, color:'var(--text)'}}>{subiendoImagen ? 'Subiendo…' : 'Subir imagen del evento'}</div>
+                    <div style={{fontSize:11, color:'var(--muted)'}}>{subiendoImagen ? 'Comprimiendo y guardando…' : 'JPG o PNG desde tu dispositivo · máx 10 MB'}</div>
+                  </label>
+                )}
+                <div style={{fontSize:11,color:'var(--muted)',marginTop:6}}>Si no subes imagen, se usará la foto de la categoría automáticamente.</div>
               </div>
 
               <div style={{borderTop:'1px solid var(--border)',margin:'16px 0',paddingTop:16}}>
