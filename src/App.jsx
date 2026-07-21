@@ -866,7 +866,7 @@ export default function App() {
 
   const handleCreateSubmit = async () => {
     if (!user) { setShowAuth(true); setShowCreate(false); return; }
-    if (!form.title || !form.place || !form.date) { showToast("⚠️ Completa los campos obligatorios"); return; }
+    if (!form.title || !form.place || !form.date || !form.organizer_name?.trim()) { showToast("⚠️ Completa los campos obligatorios (incluyendo organizador)"); return; }
     // Rate limiting: máximo 5 eventos por hora
     if (!checkRateLimit("createEvent_" + user.id, 5, 3600000)) { showToast("⚠️ Has publicado demasiados eventos, intenta más tarde"); return; }
     // Validar URLs
@@ -2273,8 +2273,9 @@ export default function App() {
               <div style={{borderTop:'1px solid var(--border)',margin:'16px 0',paddingTop:16}}>
                 <div style={{fontSize:12,fontWeight:700,color:'var(--gold)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:14}}><User size={12} style={{marginRight:4, verticalAlign:'-2px'}} />Información del organizador</div>
                 <div className="form-group">
-                  <label className="form-label">Nombre del organizador</label>
-                  <input className="form-input" placeholder="ej. Productora XYZ" value={form.organizer_name} onChange={e=>handleFormChange("organizer_name",e.target.value)} />
+                  <label className="form-label">Nombre del organizador <span style={{color:'#dc2626'}}>*</span></label>
+                  <input className="form-input" placeholder="ej. Productora XYZ, nombre del artista o venue" value={form.organizer_name} onChange={e=>handleFormChange("organizer_name",e.target.value)} required />
+                  <div style={{fontSize:11, color:'var(--muted)', marginTop:4}}>Este campo es obligatorio: sirve para que el público sepa quién organiza y mejora la visibilidad en Google.</div>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Contacto (WhatsApp, Instagram, correo)</label>
