@@ -179,7 +179,7 @@ export default function HoyPage() {
       `}</style>
 
       <nav className="hoy-nav">
-        <button className="hoy-back" onClick={() => navigate("/")}>
+        <button className="hoy-back" onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")}>
           <ArrowLeft size={18} /> Volver
         </button>
         <button className="hoy-share" onClick={compartir}>
