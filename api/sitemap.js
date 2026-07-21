@@ -42,6 +42,14 @@ export default async function handler(_req) {
     <lastmod>${today}</lastmod>
   </url>`,
 
+    // Página HOY (URL propia, contenido dinámico)
+`  <url>
+    <loc>${BASE_URL}/hoy</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <lastmod>${today}</lastmod>
+  </url>`,
+
     // Páginas de eventos
     ...events.map(e => `  <url>
     <loc>${BASE_URL}/evento/${slugify(e.title)}-${e.id}</loc>
