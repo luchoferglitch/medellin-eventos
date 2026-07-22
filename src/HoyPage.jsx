@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "./supabase";
+import { registrarClic } from "./registrarClic";
 import { MapPin, Clock, ArrowLeft, Navigation, Share2 } from "lucide-react";
 
 const CAT_EMOJI = {
@@ -272,14 +273,12 @@ export default function HoyPage() {
                         Ver detalle
                       </button>
                       {ev.ticket_link && (
-                        <a
+                        <button
                           className="hoy-btn hoy-btn-ticket"
-                          href={ev.ticket_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          onClick={() => registrarClic(ev.id, ev.ticket_link, "hoy")}
                         >
                           Comprar boleta
-                        </a>
+                        </button>
                       )}
                       {ev.organizer_name && (
                         <button

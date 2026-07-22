@@ -1,4 +1,4 @@
-import EventosPorRangoPage from "./EventosPorRangoPage";
+﻿import EventosPorRangoPage from "./EventosPorRangoPage";
 
 function getRangoSemana() {
   const hoy = new Date();
@@ -25,6 +25,7 @@ export default function EstaSemanaPage() {
       shareText="Mira qué hay en Medellín esta semana 👇"
       fechaDesde={desde}
       fechaHasta={hasta}
+      page="esta-semana"
       mensajeVacio="No encontramos eventos para esta semana. ¡Vuelve pronto, la agenda se actualiza constantemente!"
     />
   );

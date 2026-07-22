@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "./supabase";
+import { registrarClic } from "./registrarClic";
 import { MapPin, Clock, ArrowLeft, Navigation, Share2 } from "lucide-react";
 
 const CAT_EMOJI = {
@@ -42,6 +43,7 @@ export default function EventosPorRangoPage({
   fechaHasta,
   timeMin = null,
   mensajeVacio = "No encontramos eventos para este período.",
+  page = "rango",
 }) {
   const navigate = useNavigate();
   const [events, setEvents] = useState([]);
@@ -253,7 +255,7 @@ export default function EventosPorRangoPage({
           <section>
             <h2 className="rp-zona-title">Cerca de ti</h2>
             {[...filtrados].sort((a, b) => (a.distancia ?? 999) - (b.distancia ?? 999)).map(ev => (
-              <EventCard key={ev.id} ev={ev} navigate={navigate} />
+              <EventCard key={ev.id} ev={ev} navigate={navigate} page={page} />
             ))}
           </section>
         )}
@@ -270,7 +272,7 @@ export default function EventosPorRangoPage({
                 return (
                   <div key={zona}>
                     <h3 className="rp-zona-title">{zona} <span style={{ fontSize: 13, color: "#aaa", fontWeight: 400 }}>({evs.length})</span></h3>
-                    {evs.map(ev => <EventCard key={ev.id} ev={ev} navigate={navigate} />)}
+                    {evs.map(ev => <EventCard key={ev.id} ev={ev} navigate={navigate} page={page} />)}
                   </div>
                 );
               })}
@@ -284,7 +286,7 @@ export default function EventosPorRangoPage({
   );
 }
 
-function EventCard({ ev, navigate }) {
+function EventCard({ ev, navigate, page = "rango" }) {
   return (
     <div className="rp-card">
       <img

@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "./supabase";
+import { registrarClic } from "./registrarClic";
 import { Calendar, Clock, MapPin, Banknote, User, Share2, CalendarPlus, Search, Star, PartyPopper, Drama } from "lucide-react";
 
 const CAT_COLORS = {
@@ -322,7 +323,7 @@ export default function EventoPage() {
 
         {event.ticketPlatform && (
           <div style={{background:'white', border:'1px solid #e5e1d8', borderRadius:14, padding:'16px 20px', marginBottom:20, display:'flex', gap:14, alignItems:'center', cursor: event.link ? 'pointer' : 'default'}}
-            onClick={() => event.link && window.open(event.link, "_blank")}>
+            onClick={() => event.link && registrarClic(event.id, event.link, "evento")}>
             <div style={{width:44, height:44, borderRadius:'50%', background:'#f5f3ef', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C8860A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg></div>
             <div>
               <div style={{fontSize:11, color:'#888', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:2}}>Plataforma de tickets</div>
@@ -331,7 +332,7 @@ export default function EventoPage() {
           </div>
         )}
 
-        <button onClick={() => event.link ? window.open(event.link, "_blank") : navigate("/")}
+        <button onClick={() => event.link ? registrarClic(event.id, event.link, "evento") : navigate("/")}
           style={{width:'100%', padding:'16px', background:'#C8860A', color:'white', border:'none', borderRadius:14, fontWeight:700, fontSize:16, cursor:'pointer', fontFamily:'inherit', marginBottom:12}}>
           {event.price === "Gratis" ? "Registro gratuito →" : event.link ? `Comprar entradas · ${event.price} →` : "Ver más eventos →"}
         </button>

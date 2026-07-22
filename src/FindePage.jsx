@@ -1,4 +1,4 @@
-import EventosPorRangoPage from "./EventosPorRangoPage";
+﻿import EventosPorRangoPage from "./EventosPorRangoPage";
 
 function getRangoFinde() {
   const hoy = new Date();
@@ -39,6 +39,7 @@ export default function FindePage() {
       fechaDesde={desde}
       fechaHasta={hasta}
       timeMin="18:00"
+      page="finde"
       mensajeVacio="!No encontramos eventos para este fin de semana. ¡Vuelve el jueves, la agenda se actualiza constantemente!"
     />
   );
