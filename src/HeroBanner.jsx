@@ -1,6 +1,16 @@
 import { MapPin } from "lucide-react";
 
+const NACIMIENTO = new Date("2026-05-13");
+
+function diasVivos() {
+  const hoy = new Date();
+  const diff = Math.floor((hoy - NACIMIENTO) / (1000 * 60 * 60 * 24));
+  return diff;
+}
+
 export default function HeroBanner({ search, setSearch, stats, t, lang }) {
+  const dias = diasVivos();
+
   return (
     <div className="hero">
       <div className="hero-bg" />
@@ -24,6 +34,25 @@ export default function HeroBanner({ search, setSearch, stats, t, lang }) {
           Los mejores eventos de la ciudad de la eterna primavera. Música, arte, gastronomía y mucho más.{" "}
           <strong style={{ color: "#F5A623" }}>Tu agenda cultural, actualizada cada semana.</strong>
         </p>
+
+        {/* Fecha de nacimiento */}
+        <div style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+          background: "rgba(255,255,255,0.08)",
+          border: "1px solid rgba(255,255,255,0.15)",
+          borderRadius: 100,
+          padding: "6px 16px",
+          marginBottom: 24,
+          fontSize: 13,
+          color: "rgba(255,255,255,0.75)",
+          backdropFilter: "blur(4px)",
+        }}>
+          <span style={{ fontSize: 15 }}>🚀</span>
+          <span>Nacimos el <strong style={{ color: "#F5A623" }}>13 de mayo de 2026</strong> — {dias} días cambiando cómo Medellín descubre sus eventos</span>
+        </div>
+
         <div className="search-bar">
           <input
             placeholder={t.searchPlaceholder}
