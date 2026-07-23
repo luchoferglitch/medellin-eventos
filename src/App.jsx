@@ -1012,7 +1012,21 @@ export default function App() {
     const byOrg = {};
     allEvents.filter(e => e.estado === "aprobado" && e.organizer_name).forEach(e => { byOrg[e.organizer_name] = (byOrg[e.organizer_name] || 0) + 1; });
     const topOrgs = Object.entries(byOrg).sort((a, b) => b[1] - a[1]).slice(0, 8);
-    setAdminStats({ byEstado, byCat, byZona, byMes, topOrgs, totalSubs: totalSubs || 0, total: allEvents.length });
+    // Clics en "Comprar boleta"
+    const { data: clicksData } = await supabase.from("clicks").select("event_id, ticket_url, page, clicked_at");
+    const totalClicks = clicksData?.length || 0;
+    const clicksByPage = {};
+    const clicksByBoleteria = {};
+    const clicksByEvent = {};
+    (clicksData || []).forEach(c => {
+      clicksByPage[c.page] = (clicksByPage[c.page] || 0) + 1;
+      try { const domain = new URL(c.ticket_url).hostname.replace("www.", ""); clicksByBoleteria[domain] = (clicksByBoleteria[domain] || 0) + 1; } catch {}
+      if (c.event_id) clicksByEvent[c.event_id] = (clicksByEvent[c.event_id] || 0) + 1;
+    });
+    const topEventIds = Object.entries(clicksByEvent).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([id])=>parseInt(id));
+    const { data: topEvData } = topEventIds.length ? await supabase.from("events").select("id, title").in("id", topEventIds) : { data: [] };
+    const topClickedEvents = topEventIds.map(id => ({ title: topEvData?.find(e=>e.id===id)?.title || `Evento #${id}`, clicks: clicksByEvent[id] }));
+    setAdminStats({ byEstado, byCat, byZona, byMes, topOrgs, totalSubs: totalSubs || 0, total: allEvents.length, totalClicks, clicksByPage, clicksByBoleteria, topClickedEvents });
   };
 
   const handleApprove = async (id) => {
@@ -2041,6 +2055,69 @@ export default function App() {
                           <div style={{background:'var(--gold)', color:'white', borderRadius:100, padding:'2px 10px', fontSize:11, fontWeight:700, flexShrink:0}}>{count}</div>
                         </div>
                       ))}
+                    </div>
+
+                    {/* ── Clics en Comprar Boleta ── */}
+                    <div style={{background:"white", border:"1px solid var(--border)", borderRadius:14, padding:"16px"}}>
+                      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12}}>
+                        <div style={{fontWeight:700, fontSize:13, color:"var(--text)"}}>🎟️ Clics en "Comprar boleta"</div>
+                        <div style={{background:"#C8860A", color:"white", borderRadius:100, padding:"3px 12px", fontSize:13, fontWeight:700}}>{adminStats.totalClicks} total</div>
+                      </div>
+                      {adminStats.totalClicks === 0 ? (
+                        <div style={{textAlign:"center", color:"var(--muted)", fontSize:13, padding:"16px 0"}}>Aún no hay clics registrados. ¡Pronto aparecerán aquí!</div>
+                      ) : (
+                        <>
+                          {/* Por boletería */
+}
+                          {Object.keys(adminStats.clicksByBoleteria).length > 0 && (
+                            <div style={{marginBottom:16}}>
+                              <div style={{fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:8}}>Por boletería</div>
+                              {Object.entries(adminStats.clicksByBoleteria).sort((a,b)=>b[1]-a[1]).map(([domain, count]) => {
+                                const max = Math.max(...Object.values(adminStats.clicksByBoleteria));
+                                const pct = Math.round((count / max) * 100);
+                                return (
+                                  <div key={domain} style={{marginBottom:8}}>
+                                    <div style={{display:"flex", justifyContent:"space-between", fontSize:12, fontWeight:600, marginBottom:3}}>
+                                      <span>{domain}</span><span style={{color:"var(--gold)", fontWeight:700}}>{count}</span>
+                                    </div>
+                                    <div style={{background:"var(--surface2)", borderRadius:100, height:8, overflow:"hidden"}}>
+                                      <div style={{width:`${pct}%`, height:"100%", background:"#C8860A", borderRadius:100, transition:"width 0.5s"}} />
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {/* Por página */
+}
+                          {Object.keys(adminStats.clicksByPage).length > 0 && (
+                            <div style={{marginBottom:16}}>
+                              <div style={{fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:8}}>Por página</div>
+                              <div style={{display:"flex", flexWrap:"wrap", gap:8}}>
+                                {Object.entries(adminStats.clicksByPage).sort((a,b)=>b[1]-a[1]).map(([page, count]) => (
+                                  <div key={page} style={{background:"var(--surface2)", borderRadius:100, padding:"4px 12px", fontSize:12, fontWeight:600}}>
+                                    {page} <span style={{color:"var(--gold)", fontWeight:700}}>{count}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {/* Top eventos más clickeados */
+}
+                          {adminStats.topClickedEvents.length > 0 && (
+                            <div>
+                              <div style={{fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:8}}>Top eventos</div>
+                              {adminStats.topClickedEvents.map((ev, i) => (
+                                <div key={i} style={{display:"flex", alignItems:"center", gap:10, padding:"6px 0", borderBottom: i < adminStats.topClickedEvents.length-1 ? "1px solid var(--border)" : "none"}}>
+                                  <div style={{width:22, height:22, borderRadius:"50%", background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, color:"var(--muted)", flexShrink:0}}>{i+1}</div>
+                                  <div style={{flex:1, fontSize:12, fontWeight:600, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{ev.title}</div>
+                                  <div style={{background:"#059669", color:"white", borderRadius:100, padding:"2px 10px", fontSize:11, fontWeight:700, flexShrink:0}}>{ev.clicks} clics</div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
 
                   </div>
