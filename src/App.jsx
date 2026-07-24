@@ -1320,13 +1320,19 @@ export default function App() {
   const getEffectiveTag = (ev) => ev.tag || (isNewEvent(ev) ? "Nuevo" : null);
 
   const getDisplayDate = (ev) => {
-    if (!ev.recurrencia) return ev.date;
-    const proxima = getProximaFecha(ev);
-    if (!proxima) return ev.date;
-    const dia = DIAS_SEMANA[proxima.getDay()];
-    const num = proxima.getDate();
-    const mes = MESES_CORTO[proxima.getMonth()];
-    return `${dia} ${num} ${mes}`;
+    const MESES_CORTO_D = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+    const fmtDate = (iso) => { if (!iso) return null; const [,m,d] = iso.split("-").map(Number); const dt = new Date(Number(iso.split("-")[0]), m-1, d); return `${DIAS_SEMANA[dt.getDay()]} ${d} ${MESES_CORTO_D[m-1]}`; };
+    if (ev.recurrencia) {
+      const proxima = getProximaFecha(ev);
+      if (!proxima) return ev.date || "";
+      return `${DIAS_SEMANA[proxima.getDay()]} ${proxima.getDate()} ${MESES_CORTO_D[proxima.getMonth()]}`;
+    }
+    const desde = ev.fechaReal || ev.fecha_real || ev.date;
+    const hasta = ev.fechaFin  || ev.fecha_fin;
+    if (!desde) return ev.date || "";
+    const desdeStr = fmtDate(desde);
+    if (hasta && hasta !== desde) return `${desdeStr} - ${fmtDate(hasta)}`;
+    return desdeStr || ev.date || "";
   };
   const featuredEvent = (() => {
     const today = new Date().toISOString().split('T')[0];
