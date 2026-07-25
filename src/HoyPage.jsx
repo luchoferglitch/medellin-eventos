@@ -156,7 +156,7 @@ export default function HoyPage() {
         .hoy-card-body { padding: 16px 18px; flex: 1; min-width: 0; }
         .hoy-card-cat { font-size: 12px; color: #888; margin-bottom: 4px; }
         .hoy-card-title { font-size: 17px; color: #1a1a1a; margin: 0 0 8px; font-weight: 700; line-height: 1.3; }
-        .hoy-card-meta { display: flex; align-items: center; gap: 6px; color: #555; font-size: 13px; margin: 3px 0; }
+        .hoy-card-meta { display: flex; align-items: flex-start; gap: 6px; color: #555; font-size: 13px; margin: 3px 0; }
         .hoy-card-price { display: inline-block; margin-top: 6px; font-weight: 700; font-size: 14px; }
         .hoy-card-price.gratis { color: #059669; }
         .hoy-card-price.pago { color: #C8860A; }

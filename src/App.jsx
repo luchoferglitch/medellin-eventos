@@ -302,7 +302,7 @@ const style = `
   .event-card-body { padding: 16px; }
   .event-card-title { font-weight: 600; font-size: 15px; margin-bottom: 8px; line-height: 1.3; color: var(--text); }
   .event-card-info { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
-  .event-card-info-row { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+  .event-card-info-row { display: flex; align-items: flex-start; gap: 6px; font-size: 13px; color: var(--muted); text-align: left; }
   .event-card-footer { display: flex; justify-content: space-between; align-items: center; }
   .event-card-price { font-weight: 700; font-size: 15px; color: var(--gold); }
   .event-card-price.free { color: var(--green); }
