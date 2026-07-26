@@ -337,7 +337,7 @@ export default function EventoPage() {
           {event.price === "Gratis" ? "Registro gratuito →" : event.link ? `Comprar entradas · ${event.price} →` : "Ver más eventos →"}
         </button>
 
-        <button onClick={() => { const text = `${event.title} — ${event.date} en ${event.place}\n${canonicalUrl}`; if (navigator.share) navigator.share({ title: event.title, url: canonicalUrl }); else navigator.clipboard.writeText(text); }}
+        <button onClick={() => { if (navigator.share) navigator.share({ title: event.title, url: canonicalUrl }); else navigator.clipboard.writeText(canonicalUrl); }}
           style={{width:'100%', padding:'13px', background:'white', color:'#1a1a1a', border:'1px solid #e5e1d8', borderRadius:14, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit', marginBottom:12}}>
           <Share2 size={15} style={{display:'inline', verticalAlign:'-2px', marginRight:6}} />Compartir evento
         </button>
