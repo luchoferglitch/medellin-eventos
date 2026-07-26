@@ -1416,7 +1416,7 @@ export default function App() {
               ))}
             </div>
             {/* === FILTROS DE CATEGORÍA === */}
-            <div style={{maxWidth:1200, margin:"0 auto", padding:"0 24px 8px"}}>
+            <div style={{padding:"0 24px 8px"}}>
               <button
                 className={`filter-chip ${activeFilter==="Todos"?"active":""}`}
                 onClick={() => setActiveFilter("Todos")}
