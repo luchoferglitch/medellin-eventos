@@ -133,6 +133,7 @@ const style = `
   .nav-logo span { color: var(--red); }
   .nav-actions { display: flex; gap: 10px; align-items: center; }
   .nav-links { display: none; }
+  @media (max-width: 767px) { .desktop-only { display: none !important; } }
   @media (min-width: 768px) {
     .nav-links { display: flex; gap: 4px; margin-left: 18px; flex: 1; }
     .nav-link { background: none; border: none; cursor: pointer; font-family: var(--font-body); font-size: 13px; font-weight: 600; color: var(--muted); padding: 8px 12px; border-radius: 8px; transition: all 0.2s; }
@@ -1506,7 +1507,7 @@ export default function App() {
               if (findeEvents.length === 0) return null;
               const label = (day === 6 || day === 0) ? "Este Fin de Semana" : "El Próximo Fin de Semana";
               return (
-                <div style={{background:'linear-gradient(135deg, #1a1a1a, #2a2020)', padding:'32px 24px', borderBottom:'1px solid var(--border)'}}>
+                <div className="desktop-only" style={{background:'linear-gradient(135deg, #1a1a1a, #2a2020)', padding:'32px 24px', borderBottom:'1px solid var(--border)'}}>
                   <div style={{maxWidth:1200, margin:'0 auto'}}>
                     <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20}}>
                       <div>
@@ -1557,7 +1558,7 @@ export default function App() {
               const weekEvents = events.filter(e => e.fechaReal <= endOfWeekStr && (e.fechaFin || e.fechaReal) >= todayStr).slice(0, 4);
               if (weekEvents.length === 0) return null;
               return (
-                <div style={{background:'white', padding:'32px 24px', borderBottom:'1px solid var(--border)'}}>
+                <div className="desktop-only" style={{background:'white', padding:'32px 24px', borderBottom:'1px solid var(--border)'}}>
                   <div style={{maxWidth:1200, margin:'0 auto'}}>
                     <div className="section-header">
                       <div className="section-title">🗓️ Esta <span>Semana</span></div>
@@ -1585,7 +1586,7 @@ export default function App() {
 
             <div className="main">
               {activeFilter === "Todos" && !search && featuredEvent && (
-                <>
+                <div className="desktop-only">
                   <div className="section-header"><div className="section-title">{t.featuredTitle} <span>{t.featuredTitleSpan}</span></div></div>
                   <div className="featured-card" onClick={() => setSelectedEvent(featuredEvent)}>
                     <div className="featured-bg" style={{backgroundImage: `url(${getCatConfig(featuredEvent.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}} />
@@ -1604,7 +1605,7 @@ export default function App() {
                       </div>
                     </div>
                   </div>
-                </>
+                </div>
               )}
 
               <div className="section-header">
