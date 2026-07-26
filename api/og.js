@@ -1,4 +1,4 @@
-// api/og.js — Meta tags dinámicos por evento (WhatsApp, Facebook, Twitter, Google)
+﻿// api/og.js — Meta tags dinámicos por evento (WhatsApp, Facebook, Twitter, Google)
 // Los bots (filtrados por user-agent en vercel.json) reciben el index.html real
 // del sitio con los meta tags del evento inyectados. Los humanos nunca pasan por aquí.
 
@@ -101,6 +101,10 @@ export default async function handler(req) {
   <meta property="og:title" content="${title}" />
   <meta property="og:description" content="${description}" />
   <meta property="og:image" content="${image}" />
+  <meta property="og:image:secure_url" content="${image}" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1000" />
+  <meta property="og:image:height" content="1000" />
   <meta property="og:url" content="${canonical}" />
   <meta property="og:type" content="event" />
   <meta property="og:site_name" content="Medellín Vibra" />
