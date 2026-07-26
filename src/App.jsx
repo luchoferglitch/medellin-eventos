@@ -213,7 +213,7 @@ const style = `
   }
   .hero-bg {
     position: absolute; inset: 0;
-    background-image: url('https://jtbqaqugnqkympwnfsod.supabase.co/storage/v1/object/public/event-images/evento-default-fallback');
+    background-image: url('https://pub-c5ba255ea192436da56e91e3ef3ecfa5.r2.dev/default-fallback-medellin');
     background-color: #1a2a3a;
     background-size: cover; background-position: center;
   }
