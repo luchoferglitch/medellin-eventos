@@ -1415,15 +1415,34 @@ export default function App() {
                 </button>
               ))}
             </div>
-            <div className="filters-bar">
-              {CATS.map(c => {
-                const count = c === "Todos" ? events.length : events.filter(e => e.cat === c).length;
-                return (
-                  <button key={c} className={`filter-chip ${activeFilter===c?"active":""}`} onClick={() => setActiveFilter(c)}>
-                    {c} {count > 0 && <span style={{fontSize:11,opacity:0.8,marginLeft:4}}>({count})</span>}
-                  </button>
-                );
-              })}
+            {/* === FILTROS DE CATEGORÍA === */}
+            <div style={{maxWidth:1200, margin:"0 auto", padding:"0 24px 8px"}}>
+              <button
+                className={`filter-chip ${activeFilter==="Todos"?"active":""}`}
+                onClick={() => setActiveFilter("Todos")}
+                style={{width:"100%", justifyContent:"center", fontSize:15, padding:"12px 20px", marginBottom:8, display:"flex"}}
+              >
+                Todos los eventos
+                <span style={{fontSize:12, opacity:0.8, marginLeft:6}}>({events.length})</span>
+              </button>
+              <div style={{display:"grid", gridTemplateColumns:"repeat(5, 1fr)", gap:8}}>
+                {(() => {
+                  const EMO = {"Música":"🎵","Arte":"🎨","Comedia":"😂","Tech":"💻","Gastronomía":"🍽️","Baile":"💃","Deportes":"⚽","Teatro":"🎭","Bienestar":"🧘","Académicos":"📚"};
+                  return CATS.filter(c => c !== "Todos").map(c => {
+                    const count = events.filter(e => e.cat === c).length;
+                    return (
+                      <button key={c} className={`filter-chip ${activeFilter===c?"active":""}`}
+                        onClick={() => setActiveFilter(c)}
+                        style={{justifyContent:"center", flexDirection:"column", padding:"10px 4px", gap:3, fontSize:12, textAlign:"center", lineHeight:1.2, display:"flex", alignItems:"center"}}
+                      >
+                        <span style={{fontSize:18}}>{ {"Música":"🎵","Arte":"🎨","Comedia":"😂","Tech":"💻","Gastronomía":"🍽️","Baile":"💃","Deportes":"⚽","Teatro":"🎭","Bienestar":"🧘","Académicos":"📚"}[c] }</span>
+                        <span>{c}</span>
+                        {count > 0 && <span style={{fontSize:10,opacity:0.7}}>({count})</span>}
+                      </button>
+                    );
+                  });
+                })()} 
+              </div>
             </div>
 
             {/* BARRA DE TAGS */}
