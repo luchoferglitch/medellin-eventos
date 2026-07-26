@@ -213,7 +213,7 @@ const style = `
   }
   .hero-bg {
     position: absolute; inset: 0;
-    background-image: url('https://pub-c5ba255ea192436da56e91e3ef3ecfa5.r2.dev/default-fallback-medellin');
+    background-image: url('https://pub-c5ba255ea192436da56e91e3ef3ecfa5.r2.dev/hero-medellin-vibra-bg.jpg');
     background-color: #1a2a3a;
     background-size: cover; background-position: center;
   }
