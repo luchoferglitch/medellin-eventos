@@ -103,7 +103,7 @@ export default function EventoPage() {
       if (!el) { el = document.createElement("meta"); document.head.appendChild(el); }
       el.setAttribute("content", content);
     };
-    const url = window.location.href;
+    const url = `https://www.medellinvibra.co/evento/${slugify(event.title)}-${event.id}`;
     const img = e.image_url || "https://pub-c5ba255ea192436da56e91e3ef3ecfa5.r2.dev/default-fallback-medellin";
     const desc = e.description ? e.description.slice(0, 155) : `${e.category} en ${e.place} · ${e.date} · ${e.price}`;
     setMeta('meta[name="description"]', desc);
