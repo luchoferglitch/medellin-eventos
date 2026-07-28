@@ -234,17 +234,7 @@ export default function EventoPage() {
     </div>
   );
 
-  if (notFound) return (
-    <div style={{minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#f5f3ef', fontFamily:'sans-serif'}}>
-      <div style={{textAlign:'center'}}>
-        <div style={{marginBottom:16}}><Search size={56} color="#bbb" strokeWidth={1.5} /></div>
-        <div style={{fontWeight:700, fontSize:22, marginBottom:8}}>Evento no encontrado</div>
-        <div style={{color:'#888', marginBottom:24}}>Este evento no existe o ya fue archivado.</div>
-        <button onClick={() => navigate("/")} style={{background:'#C8860A', color:'white', border:'none', padding:'12px 24px', borderRadius:100, fontWeight:700, cursor:'pointer', fontSize:15}}>Ver todos los eventos →</button>
-      </div>
-    </div>
-  );
-
+  if (notFound) { navigate("/", { replace: true }); return null; }
   const catColor = CAT_COLORS[event.cat] || "#C8860A";
   const tagCfg = event.tag ? TAGS_CONFIG[event.tag] : null;
   const canonicalUrl = `https://www.medellinvibra.co/evento/${slugify(event.title)}-${event.id}`;
