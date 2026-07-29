@@ -1423,7 +1423,7 @@ export default function App() {
                 style={{width:"100%", justifyContent:"center", fontSize:15, padding:"12px 20px", marginBottom:8, display:"flex"}}
               >
                 Todos los eventos
-                <span style={{fontSize:12, opacity:0.8, marginLeft:6}}>({events.length})</span>
+                <span style={{fontSize:12, opacity:0.8, marginLeft:6}}>({stats.eventos})</span>
               </button>
               <div style={{display:"grid", gridTemplateColumns:"repeat(5, 1fr)", gap:8}}>
                 {(() => {

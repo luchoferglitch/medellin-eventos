@@ -23,7 +23,7 @@ export default function HeroBanner({ search, setSearch, stats, t, lang }) {
           style={{ textDecoration: "none" }}
         >
           <MapPin size={12} style={{ display: "inline", verticalAlign: "-2px", marginRight: 4 }} />
-          Medellín, Colombia
+          Medellín, Área Metropolitana y Oriente Cercano
         </a>
         <h1 className="hero-title">
           DESCUBRE<br />
@@ -31,7 +31,7 @@ export default function HeroBanner({ search, setSearch, stats, t, lang }) {
           <span className="accent-red">VIBRA</span>
         </h1>
         <p className="hero-sub">
-          Los mejores eventos de la ciudad de la eterna primavera. Música, arte, gastronomía y mucho más.{" "}
+          Los mejores eventos de Medellín, el Área Metropolitana y el Oriente Cercano.{" "}
           <strong style={{ color: "#F5A623" }}>Tu agenda cultural, actualizada cada semana.</strong>
         </p>
 
@@ -50,7 +50,7 @@ export default function HeroBanner({ search, setSearch, stats, t, lang }) {
           backdropFilter: "blur(4px)",
         }}>
           <span style={{ fontSize: 15 }}>🚀</span>
-          <span>Nacimos el <strong style={{ color: "#F5A623" }}>13 de mayo de 2026</strong> — {dias} días cambiando cómo Medellín descubre sus eventos</span>
+          <span>Nacimos el <strong style={{ color: "#F5A623" }}>13 de mayo de 2026</strong> — {dias} días conectando la región con su cultura</span>
         </div>
 
         <div className="search-bar">
