@@ -78,6 +78,9 @@ export default function HoyPage() {
         setMiUbicacion({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setCercaDeMi(true);
         setBuscandoUbicacion(false);
+        if (typeof window.gtag === "function") {
+          window.gtag("event", "usar_cerca_de_mi", { radio_km: radioKm });
+        }
       },
       () => {
         showToast("No pudimos acceder a tu ubicación. Revisa los permisos del navegador.");
@@ -275,7 +278,7 @@ export default function HoyPage() {
                       {ev.ticket_link && (
                         <button
                           className="hoy-btn hoy-btn-ticket"
-                          onClick={() => registrarClic(ev.id, ev.ticket_link, "hoy")}
+                          onClick={() => registrarClic(ev.id, ev.ticket_link, "hoy", ev.title, ev.category)}
                         >
                           Comprar boleta
                         </button>

@@ -722,6 +722,9 @@ export default function App() {
         setMiUbicacion({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setCercaDeMi(true);
         setBuscandoUbicacion(false);
+        if (typeof window.gtag === "function") {
+          window.gtag("event", "usar_cerca_de_mi", { radio_km: radioKm });
+        }
       },
       () => {
         showToast("No pudimos acceder a tu ubicación. Revisa los permisos del navegador.");
@@ -729,6 +732,14 @@ export default function App() {
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
+  };
+
+  // Filtro por calendario: dispara el evento de GA4 solo al elegir una fecha, no al limpiarla
+  const handleFechaElegida = (ymd) => {
+    setFechaElegida(ymd);
+    if (ymd && typeof window.gtag === "function") {
+      window.gtag("event", "usar_filtro_calendario", { fecha_elegida: ymd });
+    }
   };
 
   const filtered = events.filter(e => {
@@ -1307,7 +1318,7 @@ export default function App() {
     setShowPopup(false);
     setShowStickyFooter(false);
   };
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (origen = "footer") => {
     // Anti-bot: si el honeypot tiene valor, es un bot
     if (honeypot) return;
     // Validación de email
@@ -1327,6 +1338,9 @@ export default function App() {
       setSubEmail("");
       setSubNombre("");
       markSubscribed();
+      if (typeof window.gtag === "function") {
+        window.gtag("event", "suscripcion_newsletter", { origen });
+      }
     }
   };
 
@@ -1426,7 +1440,7 @@ export default function App() {
               <FiltroCalendario
                 eventos={events.map(paraCalendario)}
                 fechaSeleccionada={fechaElegida}
-                onSeleccionar={setFechaElegida}
+                onSeleccionar={handleFechaElegida}
               />
               {[["Todos",t.filterAll],["Hoy",t.filterToday],["FinDeSemana",t.filterWeekend],["EstaSemana",t.filterWeek],["EsteMes",t.filterMonth],["Gratis",t.filterFree],["ConCobro","De pago"]].map(([val,label]) => (
                 <button key={val} className={`filter-chip ${val==="Hoy"?"filter-chip-hoy":""} ${val==="EstaSemana"?"filter-chip-semana":""} ${val==="FinDeSemana"?"filter-chip-finde":""} ${activeDateFilter===val?"active":""}`} onClick={() => val==="Hoy" ? navigate("/hoy") : val==="FinDeSemana" ? navigate("/finde") : val==="EstaSemana" ? navigate("/esta-semana") : setActiveDateFilter(val)}>
@@ -2190,7 +2204,7 @@ export default function App() {
                     style={{padding:'12px 16px', borderRadius:10, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.08)', color:'white', fontSize:14, fontFamily:'var(--font-body)', outline:'none'}} />
                   <input type="email" placeholder="Tu correo electrónico" value={subEmail} onChange={e => setSubEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSubscribe()}
                     style={{padding:'12px 16px', borderRadius:10, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.08)', color:'white', fontSize:14, fontFamily:'var(--font-body)', outline:'none'}} />
-                  <button onClick={handleSubscribe} disabled={subLoading}
+                  <button onClick={() => handleSubscribe("footer")} disabled={subLoading}
                     style={{padding:'13px', borderRadius:10, background:'var(--gold)', color:'white', border:'none', fontWeight:700, fontSize:15, fontFamily:'var(--font-body)', cursor:'pointer', opacity: subLoading ? 0.7 : 1}}>
                     {subLoading ? "Suscribiendo..." : "Suscribirme gratis →"}
                   </button>
@@ -2342,7 +2356,18 @@ export default function App() {
                   </div>
                 )}
                 <div className="detail-actions">
-                  <button className="btn-buy" onClick={() => { if(selectedEvent.link) window.open(selectedEvent.link,'_blank'); else handleReserve(); }}>
+                  <button className="btn-buy" onClick={() => {
+                    if (selectedEvent.link) {
+                      if (typeof window.gtag === "function") {
+                        window.gtag("event", "comprar_boleta", {
+                          evento_id: selectedEvent.id,
+                          evento_nombre: selectedEvent.title,
+                          evento_categoria: selectedEvent.cat,
+                        });
+                      }
+                      window.open(selectedEvent.link,'_blank');
+                    } else handleReserve();
+                  }}>
                     {selectedEvent.price === "Gratis" ? t.registerFree : selectedEvent.price.startsWith("En") ? t.buyTickets : `${t.buy} · ${selectedEvent.price} →`}
                   </button>
                   <button className="btn-share" title="Compartir por WhatsApp" style={{color:'#25D366',borderColor:'rgba(37,211,102,0.3)'}} onClick={()=>{

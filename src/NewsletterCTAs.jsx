@@ -34,7 +34,7 @@ export default function NewsletterCTAs({
             </div>
           </div>
           <form
-            onSubmit={(e) => { e.preventDefault(); handleSubscribe(); }}
+            onSubmit={(e) => { e.preventDefault(); handleSubscribe("banner"); }}
             style={{ display: "flex", gap: 8, flex: "1 1 260px", minWidth: 0 }}
           >
             <input
@@ -70,7 +70,7 @@ export default function NewsletterCTAs({
             <p style={{ margin: "0 0 20px", color: "#555", textAlign: "center", fontSize: 14 }}>
               Todos los eventos filtrados por tu zona, cada viernes en tu correo. Gratis, sin spam.
             </p>
-            <form onSubmit={(e) => { e.preventDefault(); handleSubscribe(); }} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <form onSubmit={(e) => { e.preventDefault(); handleSubscribe("popup"); }} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <input
                 type="email"
                 placeholder="Tu correo"
@@ -105,7 +105,7 @@ export default function NewsletterCTAs({
             <div style={{ fontSize: 12, color: "#bbb" }}>Newsletter gratis cada viernes</div>
           </div>
           <form
-            onSubmit={(e) => { e.preventDefault(); handleSubscribe(); }}
+            onSubmit={(e) => { e.preventDefault(); handleSubscribe("sticky_footer"); }}
             style={{ display: "flex", gap: 8, flex: "1 1 240px" }}
           >
             <input

@@ -96,6 +96,9 @@ export default function EventosPorRangoPage({
         setMiUbicacion({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setCercaDeMi(true);
         setBuscandoUbicacion(false);
+        if (typeof window.gtag === "function") {
+          window.gtag("event", "usar_cerca_de_mi", { radio_km: radioKm });
+        }
       },
       () => {
         showToast("No pudimos acceder a tu ubicación. Revisa los permisos del navegador.");
@@ -324,7 +327,21 @@ function EventCard({ ev, navigate, page = "rango" }) {
             Ver detalle
           </button>
           {ev.ticket_link && (
-            <a className="rp-btn rp-btn-ticket" href={ev.ticket_link} target="_blank" rel="noopener noreferrer">
+            <a
+              className="rp-btn rp-btn-ticket"
+              href={ev.ticket_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                if (typeof window.gtag === "function") {
+                  window.gtag("event", "comprar_boleta", {
+                    evento_id: ev.id,
+                    evento_nombre: ev.title,
+                    evento_categoria: ev.category,
+                  });
+                }
+              }}
+            >
               Comprar boleta
             </a>
           )}
