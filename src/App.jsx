@@ -12,6 +12,7 @@ import EstaSemanaPage from "./EstaSemanaPage";
 import FindePage from "./FindePage";
 import HeroBanner from "./HeroBanner";
 import NewsletterCTAs from "./NewsletterCTAs";
+import FiltroCalendario, { eventoOcurreEnFecha } from "./FiltroCalendario";
 
 import catMusica from "./assets/cat-musica.jpg";
 import catArte from "./assets/cat-arte.jpg";
@@ -91,6 +92,17 @@ const getProximaFecha = (ev) => {
   }
   return null;
 };
+
+// Adapta un evento (campos camelCase del estado local) al formato snake_case
+// que espera eventoOcurreEnFecha (viene de FiltroCalendario.jsx)
+const paraCalendario = (e) => ({
+  recurrencia: e.recurrencia,
+  fecha_real: e.fechaReal,
+  fecha_fin: e.fechaFin,
+  dia_semana: e.diaSemana,
+  dia_mes: e.diaMes,
+  date: e.date,
+});
 
 const DIAS_SEMANA = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
 const MESES_CORTO = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
@@ -501,6 +513,7 @@ const matchVenueConocido = (place) => {
 export default function App() {
   const [activeFilter, setActiveFilter] = useState("Todos");
   const [activeDateFilter, setActiveDateFilter] = useState("Todos");
+  const [fechaElegida, setFechaElegida] = useState(null);
   const [activeZona, setActiveZona] = useState("Todas");
   const [activeTagFilter, setActiveTagFilter] = useState(null);
   const [adminTagPicker, setAdminTagPicker] = useState(null);
@@ -780,7 +793,8 @@ export default function App() {
     const effectiveTag = e.tag || (isNewEvent(e) ? "Nuevo" : null);
     const matchTag = !activeTagFilter || effectiveTag === activeTagFilter;
     const matchDistancia = !cercaDeMi || !miUbicacion || (e.lat != null && e.lng != null && distanciaKm(miUbicacion.lat, miUbicacion.lng, e.lat, e.lng) <= radioKm);
-    return matchCat && matchSearch && matchDate && matchZona && matchTag && matchDistancia;
+    const matchFechaElegida = !fechaElegida || eventoOcurreEnFecha(paraCalendario(e), fechaElegida);
+    return matchCat && matchSearch && matchDate && matchZona && matchTag && matchDistancia && matchFechaElegida;
   }).sort((a, b) => {
     if (!cercaDeMi || !miUbicacion) return 0;
     const da = (a.lat != null && a.lng != null) ? distanciaKm(miUbicacion.lat, miUbicacion.lng, a.lat, a.lng) : Infinity;
@@ -1414,6 +1428,11 @@ export default function App() {
                   {label}
                 </button>
               ))}
+              <FiltroCalendario
+                eventos={events.map(paraCalendario)}
+                fechaSeleccionada={fechaElegida}
+                onSeleccionar={setFechaElegida}
+              />
             </div>
             {/* === FILTROS DE CATEGORÍA === */}
             <div style={{padding:"0 24px 8px"}}>
