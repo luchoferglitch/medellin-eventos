@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect, useRef, useCallback } from "react";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "./supabase";
+import { initGA, logPageView, trackEvent } from "./analytics";
 import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette } from "lucide-react";
 import { translations } from "./translations";
 import EventoPage from "./EventoPage";
@@ -81,7 +82,6 @@ const getProximaFecha = (ev) => {
   if (ev.recurrencia === "semanal" && ev.diaSemana !== null && ev.diaSemana !== undefined) {
     const next = new Date(today);
     const diff = (ev.diaSemana - today.getDay() + 7) % 7;
-    // Si diff === 0 significa que hoy es ese día — mostrar el próximo (en 7 días)
     next.setDate(today.getDate() + (diff === 0 ? 7 : diff));
     return next;
   }
@@ -93,8 +93,6 @@ const getProximaFecha = (ev) => {
   return null;
 };
 
-// Adapta un evento (campos camelCase del estado local) al formato snake_case
-// que espera eventoOcurreEnFecha (viene de FiltroCalendario.jsx)
 const paraCalendario = (e) => ({
   recurrencia: e.recurrencia,
   fecha_real: e.fechaReal,
@@ -218,7 +216,6 @@ const style = `
     width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 16px;
   }
 
-  /* HERO con foto aérea */
   .hero {
     position: relative; overflow: hidden; min-height: 560px;
     display: flex; align-items: center;
@@ -259,7 +256,6 @@ const style = `
   .stat-num { font-family: var(--font-display); font-size: 32px; color: #F5A623; }
   .stat-label { font-size: 12px; color: rgba(255,255,255,0.6); }
 
-  /* ABOUT SECTION */
   .about-section {
     background: white; padding: 48px 24px;
     border-bottom: 1px solid var(--border);
@@ -361,7 +357,7 @@ const style = `
   .btn-cancel:hover { color: var(--text); border-color: var(--text); }
   .btn-submit { flex: 1; padding: 14px; border-radius: 10px; background: var(--gold); color: white; border: none; font-weight: 700; font-size: 15px; cursor: pointer; font-family: var(--font-body); transition: all 0.2s; }
   .btn-submit:hover { background: #a06d08; }
-  .bottom-nav { position: sticky; bottom: 0; z-index: 200; background: rgba(255,255,255,0.97); backdrop-filter: blur(16px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 0 16px; box-shadow: 0 -4px 20px rgba(0,0,0,0.06); }
+  .bottom-nav { position: sticky; bottom: 0; z-index: 200; background: rgba(255,255,255,0.97); backdrop-filter: blur(16px); border-top: 1px solid var(--border); display: flex; justify-around: space-around; padding: 10px 0 16px; box-shadow: 0 -4px 20px rgba(0,0,0,0.06); }
   .bottom-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted); font-size: 11px; cursor: pointer; padding: 4px 16px; transition: color 0.2s; background: none; border: none; font-family: var(--font-body); }
   .bottom-nav-item.active { color: var(--gold); }
   .bottom-nav-item span:first-child { font-size: 20px; display: flex; align-items: center; justify-content: center; position: relative; }
@@ -404,7 +400,6 @@ const style = `
 
 const ADMINS = ["luchofer2001@gmail.com"];
 
-// ── Seguridad: Rate limiter y sanitización ──
 const rateLimiter = {};
 const checkRateLimit = (key, maxAttempts = 3, windowMs = 60000) => {
   const now = Date.now();
@@ -421,7 +416,6 @@ const sanitize = (str) => {
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 const isValidUrl = (url) => !url || url.startsWith("http://") || url.startsWith("https://");
 
-// Agregar evento al calendario (Google Calendar URL)
 const addToCalendar = (ev) => {
   const fechaReal = ev.fechaReal || ev.fecha_real;
   const fechaFin = ev.fechaFin || ev.fecha_fin;
@@ -439,20 +433,14 @@ const addToCalendar = (ev) => {
 
 const CATS = ["Todos","Música","Arte","Comedia","Tech","Gastronomía","Baile","Deportes","Teatro","Bienestar","Académicos"];
 
-// ── Geocodificación: límites de la región y venues verificados ──
-// Rectángulo que cubre el Valle de Aburrá y el Oriente Cercano
 const GEO_BOUNDS = { latMin: 5.90, latMax: 6.50, lngMin: -75.80, lngMax: -75.10 };
 const inRegion = (lat, lng) =>
   lat >= GEO_BOUNDS.latMin && lat <= GEO_BOUNDS.latMax &&
   lng >= GEO_BOUNDS.lngMin && lng <= GEO_BOUNDS.lngMax;
 
-// Normaliza texto: minúsculas y sin tildes, para comparar nombres de lugares
 const normPlace = (s) => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-// Coordenadas verificadas (Google Places, jun 2026). Se comparan por palabra
-// completa contra el campo `place`, en orden: los más específicos primero.
 const VENUES_CONOCIDOS = [
-  // Venues de Medellín
   { match: "teatro metropolitano", lat: 6.2430, lng: -75.5775 },
   { match: "plaza mayor", lat: 6.2410, lng: -75.5759 },
   { match: "pablo tobon", lat: 6.2476, lng: -75.5594 },
@@ -481,12 +469,10 @@ const VENUES_CONOCIDOS = [
   { match: "universidad de medellin", lat: 6.2312, lng: -75.6109 },
   { match: "coltejer", lat: 6.2501, lng: -75.5661 },
   { match: "trilogia bar", lat: 6.2256, lng: -75.5724 },
-  // Venues del Área Metropolitana y Oriente Cercano
   { match: "polideportivo sur", lat: 6.1630, lng: -75.6003 },
   { match: "polideportivo de envigado", lat: 6.1630, lng: -75.6003 },
   { match: "media luna", lat: 6.0729, lng: -75.4971 },
   { match: "llanogrande", lat: 6.1153, lng: -75.4170 },
-  // Municipios (parques principales) — van al final, como respaldo
   { match: "el retiro", lat: 6.0573, lng: -75.5027 },
   { match: "carmen de viboral", lat: 6.0832, lng: -75.3354 },
   { match: "marinilla", lat: 6.1737, lng: -75.3346 },
@@ -504,13 +490,13 @@ const VENUES_CONOCIDOS = [
   { match: "barbosa", lat: 6.4389, lng: -75.3314 },
 ];
 
-// Busca el lugar en el diccionario de venues verificados (coincidencia de palabra completa)
 const matchVenueConocido = (place) => {
   const placeNorm = normPlace(place);
   return VENUES_CONOCIDOS.find(v => new RegExp(`\\b${v.match}\\b`).test(placeNorm)) || null;
 };
 
 export default function App() {
+  const location = useLocation();
   const [activeFilter, setActiveFilter] = useState("Todos");
   const [activeDateFilter, setActiveDateFilter] = useState("Todos");
   const [fechaElegida, setFechaElegida] = useState(null);
@@ -519,7 +505,7 @@ export default function App() {
   const [adminTagPicker, setAdminTagPicker] = useState(null);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("mv-dark") === "1");
   const [pendingEvents, setPendingEvents] = useState([]);
-  const [adminSection, setAdminSection] = useState("pending"); // "pending" | "approved" | "stats"
+  const [adminSection, setAdminSection] = useState("pending");
   const [adminStats, setAdminStats] = useState(null);
   const [subEmail, setSubEmail] = useState("");
   const [showPopup, setShowPopup] = useState(false);
@@ -528,7 +514,7 @@ export default function App() {
   const [subNombre, setSubNombre] = useState("");
   const [subLoading, setSubLoading] = useState(false);
   const [subDone, setSubDone] = useState(false);
-  const [honeypot, setHoneypot] = useState(""); // anti-bot field
+  const [honeypot, setHoneypot] = useState("");
   const [geoCache, setGeoCache] = useState({});
   const [hourTick, setHourTick] = useState(0);
   const [geoLoading, setGeoLoading] = useState(false);
@@ -541,7 +527,7 @@ export default function App() {
   const [miUbicacion, setMiUbicacion] = useState(null);
   const [radioKm, setRadioKm] = useState(20);
   const [buscandoUbicacion, setBuscandoUbicacion] = useState(false);
-  const leafletRef = useRef(null); // event id with open picker
+  const leafletRef = useRef(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [toast, setToast] = useState(null);
@@ -569,7 +555,15 @@ export default function App() {
   const [lang, setLang] = useState("es");
   const t = translations[lang];
 
-  // Restaura el canonical y el titulo al inicio (por si se navego desde una pagina de evento)
+  // ── INTEGRACIÓN GOOGLE ANALYTICS 4 ──
+  useEffect(() => {
+    initGA();
+  }, []);
+
+  useEffect(() => {
+    logPageView(location.pathname + location.search);
+  }, [location]);
+
   useEffect(() => {
     document.title = "Medellín Vibra — Agenda cultural de Medellín";
     let canonicalEl = document.querySelector('link[rel="canonical"]');
@@ -577,7 +571,6 @@ export default function App() {
     canonicalEl.setAttribute("href", "https://www.medellinvibra.co/");
   }, []);
 
-  // Actualiza el evento destacado rotativo cada hora (evita leer Date.now() durante el render)
   useEffect(() => {
     const updateTick = () => setHourTick(Math.floor(Date.now() / 3600000));
     updateTick();
@@ -603,6 +596,7 @@ export default function App() {
       setStats({ eventos: aprobados || 0, promocionados: promocionados, usuarios: visitas || 0, organizadores: organizadores || 0 });
     } catch(e) { console.log("Stats error:", e); }
   };
+  
   const fetchEvents = async () => {
     const { data, error } = await supabase.from("events").select("*, recurrencia, dia_semana, dia_mes").eq("estado", "aprobado").order("fecha_real", { ascending: true, nullsFirst: false });
     if (!error && data) {
@@ -660,7 +654,6 @@ export default function App() {
     else { setShowResetPassword(false); setNewPassword(""); showToast("✓ ¡Contraseña actualizada exitosamente!"); }
   };
 
-
   const SYNONYMS = {
     "Música":      ["concierto","conciertos","show","banda","artista","música","musica","rock","jazz","salsa","reggaeton","reggaetón","pop","electrónica","electronica","sinfónico","sinfonico","orquesta","ópera","opera","zarzuela","tributo","bolero","vallenato","cumbia","rap","hip hop","metal","punk","ska","trova"],
     "Arte":        ["exposición","exposicion","galería","galeria","museo","pintura","cultura","arte","mural","fotografía","fotografia","escultura","instalación","instalacion","dibujo","ilustración","ilustracion"],
@@ -674,7 +667,6 @@ export default function App() {
     "Académicos":  ["congreso","seminario","simposio","conferencia","académico","academico","feria","bienal","poesía","poesia","libro","lectura","literatura","escritura","educación","educacion","ciencia","investigación","investigacion","foro"],
   };
 
-  // Sinónimos de precio y fecha para búsqueda directa
   const PRICE_SYNONYMS = ["gratis","gratuito","gratuita","sin costo","sin cobro","libre","entrada libre","entrada gratuita","free"];
   const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 
@@ -704,7 +696,6 @@ export default function App() {
     };
   };
 
-  // Distancia en km entre dos puntos (formula de Haversine)
   const distanciaKm = (lat1, lng1, lat2, lng2) => {
     const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -722,9 +713,7 @@ export default function App() {
         setMiUbicacion({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setCercaDeMi(true);
         setBuscandoUbicacion(false);
-        if (typeof window.gtag === "function") {
-          window.gtag("event", "usar_cerca_de_mi", { radio_km: radioKm });
-        }
+        trackEvent({ action: "usar_cerca_de_mi", category: "Navegacion", label: `${radioKm} km` });
       },
       () => {
         showToast("No pudimos acceder a tu ubicación. Revisa los permisos del navegador.");
@@ -734,11 +723,10 @@ export default function App() {
     );
   };
 
-  // Filtro por calendario: dispara el evento de GA4 solo al elegir una fecha, no al limpiarla
   const handleFechaElegida = (ymd) => {
     setFechaElegida(ymd);
-    if (ymd && typeof window.gtag === "function") {
-      window.gtag("event", "usar_filtro_calendario", { fecha_elegida: ymd });
+    if (ymd) {
+      trackEvent({ action: "usar_filtro_calendario", category: "Filtros", label: ymd });
     }
   };
 
@@ -748,9 +736,7 @@ export default function App() {
     const synCat = getCatFromSynonym(s);
     const effectiveTagForSearch = e.tag || (isNewEvent(e) ? "Nuevo" : null);
 
-    // ¿Es una búsqueda de precio gratis?
     const isSearchingFree = PRICE_SYNONYMS.some(p => p.includes(s) || s.includes(p));
-    // ¿Está buscando por mes?
     const mesIdx = MESES.findIndex(m => s.includes(m));
     const matchMes = mesIdx >= 0 && e.fechaReal
       ? e.fechaReal.startsWith(`2026-${String(mesIdx + 1).padStart(2, '0')}`) ||
@@ -773,12 +759,10 @@ export default function App() {
     let matchDate = true;
     if (activeDateFilter !== "Todos") {
       if (e.recurrencia) {
-        // Eventos recurrentes siempre aparecen excepto en filtro de mes específico
         matchDate = activeDateFilter !== "Gratis" && activeDateFilter !== "ConCobro";
         if (activeDateFilter === "Gratis") matchDate = e.price === "Gratis";
         else if (activeDateFilter === "ConCobro") matchDate = e.price !== "Gratis";
         else {
-          // Para hoy/finde/semana verificar si la próxima ocurrencia cae en ese rango
           const proxima = getProximaFecha(e);
           if (proxima) {
             const { today, weekendStart, weekendEnd, weekEnd, monthEnd } = getDateRange();
@@ -824,8 +808,11 @@ export default function App() {
       else showToast("⚠️ Error: " + error.message);
     } else {
       const { data, error } = await supabase.from("favorites").insert({ event_id: numId }).select();
-      console.log("Insert result:", data, error);
-      if (!error) { setSaved(s => [...s, numId]); showToast("✓ Guardado en tu lista"); }
+      if (!error) {
+        setSaved(s => [...s, numId]);
+        showToast("✓ Guardado en tu lista");
+        trackEvent({ action: "guardar_evento", category: "Interaccion", label: String(numId) });
+      }
       else showToast("⚠️ Error: " + error.message);
     }
   };
@@ -843,7 +830,6 @@ export default function App() {
 
   const [subiendoImagen, setSubiendoImagen] = useState(false);
 
-  // Comprime una imagen en el navegador antes de subir
   const comprimirImagen = (file, maxWidth = 1000, quality = 0.78) => new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -873,9 +859,7 @@ export default function App() {
 
     setSubiendoImagen(true);
     try {
-      // Comprimir en el navegador (max 1000px, q 0.78)
       let blob = await comprimirImagen(file, 1000, 0.78);
-      // Si sigue muy grande, comprimir más agresivo
       if (blob.size > 480 * 1024) blob = await comprimirImagen(file, 900, 0.65);
       if (blob.size > 480 * 1024) blob = await comprimirImagen(file, 800, 0.55);
 
@@ -906,9 +890,7 @@ export default function App() {
   const handleCreateSubmit = async () => {
     if (!user) { setShowAuth(true); setShowCreate(false); return; }
     if (!form.title || !form.place || !form.date || !form.organizer_name?.trim()) { showToast("⚠️ Completa los campos obligatorios (incluyendo organizador)"); return; }
-    // Rate limiting: máximo 5 eventos por hora
     if (!checkRateLimit("createEvent_" + user.id, 5, 3600000)) { showToast("⚠️ Has publicado demasiados eventos, intenta más tarde"); return; }
-    // Validar URLs
     if (form.ticket_link && !isValidUrl(form.ticket_link)) { showToast("⚠️ El link de compra no es válido"); return; }
     if (form.image_url && !isValidUrl(form.image_url)) { showToast("⚠️ El link de la imagen no es válido"); return; }
     setFormLoading(true);
@@ -938,6 +920,8 @@ export default function App() {
     }]).select();
     setFormLoading(false);
     if (error) { showToast("⚠️ Error al publicar: " + error.message); return; }
+    
+    trackEvent({ action: "publicar_evento", category: "Organizador", label: form.category });
     setShowCreate(false);
     setForm({ title:"", category:"Música", date:"", time:"", place:"", price:"", capacity:"", description:"", emoji:"🎵", tag:"", ticket_platform:"", ticket_link:"", organizer_name:"", organizer_contact:"", image_url:"" });
     if (esAdmin) {
@@ -945,7 +929,6 @@ export default function App() {
       fetchEvents();
     } else {
       showToast("✓ ¡Evento enviado! Lo revisaremos pronto.");
-      // Enviar alerta al admin
       await fetch("https://jtbqaqugnqkympwnfsod.supabase.co/functions/v1/alerta-evento", {
         method: "POST",
         headers: { 
@@ -1038,7 +1021,6 @@ export default function App() {
     const byOrg = {};
     allEvents.filter(e => e.estado === "aprobado" && e.organizer_name).forEach(e => { byOrg[e.organizer_name] = (byOrg[e.organizer_name] || 0) + 1; });
     const topOrgs = Object.entries(byOrg).sort((a, b) => b[1] - a[1]).slice(0, 8);
-    // Clics en "Comprar boleta"
     const { data: clicksData } = await supabase.from("clicks").select("event_id, ticket_url, page, clicked_at");
     const totalClicks = clicksData?.length || 0;
     const clicksByPage = {};
@@ -1071,21 +1053,16 @@ export default function App() {
     showToast("✗ Evento rechazado");
   };
 
-  // Geocodificación con Supabase como caché persistente
   const geocode = useCallback(async (ev) => {
-    // 1. Si el evento ya tiene coordenadas en Supabase, usarlas directamente
     if (ev.lat && ev.lng) return { lat: ev.lat, lng: ev.lng };
-    // 2. Si ya están en caché en memoria, usarlas
     if (geoCache[ev.place]) return geoCache[ev.place];
 
-    // Guarda coordenadas en Supabase, en el estado local y en la caché en memoria
     const saveCoords = async (coords) => {
       await supabase.from("events").update({ lat: coords.lat, lng: coords.lng }).eq("id", ev.id);
       setEvents(evs => evs.map(e => e.id === ev.id ? { ...e, lat: coords.lat, lng: coords.lng } : e));
       setGeoCache(c => ({ ...c, [ev.place]: coords }));
     };
 
-    // 3. Diccionario de venues verificados — sin llamadas externas, precisión garantizada
     const known = matchVenueConocido(ev.place);
     if (known) {
       const coords = { lat: known.lat, lng: known.lng };
@@ -1093,15 +1070,12 @@ export default function App() {
       return coords;
     }
 
-    // 4. Nominatim, restringido a la región con viewbox + bounded
     try {
-      // Si el lugar ya menciona Medellín o Antioquia, no duplicar el contexto
       const placeNorm = normPlace(ev.place);
       const sufijo = (placeNorm.includes("medellin") || placeNorm.includes("antioquia"))
         ? ", Colombia"
         : ", Medellín, Colombia";
       const query = encodeURIComponent(`${ev.place}${sufijo}`);
-      // viewbox en formato lng1,lat1,lng2,lat2 (esquinas del rectángulo regional)
       const viewbox = `${GEO_BOUNDS.lngMin},${GEO_BOUNDS.latMax},${GEO_BOUNDS.lngMax},${GEO_BOUNDS.latMin}`;
       const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=co&viewbox=${viewbox}&bounded=1`, {
         headers: { 'Accept-Language': 'es', 'User-Agent': 'MedellinVibra/1.0' }
@@ -1109,7 +1083,6 @@ export default function App() {
       const data = await res.json();
       if (data && data[0]) {
         const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-        // 5. Validación final: nunca guardar coordenadas fuera de la región
         if (!inRegion(coords.lat, coords.lng)) return null;
         await saveCoords(coords);
         return coords;
@@ -1118,12 +1091,10 @@ export default function App() {
     return null;
   }, [geoCache]);
 
-  // Inicializar mapa Leaflet
   const initMap = useCallback(() => {
     if (mapInstanceRef.current || !mapRef.current) return;
     const L = leafletRef.current;
     if (!L) return;
-    // Forzar dimensiones antes de inicializar
     mapRef.current.style.height = '100%';
     mapRef.current.style.width = '100%';
     const map = L.map(mapRef.current, {
@@ -1136,16 +1107,13 @@ export default function App() {
       maxZoom: 19,
     }).addTo(map);
     mapInstanceRef.current = map;
-    // Forzar re-render del mapa después de montarlo
     setTimeout(() => { map.invalidateSize(); }, 100);
   }, []);
 
-  // Cargar Leaflet dinámicamente
   useEffect(() => {
     if (activeTab !== "map") return;
     if (leafletRef.current) {
       initMap();
-      // Si ya estaba inicializado, forzar invalidateSize por si el contenedor cambió
       setTimeout(() => { mapInstanceRef.current?.invalidateSize(); }, 150);
       return;
     }
@@ -1164,14 +1132,12 @@ export default function App() {
     document.head.appendChild(script);
   }, [activeTab, initMap]);
 
-  // Pintar markers cuando cambian los eventos filtrados o el tab
   useEffect(() => {
     if (activeTab !== "map") return;
     const L = leafletRef.current;
     const map = mapInstanceRef.current;
     if (!L || !map) return;
 
-    // Limpiar markers anteriores
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
     setMarkerCount(0);
@@ -1200,21 +1166,18 @@ export default function App() {
       setMarkerCount(markersRef.current.length);
     };
 
-    // Ajustar el encuadre del mapa para que se vean todos los pines
     const fitToMarkers = () => {
       if (markersRef.current.length === 0) return;
       const bounds = L.featureGroup(markersRef.current).getBounds();
       map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
     };
 
-    // FASE 1: Pintar instantáneamente los que ya tienen coords en Supabase
     const withCoords = eventsToShow.filter(e => e.lat && e.lng);
     const withoutCoords = eventsToShow.filter(e => !e.lat || !e.lng);
 
     withCoords.forEach(ev => addMarker(ev, { lat: ev.lat, lng: ev.lng }));
     fitToMarkers();
 
-    // FASE 2: Geocodificar los que no tienen coords (en segundo plano)
     if (withoutCoords.length === 0) {
       setGeoLoading(false);
       return;
@@ -1243,7 +1206,6 @@ export default function App() {
     if (activeTab === "admin" && isAdmin) { fetchPendingEvents(); fetchAdminStats(); }
   }, [activeTab]);
 
-  // Exponer función global para el popup
   useEffect(() => {
     window.__mvOpenEvent = (id) => {
       const ev = events.find(e => e.id === id);
@@ -1252,7 +1214,6 @@ export default function App() {
     return () => { delete window.__mvOpenEvent; };
   }, [events]);
 
-  // Cleanup mapa al desmontar
   useEffect(() => {
     return () => {
       if (mapInstanceRef.current) {
@@ -1270,15 +1231,12 @@ export default function App() {
 
   const toggleDarkMode = () => setDarkMode(d => !d);
 
-  // Coordinación de CTAs de suscripción
   useEffect(() => {
-    // Comprobar si el usuario ya se suscribió o cerró los CTAs antes
     const subscribedStorage = localStorage.getItem("mv_subscribed") === "1";
     const popupDismissed = localStorage.getItem("mv_popup_dismissed") === "1";
     const stickyDismissed = localStorage.getItem("mv_sticky_dismissed") === "1";
     setAlreadySubscribed(subscribedStorage);
 
-    // Sticky footer: solo primera visita, 3s después de carga, auto-oculta a los 12s
     if (!subscribedStorage && !stickyDismissed) {
       const timerShow = setTimeout(() => setShowStickyFooter(true), 3000);
       const timerHide = setTimeout(() => {
@@ -1290,13 +1248,12 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // Pop-up al 30% de scroll — solo si no se ha suscrito ni cerrado
     if (alreadySubscribed || localStorage.getItem("mv_popup_dismissed") === "1") return;
     const onScroll = () => {
       const pct = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
       if (pct > 0.3) {
         setShowPopup(true);
-        setShowStickyFooter(false); // no coincidir con el sticky
+        setShowStickyFooter(false);
         window.removeEventListener("scroll", onScroll);
       }
     };
@@ -1319,11 +1276,8 @@ export default function App() {
     setShowStickyFooter(false);
   };
   const handleSubscribe = async (origen = "footer") => {
-    // Anti-bot: si el honeypot tiene valor, es un bot
     if (honeypot) return;
-    // Validación de email
     if (!subEmail || !isValidEmail(subEmail)) { showToast("⚠️ Ingresa un correo válido"); return; }
-    // Rate limiting: máximo 3 intentos por minuto
     if (!checkRateLimit("subscribe", 3, 60000)) { showToast("⚠️ Demasiados intentos, espera un momento"); return; }
     setSubLoading(true);
     const cleanEmail = sanitize(subEmail).trim().toLowerCase();
@@ -1338,9 +1292,7 @@ export default function App() {
       setSubEmail("");
       setSubNombre("");
       markSubscribed();
-      if (typeof window.gtag === "function") {
-        window.gtag("event", "suscripcion_newsletter", { origen });
-      }
+      trackEvent({ action: "suscripcion_newsletter", category: "Conversión", label: origen });
     }
   };
 
@@ -1377,16 +1329,16 @@ export default function App() {
       <Route path="/para-organizadores" element={<OrganizadoresLanding />} />
       <Route path="/preguntas-frecuentes" element={<FaqPage />} />
       <Route path="/hoy" element={<HoyPage />} />
-        <Route path="/esta-semana" element={<EstaSemanaPage />} />
-        <Route path="/finde" element={<FindePage />} />
+      <Route path="/esta-semana" element={<EstaSemanaPage />} />
+      <Route path="/finde" element={<FindePage />} />
       <Route path="*" element={<>
       <style>{style}</style>
       <div className="app">
         <nav className="nav">
-          <div className="nav-logo" style={{cursor:'pointer'}} onClick={()=>setActiveTab("home")}>MEDELLÍN VIBRA</div>
+          <div className="nav-logo" style={{cursor:'pointer'}} onClick={()=>{setActiveTab("home"); trackEvent({ action: "cambiar_tab", category: "Navegacion", label: "home" });}}>MEDELLÍN VIBRA</div>
           <div className="nav-links">
             {[[t.tabExplore,"explore"],["Mapa","map"],[t.tabSaved,"saved"]].map(([label,tab]) => (
-              <button key={tab} className={`nav-link ${activeTab===tab?"active":""}`} onClick={()=>setActiveTab(tab)}>{label}</button>
+              <button key={tab} className={`nav-link ${activeTab===tab?"active":""}`} onClick={()=>{setActiveTab(tab); trackEvent({ action: "cambiar_tab", category: "Navegacion", label: tab });}}>{label}</button>
             ))}
           </div>
           <div className="nav-actions">
@@ -1418,12 +1370,12 @@ export default function App() {
 
         {activeTab === "home" && (
           <>
-            <HeroBanner search={search} setSearch={setSearch} stats={stats} t={t} lang={lang} />
+            <HeroBanner search={search} setSearch={(val) => { setSearch(val); if(val.length > 2) trackEvent({ action: "busqueda", category: "Interaccion", label: val }); }} stats={stats} t={t} lang={lang} />
 
             <NewsletterCTAs alreadySubscribed={alreadySubscribed} showPopup={showPopup} showStickyFooter={showStickyFooter} subEmail={subEmail} setSubEmail={setSubEmail} handleSubscribe={handleSubscribe} dismissPopup={dismissPopup} dismissSticky={dismissSticky} />
             <div className="filters-bar" style={{borderBottom:'none',paddingBottom:4,paddingTop:12}}>
               {[["Todas","Todas las zonas"],["Medellín","Medellín"],["Área Metropolitana","Área Metropolitana"],["Oriente Cercano","Oriente Cercano"]].map(([val,label]) => (
-                <button key={val} className={`filter-chip ${activeZona===val?"active":""}`} onClick={() => setActiveZona(val)}>{label}</button>
+                <button key={val} className={`filter-chip ${activeZona===val?"active":""}`} onClick={() => { setActiveZona(val); trackEvent({ action: "filtro_zona", category: "Filtros", label: val }); }}>{label}</button>
               ))}
               <button className={`filter-chip ${cercaDeMi?"active":""}`} onClick={activarCercaDeMi} disabled={buscandoUbicacion} style={{whiteSpace:'nowrap'}}>
                 {buscandoUbicacion ? "Buscando ubicación..." : cercaDeMi ? "✕ Cerca de mí" : "📍 Cerca de mí"}
@@ -1443,16 +1395,19 @@ export default function App() {
                 onSeleccionar={handleFechaElegida}
               />
               {[["Todos",t.filterAll],["Hoy",t.filterToday],["FinDeSemana",t.filterWeekend],["EstaSemana",t.filterWeek],["EsteMes",t.filterMonth],["Gratis",t.filterFree],["ConCobro","De pago"]].map(([val,label]) => (
-                <button key={val} className={`filter-chip ${val==="Hoy"?"filter-chip-hoy":""} ${val==="EstaSemana"?"filter-chip-semana":""} ${val==="FinDeSemana"?"filter-chip-finde":""} ${activeDateFilter===val?"active":""}`} onClick={() => val==="Hoy" ? navigate("/hoy") : val==="FinDeSemana" ? navigate("/finde") : val==="EstaSemana" ? navigate("/esta-semana") : setActiveDateFilter(val)}>
+                <button key={val} className={`filter-chip ${val==="Hoy"?"filter-chip-hoy":""} ${val==="EstaSemana"?"filter-chip-semana":""} ${val==="FinDeSemana"?"filter-chip-finde":""} ${activeDateFilter===val?"active":""}`} onClick={() => {
+                  trackEvent({ action: "filtro_fecha", category: "Filtros", label: val });
+                  val==="Hoy" ? navigate("/hoy") : val==="FinDeSemana" ? navigate("/finde") : val==="EstaSemana" ? navigate("/esta-semana") : setActiveDateFilter(val);
+                }}>
                   {label}
                 </button>
               ))}
             </div>
-            {/* === FILTROS DE CATEGORÍA === */}
+
             <div style={{padding:"0 24px 8px"}}>
               <button
                 className={`filter-chip ${activeFilter==="Todos"?"active":""}`}
-                onClick={() => setActiveFilter("Todos")}
+                onClick={() => { setActiveFilter("Todos"); trackEvent({ action: "filtro_categoria", category: "Filtros", label: "Todos" }); }}
                 style={{width:"100%", justifyContent:"center", fontSize:15, padding:"12px 20px", marginBottom:8, display:"flex"}}
               >
                 Todos los eventos
@@ -1465,10 +1420,10 @@ export default function App() {
                     const count = events.filter(e => e.cat === c).length;
                     return (
                       <button key={c} className={`filter-chip ${activeFilter===c?"active":""}`}
-                        onClick={() => setActiveFilter(c)}
+                        onClick={() => { setActiveFilter(c); trackEvent({ action: "filtro_categoria", category: "Filtros", label: c }); }}
                         style={{justifyContent:"center", flexDirection:"column", padding:"10px 4px", gap:3, fontSize:12, textAlign:"center", lineHeight:1.2, display:"flex", alignItems:"center"}}
                       >
-                        <span style={{fontSize:18}}>{ {"Música":"🎵","Arte":"🎨","Comedia":"😂","Tech":"💻","Gastronomía":"🍽️","Baile":"💃","Deportes":"⚽","Teatro":"🎭","Bienestar":"🧘","Académicos":"📚"}[c] }</span>
+                        <span style={{fontSize:18}}>{ EMO[c] }</span>
                         <span>{c}</span>
                         {count > 0 && <span style={{fontSize:10,opacity:0.7}}>({count})</span>}
                       </button>
@@ -1478,7 +1433,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* BARRA DE TAGS */}
             {(() => {
               const tagCounts = Object.keys(TAGS_CONFIG).reduce((acc, tag) => {
                 acc[tag] = events.filter(e => {
@@ -1509,7 +1463,7 @@ export default function App() {
                       <button
                         key={tag}
                         className="tag-chip"
-                        onClick={() => setActiveTagFilter(isActive ? null : tag)}
+                        onClick={() => { setActiveTagFilter(isActive ? null : tag); trackEvent({ action: "filtro_tag", category: "Filtros", label: tag }); }}
                         style={{
                           background: isActive ? cfg.color : cfg.bg,
                           color: isActive ? "white" : cfg.color,
@@ -1525,8 +1479,7 @@ export default function App() {
               );
             })()}
 
-            
-<div className="about-section">
+            <div className="about-section">
               <div className="about-inner">
                 <div className="about-tag">{t.aboutTag}</div>
                 <div className="about-title">{t.aboutTitle}</div>
@@ -1537,15 +1490,12 @@ export default function App() {
               </div>
             </div>
 
-            {/* BLOQUE ESTE FIN DE SEMANA */}
             {(() => {
               const today = new Date(); today.setHours(0,0,0,0);
               const day = today.getDay();
               const diffToFri = (5 - day + 7) % 7;
-              // Si hoy es sáb o dom, mostrar el finde actual; si no, el próximo
               const fri = new Date(today);
               if (day === 6 || day === 0) {
-                // Estamos en fin de semana — mostrar desde hoy hasta el domingo
                 fri.setDate(today.getDate() - (day === 0 ? 1 : 0));
               } else {
                 fri.setDate(today.getDate() + diffToFri);
@@ -1579,7 +1529,7 @@ export default function App() {
                       {findeEvents.map(ev => {
                         const cfg = getCatConfig(ev.cat);
                         return (
-                          <div key={ev.id} onClick={() => setSelectedEvent(ev)}
+                          <div key={ev.id} onClick={() => { setSelectedEvent(ev); trackEvent({ action: "ver_detalle_evento", category: "Interaccion", label: ev.title }); }}
                             style={{borderRadius:16, overflow:'hidden', cursor:'pointer', position:'relative', aspectRatio:'3/4', background:`linear-gradient(135deg, ${cfg.color}33, ${cfg.color}66)`}}
                             onMouseEnter={e=>e.currentTarget.style.transform='scale(1.02)'}
                             onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}
@@ -1618,7 +1568,7 @@ export default function App() {
                     </div>
                     <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(240px, 1fr))', gap:16}}>
                       {weekEvents.map(ev => (
-                        <div key={ev.id} onClick={() => setSelectedEvent(ev)} style={{display:'flex', gap:12, alignItems:'center', background:'var(--surface2)', borderRadius:12, padding:12, cursor:'pointer', border:'1px solid var(--border)', transition:'all 0.2s'}}
+                        <div key={ev.id} onClick={() => { setSelectedEvent(ev); trackEvent({ action: "ver_detalle_evento", category: "Interaccion", label: ev.title }); }} style={{display:'flex', gap:12, alignItems:'center', background:'var(--surface2)', borderRadius:12, padding:12, cursor:'pointer', border:'1px solid var(--border)', transition:'all 0.2s'}}
                           onMouseEnter={e=>e.currentTarget.style.borderColor='var(--gold)'}
                           onMouseLeave={e=>e.currentTarget.style.borderColor='var(--border)'}
                         >
@@ -1640,7 +1590,7 @@ export default function App() {
               {activeFilter === "Todos" && !search && featuredEvent && (
                 <div className="desktop-only">
                   <div className="section-header"><div className="section-title">{t.featuredTitle} <span>{t.featuredTitleSpan}</span></div></div>
-                  <div className="featured-card" onClick={() => setSelectedEvent(featuredEvent)}>
+                  <div className="featured-card" onClick={() => { setSelectedEvent(featuredEvent); trackEvent({ action: "ver_detalle_destacado", category: "Interaccion", label: featuredEvent.title }); }}>
                     <div className="featured-bg" style={{backgroundImage: `url(${getCatConfig(featuredEvent.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}} />
                     <div className="featured-overlay" />
                     <div className="featured-content">
@@ -1684,7 +1634,7 @@ export default function App() {
               ) : viewMode === "grid" ? (
                 <div className="events-grid">
                   {filtered.map(ev => (
-                    <div key={ev.id} className="event-card" onClick={() => setSelectedEvent(ev)}>
+                    <div key={ev.id} className="event-card" onClick={() => { setSelectedEvent(ev); trackEvent({ action: "ver_detalle_evento", category: "Interaccion", label: ev.title }); }}>
                       <div className="event-card-img" style={{backgroundImage: `url(${ev.imageUrl || getCatConfig(ev.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}}>
                         <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.35)'}} />
                         <span className="event-card-cat" style={{zIndex:1}}>{ev.cat}</span>
@@ -1739,7 +1689,7 @@ export default function App() {
               ) : (
                 <div style={{display:'flex', flexDirection:'column', gap:12, marginBottom:48}}>
                   {filtered.map(ev => (
-                    <div key={ev.id} onClick={() => setSelectedEvent(ev)} style={{display:'flex', gap:16, alignItems:'center', background:'white', borderRadius:14, padding:14, cursor:'pointer', border:'1px solid var(--border)', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', transition:'all 0.2s'}}
+                    <div key={ev.id} onClick={() => { setSelectedEvent(ev); trackEvent({ action: "ver_detalle_evento", category: "Interaccion", label: ev.title }); }} style={{display:'flex', gap:16, alignItems:'center', background:'white', borderRadius:14, padding:14, cursor:'pointer', border:'1px solid var(--border)', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', transition:'all 0.2s'}}
                       onMouseEnter={e=>e.currentTarget.style.borderColor='var(--gold)'}
                       onMouseLeave={e=>e.currentTarget.style.borderColor='var(--border)'}
                     >
@@ -1772,7 +1722,6 @@ export default function App() {
               )}
             </div>
 
-            {/* LUGARES PARA EXPLORAR */}
             <div style={{background:'linear-gradient(135deg, #1a1a1a, #2a1a00)', padding:'32px 24px', borderTop:'1px solid var(--border)', borderBottom:'1px solid var(--border)'}}>
               <div style={{maxWidth:1200, margin:'0 auto'}}>
                 <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20}}>
@@ -1881,10 +1830,8 @@ export default function App() {
           </div>
         )}
 
-        {/* PESTAÑA MAPA */}
         {activeTab === "map" && (
           <div style={{flex:1, display:'flex', flexDirection:'column', minHeight:0, height:'calc(100vh - 120px)'}}>
-            {/* Header del mapa */}
             <div style={{background:'white', borderBottom:'1px solid var(--border)', padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0}}>
               <div>
                 <div style={{fontFamily:'var(--font-display)', fontSize:22, color:'var(--text)'}}>Mapa de <span style={{color:'var(--gold)'}}>Eventos</span></div>
@@ -1898,14 +1845,12 @@ export default function App() {
               )}
             </div>
 
-            {/* Filtros rápidos sobre el mapa */}
             <div style={{background:'white', padding:'8px 16px', display:'flex', gap:6, overflowX:'auto', flexShrink:0, borderBottom:'1px solid var(--border)'}}>
               {CATS.map(c => (
                 <button key={c} className={`filter-chip ${activeFilter===c?"active":""}`} style={{fontSize:12,padding:'5px 12px'}} onClick={() => setActiveFilter(c)}>{c}</button>
               ))}
             </div>
 
-            {/* Mapa Leaflet */}
             <div className="map-container" style={{flex:1, position:'relative', height:'calc(100vh - 200px)'}}>
               <div ref={mapRef} className="map-wrap" style={{height:'100%', width:'100%', minHeight:'400px'}} />
               {!geoLoading && markerCount === 0 && filtered.length > 0 && (
@@ -1921,10 +1866,8 @@ export default function App() {
           </div>
         )}
 
-        {/* PANEL ADMIN */}
         {activeTab === "admin" && isAdmin && (
           <div className="admin-panel">
-            {/* Header */}
             <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', paddingBottom:4}}>
               <div style={{fontFamily:'var(--font-display)', fontSize:28, color:'var(--text)'}}>
                 Panel <span style={{color:'var(--gold)'}}>Admin</span>
@@ -1934,7 +1877,6 @@ export default function App() {
               </button>
             </div>
 
-            {/* Tabs internos */}
             <div style={{display:'flex', gap:8, background:'var(--surface2)', borderRadius:12, padding:4}}>
               {[["pending","⏳ Pendientes", pendingEvents.length],["approved","✅ Aprobados", events.length],["stats","📊 Stats", null]].map(([key,label,count])=>(
                 <button key={key} onClick={()=>{ setAdminSection(key); if(key==='stats') fetchAdminStats(); }}
@@ -1948,7 +1890,6 @@ export default function App() {
               ))}
             </div>
 
-            {/* Sección Pendientes */}
             {adminSection === "pending" && (
               pendingEvents.length === 0
                 ? <div style={{textAlign:'center', padding:'48px 0', color:'var(--muted)'}}>
@@ -1980,7 +1921,6 @@ export default function App() {
                 ))
             )}
 
-            {/* Sección Aprobados */}
             {adminSection === "approved" && (
               events.map(ev => (
                 <div key={ev.id} className="admin-event-row">
@@ -1991,7 +1931,6 @@ export default function App() {
                     <div className="admin-event-row-title">{ev.title}</div>
                     <div className="admin-event-row-meta">📅 {ev.date} · 📍 {ev.place} · 💰 {ev.price}</div>
                     <div className="admin-event-row-actions">
-                      {/* Tag picker */}
                       <div style={{position:'relative'}}>
                         <button className="admin-btn-delete" onClick={()=>setAdminTagPicker(adminTagPicker===ev.id?null:ev.id)}>
                           🏷️ {ev.tag || "Sin tag"}
@@ -2020,7 +1959,6 @@ export default function App() {
               ))
             )}
 
-            {/* Sección Stats */}
             {adminSection === "stats" && (
               !adminStats
                 ? <div style={{textAlign:'center', padding:'48px 0', color:'var(--muted)'}}>
@@ -2029,7 +1967,6 @@ export default function App() {
                   </div>
                 : <div style={{display:'flex', flexDirection:'column', gap:16}}>
 
-                    {/* Números grandes */}
                     <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10}}>
                       {[
                         ["✅ Aprobados", adminStats.byEstado.aprobado, "#059669"],
@@ -2044,7 +1981,6 @@ export default function App() {
                       ))}
                     </div>
 
-                    {/* Por categoría */}
                     <div style={{background:'white', border:'1px solid var(--border)', borderRadius:14, padding:'16px'}}>
                       <div style={{fontWeight:700, fontSize:13, marginBottom:12, color:'var(--text)'}}>📂 Eventos por categoría</div>
                       {Object.entries(adminStats.byCat).sort((a,b)=>b[1]-a[1]).map(([cat, count]) => {
@@ -2064,7 +2000,6 @@ export default function App() {
                       })}
                     </div>
 
-                    {/* Por zona */}
                     <div style={{background:'white', border:'1px solid var(--border)', borderRadius:14, padding:'16px'}}>
                       <div style={{fontWeight:700, fontSize:13, marginBottom:12, color:'var(--text)'}}>🗺️ Eventos por zona</div>
                       {Object.entries(adminStats.byZona).sort((a,b)=>b[1]-a[1]).map(([zona, count]) => {
@@ -2083,7 +2018,6 @@ export default function App() {
                       })}
                     </div>
 
-                    {/* Por mes */}
                     <div style={{background:'white', border:'1px solid var(--border)', borderRadius:14, padding:'16px'}}>
                       <div style={{fontWeight:700, fontSize:13, marginBottom:12, color:'var(--text)'}}>📅 Eventos por mes</div>
                       {Object.entries(adminStats.byMes).sort((a,b)=>a[0].localeCompare(b[0])).map(([mes, count]) => {
@@ -2104,7 +2038,6 @@ export default function App() {
                       })}
                     </div>
 
-                    {/* Organizadores más activos */}
                     <div style={{background:'white', border:'1px solid var(--border)', borderRadius:14, padding:'16px'}}>
                       <div style={{fontWeight:700, fontSize:13, marginBottom:12, color:'var(--text)'}}>👤 Organizadores más activos</div>
                       {adminStats.topOrgs.map(([org, count], i) => (
@@ -2116,7 +2049,6 @@ export default function App() {
                       ))}
                     </div>
 
-                    {/* ── Clics en Comprar Boleta ── */}
                     <div style={{background:"white", border:"1px solid var(--border)", borderRadius:14, padding:"16px"}}>
                       <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12}}>
                         <div style={{fontWeight:700, fontSize:13, color:"var(--text)"}}>🎟️ Clics en "Comprar boleta"</div>
@@ -2126,8 +2058,6 @@ export default function App() {
                         <div style={{textAlign:"center", color:"var(--muted)", fontSize:13, padding:"16px 0"}}>Aún no hay clics registrados. ¡Pronto aparecerán aquí!</div>
                       ) : (
                         <>
-                          {/* Por boletería */
-}
                           {Object.keys(adminStats.clicksByBoleteria).length > 0 && (
                             <div style={{marginBottom:16}}>
                               <div style={{fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:8}}>Por boletería</div>
@@ -2147,8 +2077,6 @@ export default function App() {
                               })}
                             </div>
                           )}
-                          {/* Por página */
-}
                           {Object.keys(adminStats.clicksByPage).length > 0 && (
                             <div style={{marginBottom:16}}>
                               <div style={{fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:8}}>Por página</div>
@@ -2161,8 +2089,6 @@ export default function App() {
                               </div>
                             </div>
                           )}
-                          {/* Top eventos más clickeados */
-}
                           {adminStats.topClickedEvents.length > 0 && (
                             <div>
                               <div style={{fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:8}}>Top eventos</div>
@@ -2185,7 +2111,6 @@ export default function App() {
         )}
 
         <footer style={{background:'var(--surface2)', borderTop:'1px solid var(--border)', display: activeTab === 'map' || activeTab === 'admin' ? 'none' : 'block'}}>
-          {/* Bloque newsletter */}
           <div style={{background:'var(--dark)', padding:'32px 24px', textAlign:'center'}}>
             {subDone ? (
               <div>
@@ -2198,7 +2123,6 @@ export default function App() {
                 <div style={{fontFamily:'var(--font-display)', fontSize:26, color:'white', marginBottom:4}}><Mail size={22} style={{display:'inline', verticalAlign:'-2px', marginRight:8, color:'var(--gold)'}} />AGENDA SEMANAL</div>
                 <div style={{color:'rgba(255,255,255,0.6)', fontSize:14, marginBottom:20}}>Recibe cada viernes los mejores eventos de Medellín</div>
                 <div style={{display:'flex', flexDirection:'column', gap:10, maxWidth:360, margin:'0 auto'}}>
-                  {/* Honeypot anti-bot — invisible para usuarios reales */}
                   <input type="text" value={honeypot} onChange={e => setHoneypot(e.target.value)} style={{position:'absolute', left:'-9999px', opacity:0, height:0, width:0}} tabIndex={-1} autoComplete="off" />
                   <input type="text" placeholder="Tu nombre (opcional)" value={subNombre} onChange={e => setSubNombre(e.target.value)}
                     style={{padding:'12px 16px', borderRadius:10, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.08)', color:'white', fontSize:14, fontFamily:'var(--font-body)', outline:'none'}} />
@@ -2213,7 +2137,6 @@ export default function App() {
               </>
             )}
           </div>
-          {/* Footer normal */}
           <div style={{padding:'20px 24px', textAlign:'center'}}>
             <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:16, flexWrap:'wrap'}}>
               <span style={{fontFamily:'var(--font-display)', fontSize:18, color:'var(--gold)'}}>MEDELLÍN VIBRA</span>
@@ -2236,7 +2159,7 @@ export default function App() {
 
         <nav className="bottom-nav">
           {[[Home,t.tabHome,"home"],[Search,t.tabExplore,"explore"],[MapIcon,"Mapa","map"],[Heart,t.tabSaved,"saved"],[User,t.tabProfile,"profile"]].map(([Icon,label,tab])=>(
-            <button key={tab} className={`bottom-nav-item ${activeTab===tab?"active":""}`} onClick={()=>setActiveTab(tab)}>
+            <button key={tab} className={`bottom-nav-item ${activeTab===tab?"active":""}`} onClick={()=>{setActiveTab(tab); trackEvent({ action: "cambiar_tab_bottom", category: "Navegacion", label: tab });}}>
               <span><Icon size={20} fill={tab==="saved" && saved.length > 0 ? "#E8353A" : "none"} color={tab==="saved" && saved.length > 0 ? "#E8353A" : "currentColor"} /></span><span>{label}</span>
             </button>
           ))}
@@ -2357,20 +2280,15 @@ export default function App() {
                 )}
                 <div className="detail-actions">
                   <button className="btn-buy" onClick={() => {
+                    trackEvent({ action: "comprar_boleta", category: "Conversion", label: selectedEvent.title });
                     if (selectedEvent.link) {
-                      if (typeof window.gtag === "function") {
-                        window.gtag("event", "comprar_boleta", {
-                          evento_id: selectedEvent.id,
-                          evento_nombre: selectedEvent.title,
-                          evento_categoria: selectedEvent.cat,
-                        });
-                      }
                       window.open(selectedEvent.link,'_blank');
                     } else handleReserve();
                   }}>
                     {selectedEvent.price === "Gratis" ? t.registerFree : selectedEvent.price.startsWith("En") ? t.buyTickets : `${t.buy} · ${selectedEvent.price} →`}
                   </button>
                   <button className="btn-share" title="Compartir por WhatsApp" style={{color:'#25D366',borderColor:'rgba(37,211,102,0.3)'}} onClick={()=>{
+                    trackEvent({ action: "compartir_whatsapp", category: "Social", label: selectedEvent.title });
                     const texto = `🎉 *${selectedEvent.title}*\n📅 ${selectedEvent.date} · ${selectedEvent.time}\n📍 ${selectedEvent.place}\n💰 ${selectedEvent.price}\n\n👉 Más info en medellinvibra.co`;
                     window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
                   }}><MessageCircle size={20} /></button>
@@ -2386,7 +2304,7 @@ export default function App() {
                   <Link2 size={15} />Ver página del evento · Compartir link
                 </button>
                 <button
-                  onClick={() => addToCalendar(selectedEvent)}
+                  onClick={() => { addToCalendar(selectedEvent); trackEvent({ action: "agregar_calendario", category: "Interaccion", label: selectedEvent.title }); }}
                   style={{width:'100%', marginTop:8, padding:'13px', borderRadius:12, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontFamily:'var(--font-body)', fontSize:14, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6}}
                 >
                   <CalendarPlus size={15} />Agregar al calendario
