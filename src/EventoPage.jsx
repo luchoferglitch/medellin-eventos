@@ -2,6 +2,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "./supabase";
 import { registrarClic } from "./registrarClic";
+import SEO from "./components/SEO"; // 👈 IMPORTACIÓN DEL COMPONENTE SEO
 import { Calendar, Clock, MapPin, Banknote, User, Share2, CalendarPlus, Search, Star, PartyPopper, Drama } from "lucide-react";
 
 const CAT_COLORS = {
@@ -71,12 +72,12 @@ export default function EventoPage() {
     supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user || null));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setUser(session?.user || null));
     return () => subscription.unsubscribe();
-  }, [])
+  }, []);
 
   useEffect(() => {
     supabase.from("hoteles_recomendados").select("*").eq("activo", true).order("orden", { ascending: true }).limit(1)
       .then(({ data }) => { if (data && data.length > 0) setHotelRecomendado(data[0]); });
-  }, []);;
+  }, []);
 
   const fetchReviews = async (eventId) => {
     const { data } = await supabase
@@ -93,77 +94,8 @@ export default function EventoPage() {
     tag: e.tag, desc: e.description, ticketPlatform: e.ticket_platform,
     link: e.ticket_link, organizerName: e.organizer_name,
     organizerContact: e.organizer_contact, imageUrl: e.image_url,
-    fechaReal: e.fecha_real, zona: e.zona,
+    fechaReal: e.fecha_real, fechaFin: e.fecha_fin, createdAt: e.created_at, zona: e.zona,
   });
-
-  const updateMetaTags = (e) => {
-    document.title = `${e.title} — Medellín Vibra`;
-    const setMeta = (sel, content) => {
-      let el = document.querySelector(sel);
-      if (!el) { el = document.createElement("meta"); document.head.appendChild(el); }
-      el.setAttribute("content", content);
-    };
-    const url = `https://www.medellinvibra.co/evento/${slugify(e.title)}-${e.id}`;
-    const img = e.image_url || "https://pub-c5ba255ea192436da56e91e3ef3ecfa5.r2.dev/default-fallback-medellin";
-    const desc = e.description ? e.description.slice(0, 155) : `${e.category} en ${e.place} · ${e.date} · ${e.price}`;
-    setMeta('meta[name="description"]', desc);
-    setMeta('meta[property="og:title"]', `${e.title} — Medellín Vibra`);
-    setMeta('meta[property="og:description"]', desc);
-    setMeta('meta[property="og:image"]', img);
-    setMeta('meta[property="og:url"]', url);
-    setMeta('meta[property="og:type"]', "event");
-    setMeta('meta[name="twitter:card"]', "summary_large_image");
-    setMeta('meta[name="twitter:title"]', `${e.title} — Medellín Vibra`);
-    setMeta('meta[name="twitter:description"]', desc);
-    setMeta('meta[name="twitter:image"]', img);
-
-    // Canonical dinamico: cada evento debe apuntar a su propia URL, no al home
-    let canonicalEl = document.querySelector('link[rel="canonical"]');
-    if (!canonicalEl) { canonicalEl = document.createElement("link"); canonicalEl.setAttribute("rel", "canonical"); document.head.appendChild(canonicalEl); }
-    canonicalEl.setAttribute("href", url);
-
-    // JSON-LD Event (schema.org) — habilita resultados enriquecidos de eventos en Google
-    const oldLd = document.getElementById("event-jsonld");
-    if (oldLd) oldLd.remove();
-    if (e.fecha_real) {
-      const organizerName = e.organizer_name || "Medellín Vibra";
-      const organizerUrl = e.organizer_name
-        ? `https://www.medellinvibra.co/organizador/${slugify(e.organizer_name)}`
-        : "https://www.medellinvibra.co";
-      const esGratis = (e.price || "").toLowerCase().startsWith("gratis");
-      const priceMatch = (e.price || "").match(/[0-9][0-9.,]*/);
-      const offerPrice = esGratis ? "0" : (priceMatch ? priceMatch[0].replace(/\./g, "").replace(/,/g, "") : undefined);
-      const validFrom = e.created_at ? new Date(e.created_at).toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
-      const ld = {
-        "@context": "https://schema.org",
-        "@type": "Event",
-        name: e.title,
-        startDate: e.fecha_real,
-        endDate: e.fecha_fin || e.fecha_real,
-        eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-        eventStatus: "https://schema.org/EventScheduled",
-        location: { "@type": "Place", name: e.place, address: { "@type": "PostalAddress", addressLocality: "Medellín", addressRegion: "Antioquia", addressCountry: "CO" } },
-        ...(e.image_url ? { image: [e.image_url] } : {}),
-        ...(e.description ? { description: e.description.slice(0, 300) } : {}),
-        performer: { "@type": "PerformingGroup", name: organizerName },
-        organizer: { "@type": "Organization", name: organizerName, url: organizerUrl },
-        offers: {
-          "@type": "Offer",
-          url,
-          priceCurrency: "COP",
-          availability: "https://schema.org/InStock",
-          validFrom,
-          ...(offerPrice ? { price: offerPrice } : {}),
-        },
-        ...(esGratis ? { isAccessibleForFree: true } : {}),
-      };
-      const s = document.createElement("script");
-      s.type = "application/ld+json";
-      s.id = "event-jsonld";
-      s.textContent = JSON.stringify(ld);
-      document.head.appendChild(s);
-    }
-  };
 
   useEffect(() => {
     const handleFoundRow = (data) => {
@@ -171,11 +103,9 @@ export default function EventoPage() {
       if (data.estado === "archivado") {
         setEvent(mapEvent(data));
         setIsArchived(true);
-        updateMetaTags(data);
         return;
       }
       setEvent(mapEvent(data));
-      updateMetaTags(data);
       fetchReviews(data.id);
     };
 
@@ -196,7 +126,6 @@ export default function EventoPage() {
 
     fetchEvent();
   }, [slug]);
-
 
   useEffect(() => {
     if (user && event) {
@@ -235,12 +164,60 @@ export default function EventoPage() {
   );
 
   if (notFound) { navigate("/", { replace: true }); return null; }
+
   const catColor = CAT_COLORS[event.cat] || "#C8860A";
   const tagCfg = event.tag ? TAGS_CONFIG[event.tag] : null;
   const canonicalUrl = `https://www.medellinvibra.co/evento/${slugify(event.title)}-${event.id}`;
+  const eventImg = event.imageUrl || "https://pub-c5ba255ea192436da56e91e3ef3ecfa5.r2.dev/default-fallback-medellin";
+  const eventDesc = event.desc ? event.desc.slice(0, 155) : `${event.cat} en ${event.place} · ${event.date} · ${event.price}`;
+
+  // Estructura JSON-LD de Evento para Google Search
+  const esGratis = (event.price || "").toLowerCase().startsWith("gratis");
+  const priceMatch = (event.price || "").match(/[0-9][0-9.,]*/);
+  const offerPrice = esGratis ? "0" : (priceMatch ? priceMatch[0].replace(/\./g, "").replace(/,/g, "") : undefined);
+  const validFrom = event.createdAt ? new Date(event.createdAt).toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
+
+  const jsonLdData = event.fechaReal ? {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: event.title,
+    startDate: event.fechaReal,
+    endDate: event.fechaFin || event.fechaReal,
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    eventStatus: "https://schema.org/EventScheduled",
+    location: { "@type": "Place", name: event.place, address: { "@type": "PostalAddress", addressLocality: "Medellín", addressRegion: "Antioquia", addressCountry: "CO" } },
+    ...(event.imageUrl ? { image: [event.imageUrl] } : {}),
+    ...(event.desc ? { description: event.desc.slice(0, 300) } : {}),
+    performer: { "@type": "PerformingGroup", name: event.organizerName || "Medellín Vibra" },
+    organizer: { "@type": "Organization", name: event.organizerName || "Medellín Vibra", url: event.organizerName ? `https://www.medellinvibra.co/organizador/${slugify(event.organizerName)}` : "https://www.medellinvibra.co" },
+    offers: {
+      "@type": "Offer",
+      url: canonicalUrl,
+      priceCurrency: "COP",
+      availability: "https://schema.org/InStock",
+      validFrom,
+      ...(offerPrice ? { price: offerPrice } : {}),
+    },
+    ...(esGratis ? { isAccessibleForFree: true } : {}),
+  } : null;
 
   return (
     <div style={{minHeight:'100vh', background:'#f5f3ef', fontFamily:"'DM Sans', sans-serif"}}>
+      {/* 🚀 COMPONENTE DE SEO DINÁMICO */}
+      <SEO 
+        title={`${event.title} — Medellín Vibra`}
+        description={eventDesc}
+        image={eventImg}
+        url={canonicalUrl}
+      />
+
+      {/* Script JSON-LD inyectado para Rich Results de Google */}
+      {jsonLdData && (
+        <script type="application/ld+json">
+          {JSON.stringify(jsonLdData)}
+        </script>
+      )}
+
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
 
@@ -439,5 +416,3 @@ export default function EventoPage() {
     </div>
   );
 }
-
-
