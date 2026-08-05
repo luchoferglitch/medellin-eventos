@@ -433,6 +433,37 @@ const addToCalendar = (ev) => {
 
 const CATS = ["Todos","Música","Arte","Comedia","Tech","Gastronomía","Baile","Deportes","Teatro","Bienestar","Académicos"];
 
+// Páginas de zona indexables: pre-filtran el listado por zona sin bloquear el chip de zona.
+const ZONA_PAGES = {
+  "/medellin": {
+    zona: "Medellín",
+    title: "Eventos en Medellín hoy y esta semana — Medellín Vibra",
+    description: "La agenda de conciertos, teatro, arte y gastronomía en Medellín: Teatro Metropolitano, Pablo Tobón Uribe, Plaza Mayor, El Poblado y Laureles. Filtra por categoría, fecha o cercanía.",
+    heroTitle: (<>QUÉ HACER<br /><span className="accent-red">EN MEDELLÍN</span></>),
+    heroSubtitle: (<>Conciertos, teatro, arte y gastronomía en el centro de la ciudad — de Laureles al Poblado.{" "}<strong style={{ color: "#F5A623" }}>Tu agenda cultural, actualizada cada semana.</strong></>),
+    heading: "Qué hacer en Medellín",
+    intro: "La agenda de eventos dentro de Medellín: desde el Teatro Metropolitano y el Pablo Tobón Uribe hasta planes en Laureles, El Poblado y el centro. Filtra por categoría, fecha o activa \"Cerca de mí\" para ver qué está pasando cerca de ti ahora mismo.",
+  },
+  "/area-metropolitana": {
+    zona: "Área Metropolitana",
+    title: "Eventos en el Área Metropolitana de Medellín (Envigado, Sabaneta, Itagüí) — Medellín Vibra",
+    description: "Agenda de eventos culturales en Envigado, Sabaneta, Itagüí, Caldas y los demás municipios del Área Metropolitana de Medellín. Conciertos, teatro, deportes y gastronomía, filtrables por categoría y fecha.",
+    heroTitle: (<>QUÉ HACER EN EL<br /><span className="accent-red">ÁREA METROPOLITANA</span></>),
+    heroSubtitle: (<>Los planes del Valle de Aburrá fuera del centro: Envigado, Sabaneta, Itagüí y alrededores.{" "}<strong style={{ color: "#F5A623" }}>Tu agenda cultural, actualizada cada semana.</strong></>),
+    heading: "Qué hacer en el Área Metropolitana",
+    intro: "Estos son los planes del Valle de Aburrá fuera del centro de Medellín: hoy la agenda está más activa en Envigado y Sabaneta, con eventos también en Itagüí y Caldas — además de Bello, La Estrella, Copacabana, Girardota y Barbosa, que también hacen parte de esta zona. Filtra por categoría, fecha o activa \"Cerca de mí\" para ver qué está pasando cerca de ti.",
+  },
+  "/oriente-cercano": {
+    zona: "Oriente Cercano",
+    title: "Eventos en el Oriente Cercano: La Ceja, Rionegro, El Retiro y Marinilla — Medellín Vibra",
+    description: "La agenda cultural del Oriente Cercano antioqueño: eventos en La Ceja, Rionegro, El Retiro y Marinilla. Conciertos, ferias, teatro y gastronomía, filtrables por categoría y fecha.",
+    heroTitle: (<>QUÉ HACER EN EL<br /><span className="accent-red">ORIENTE CERCANO</span></>),
+    heroSubtitle: (<>Los mejores planes en La Ceja, Rionegro, El Retiro y Marinilla.{" "}<strong style={{ color: "#F5A623" }}>Tu agenda cultural, actualizada cada semana.</strong></>),
+    heading: "Qué hacer en el Oriente Cercano",
+    intro: "La agenda cultural de La Ceja, Rionegro, El Retiro y Marinilla — los municipios del Oriente Cercano con más eventos activos ahora mismo. Filtra por categoría, fecha o activa \"Cerca de mí\" para ver qué está pasando cerca de ti.",
+  },
+};
+
 const GEO_BOUNDS = { latMin: 5.90, latMax: 6.50, lngMin: -75.80, lngMax: -75.10 };
 const inRegion = (lat, lng) =>
   lat >= GEO_BOUNDS.latMin && lat <= GEO_BOUNDS.latMax &&
@@ -500,7 +531,7 @@ export default function App() {
   const [activeFilter, setActiveFilter] = useState("Todos");
   const [activeDateFilter, setActiveDateFilter] = useState("Todos");
   const [fechaElegida, setFechaElegida] = useState(null);
-  const [activeZona, setActiveZona] = useState("Todas");
+  const [activeZona, setActiveZona] = useState(() => ZONA_PAGES[window.location.pathname]?.zona || "Todas");
   const [activeTagFilter, setActiveTagFilter] = useState(null);
   const [adminTagPicker, setAdminTagPicker] = useState(null);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("mv-dark") === "1");
@@ -566,12 +597,19 @@ export default function App() {
     logPageView(location.pathname + location.search);
   }, [location]);
 
+  const zonaPageConfig = ZONA_PAGES[location.pathname];
+
   useEffect(() => {
-    document.title = "Medellín Vibra — Agenda cultural de Medellín";
+    document.title = zonaPageConfig ? zonaPageConfig.title : "Medellín Vibra — Agenda cultural de Medellín";
+
     let canonicalEl = document.querySelector('link[rel="canonical"]');
     if (!canonicalEl) { canonicalEl = document.createElement("link"); canonicalEl.setAttribute("rel", "canonical"); document.head.appendChild(canonicalEl); }
-    canonicalEl.setAttribute("href", "https://www.medellinvibra.co/");
-  }, []);
+    canonicalEl.setAttribute("href", `https://www.medellinvibra.co${zonaPageConfig ? location.pathname : "/"}`);
+
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) { metaDesc = document.createElement("meta"); metaDesc.setAttribute("name", "description"); document.head.appendChild(metaDesc); }
+    metaDesc.setAttribute("content", zonaPageConfig ? zonaPageConfig.description : "La agenda cultural de Medellín, el Área Metropolitana y el Oriente Cercano. Conciertos, teatro, gastronomía, arte, deportes y más — todo en un solo lugar.");
+  }, [location.pathname]);
 
   useEffect(() => {
     const updateTick = () => setHourTick(Math.floor(Date.now() / 3600000));
@@ -1378,7 +1416,7 @@ export default function App() {
 
         {activeTab === "home" && (
           <>
-            <HeroBanner search={search} setSearch={(val) => { setSearch(val); if(val.length > 2) trackEvent({ action: "busqueda", category: "Interaccion", label: val }); }} stats={stats} t={t} lang={lang} />
+            <HeroBanner search={search} setSearch={(val) => { setSearch(val); if(val.length > 2) trackEvent({ action: "busqueda", category: "Interaccion", label: val }); }} stats={stats} t={t} lang={lang} heroTitle={zonaPageConfig?.heroTitle} heroSubtitle={zonaPageConfig?.heroSubtitle} />
 
             <NewsletterCTAs alreadySubscribed={alreadySubscribed} showPopup={showPopup} showStickyFooter={showStickyFooter} subEmail={subEmail} setSubEmail={setSubEmail} handleSubscribe={handleSubscribe} dismissPopup={dismissPopup} dismissSticky={dismissSticky} />
             <div className="filters-bar" style={{borderBottom:'none',paddingBottom:4,paddingTop:12}}>
@@ -1615,6 +1653,13 @@ export default function App() {
                       </div>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {zonaPageConfig && (
+                <div style={{marginBottom:24}}>
+                  <h2 style={{fontFamily:'var(--font-display)', fontSize:24, letterSpacing:0.5, color:'var(--text)', marginBottom:8}}>{zonaPageConfig.heading}</h2>
+                  <p style={{fontSize:15, lineHeight:1.6, color:'var(--muted)', maxWidth:720}}>{zonaPageConfig.intro}</p>
                 </div>
               )}
 

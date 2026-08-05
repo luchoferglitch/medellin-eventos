@@ -64,6 +64,26 @@ export default async function handler(_req) {
     <lastmod>${today}</lastmod>
   </url>`,
 
+    // Páginas de zona (SEO)
+`  <url>
+    <loc>${BASE_URL}/medellin</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <lastmod>${today}</lastmod>
+  </url>`,
+`  <url>
+    <loc>${BASE_URL}/area-metropolitana</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <lastmod>${today}</lastmod>
+  </url>`,
+`  <url>
+    <loc>${BASE_URL}/oriente-cercano</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+    <lastmod>${today}</lastmod>
+  </url>`,
+
     // Páginas de eventos
     ...events.map(e => `  <url>
     <loc>${BASE_URL}/evento/${slugify(e.title)}-${e.id}</loc>

@@ -8,7 +8,22 @@ function diasVivos() {
   return diff;
 }
 
-export default function HeroBanner({ search, setSearch, stats, t, lang }) {
+const DEFAULT_TITLE = (
+  <>
+    DESCUBRE<br />
+    <span className="accent">LO QUE</span><br />
+    <span className="accent-red">VIBRA</span>
+  </>
+);
+
+const DEFAULT_SUBTITLE = (
+  <>
+    Los mejores eventos de Medellín, el Área Metropolitana y el Oriente Cercano.{" "}
+    <strong style={{ color: "#F5A623" }}>Tu agenda cultural, actualizada cada semana.</strong>
+  </>
+);
+
+export default function HeroBanner({ search, setSearch, stats, t, lang, heroTitle, heroSubtitle }) {
   const dias = diasVivos();
 
   return (
@@ -26,13 +41,10 @@ export default function HeroBanner({ search, setSearch, stats, t, lang }) {
           Medellín, Área Metropolitana y Oriente Cercano
         </a>
         <h1 className="hero-title">
-          DESCUBRE<br />
-          <span className="accent">LO QUE</span><br />
-          <span className="accent-red">VIBRA</span>
+          {heroTitle || DEFAULT_TITLE}
         </h1>
         <p className="hero-sub">
-          Los mejores eventos de Medellín, el Área Metropolitana y el Oriente Cercano.{" "}
-          <strong style={{ color: "#F5A623" }}>Tu agenda cultural, actualizada cada semana.</strong>
+          {heroSubtitle || DEFAULT_SUBTITLE}
         </p>
 
         {/* Fecha de nacimiento */}
