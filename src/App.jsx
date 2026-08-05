@@ -286,7 +286,7 @@ const style = `
   .filter-chip-finde::before { content: "✦"; display: inline-block; margin-right: 6px; color: white; }
   .filter-chip-finde:hover:not(.active) { background: #047857; color: white !important; }
   .main { flex: 1; padding: 32px 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
-  .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; }
+  .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; scroll-margin-top: 76px; }
   .section-title { font-family: var(--font-display); font-size: 28px; letter-spacing: 0.5px; color: var(--text); }
   .section-title span { color: var(--gold); }
   .section-link { color: var(--gold); font-size: 13px; cursor: pointer; text-decoration: underline; }
@@ -554,6 +554,8 @@ export default function App() {
   const [viewMode, setViewMode] = useState("grid");
   const [lang, setLang] = useState("es");
   const t = translations[lang];
+  const resultsRef = useRef(null);
+  const isFirstFilterRender = useRef(true);
 
   // ── INTEGRACIÓN GOOGLE ANALYTICS 4 ──
   useEffect(() => {
@@ -796,6 +798,12 @@ export default function App() {
     const db = (b.lat != null && b.lng != null) ? distanciaKm(miUbicacion.lat, miUbicacion.lng, b.lat, b.lng) : Infinity;
     return da - db;
   });
+
+  useEffect(() => {
+    if (isFirstFilterRender.current) { isFirstFilterRender.current = false; return; }
+    if (activeTab !== "home") return;
+    resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [activeFilter, activeDateFilter, activeZona, fechaElegida, cercaDeMi]);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
@@ -1610,10 +1618,10 @@ export default function App() {
                 </div>
               )}
 
-              <div className="section-header">
+              <div className="section-header" ref={resultsRef}>
                 <div className="section-title">{search ? `Resultados para "${search}"` : activeFilter === "Todos" ? <>{t.allEvents} <span>{t.allEventsSpan}</span></> : <span>{activeFilter}</span>}</div>
                 <div style={{display:'flex', alignItems:'center', gap:12}}>
-                  <span className="section-link">{filtered.length} eventos</span>
+                  <span className="section-link">{filtered.length} evento{filtered.length !== 1 ? "s" : ""} encontrado{filtered.length !== 1 ? "s" : ""}</span>
                   <div style={{display:'flex', gap:4, background:'var(--surface2)', borderRadius:8, padding:3, border:'1px solid var(--border)'}}>
                     <button onClick={()=>setViewMode("grid")} style={{padding:'4px 8px', borderRadius:6, border:'none', cursor:'pointer', background: viewMode==="grid" ? 'var(--gold)' : 'none', color: viewMode==="grid" ? 'white' : 'var(--muted)', fontSize:14}}>⊞</button>
                     <button onClick={()=>setViewMode("list")} style={{padding:'4px 8px', borderRadius:6, border:'none', cursor:'pointer', background: viewMode==="list" ? 'var(--gold)' : 'none', color: viewMode==="list" ? 'white' : 'var(--muted)', fontSize:14}}>☰</button>
