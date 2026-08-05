@@ -3,7 +3,7 @@ import { ArrowUp } from "lucide-react";
 
 const SCROLL_THRESHOLD = 400;
 
-export default function BackToTop() {
+export default function BackToTop({ hideForOverlay = false }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -12,6 +12,8 @@ export default function BackToTop() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const mostrar = visible && !hideForOverlay;
 
   const scrollToTop = () => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -66,11 +68,11 @@ export default function BackToTop() {
       `}</style>
       <button
         type="button"
-        className={`mv-back-to-top${visible ? " mv-back-to-top-visible" : ""}`}
+        className={`mv-back-to-top${mostrar ? " mv-back-to-top-visible" : ""}`}
         onClick={scrollToTop}
         aria-label="Volver arriba"
-        aria-hidden={!visible}
-        tabIndex={visible ? 0 : -1}
+        aria-hidden={!mostrar}
+        tabIndex={mostrar ? 0 : -1}
       >
         <ArrowUp size={20} strokeWidth={2.25} />
       </button>

@@ -2518,7 +2518,7 @@ export default function App() {
       </div>
     </>} />
     </Routes>
-    <BackToTop />
+    <BackToTop hideForOverlay={(showPopup || showStickyFooter) && !alreadySubscribed} />
     </>
   );
 }
