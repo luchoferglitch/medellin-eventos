@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect, useRef, useCallback } from "react";
-import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { Routes, Route, Link, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "./supabase";
 import { initGA, logPageView, trackEvent } from "./analytics";
 import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette } from "lucide-react";
@@ -528,10 +528,11 @@ const matchVenueConocido = (place) => {
 
 export default function App() {
   const location = useLocation();
+  const zonaPageConfig = ZONA_PAGES[location.pathname];
+  const activeZona = zonaPageConfig?.zona || "Todas";
   const [activeFilter, setActiveFilter] = useState("Todos");
   const [activeDateFilter, setActiveDateFilter] = useState("Todos");
   const [fechaElegida, setFechaElegida] = useState(null);
-  const [activeZona, setActiveZona] = useState(() => ZONA_PAGES[window.location.pathname]?.zona || "Todas");
   const [activeTagFilter, setActiveTagFilter] = useState(null);
   const [adminTagPicker, setAdminTagPicker] = useState(null);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("mv-dark") === "1");
@@ -596,8 +597,6 @@ export default function App() {
   useEffect(() => {
     logPageView(location.pathname + location.search);
   }, [location]);
-
-  const zonaPageConfig = ZONA_PAGES[location.pathname];
 
   useEffect(() => {
     document.title = zonaPageConfig ? zonaPageConfig.title : "Medellín Vibra — Agenda cultural de Medellín";
@@ -1420,8 +1419,8 @@ export default function App() {
 
             <NewsletterCTAs alreadySubscribed={alreadySubscribed} showPopup={showPopup} showStickyFooter={showStickyFooter} subEmail={subEmail} setSubEmail={setSubEmail} handleSubscribe={handleSubscribe} dismissPopup={dismissPopup} dismissSticky={dismissSticky} />
             <div className="filters-bar" style={{borderBottom:'none',paddingBottom:4,paddingTop:12}}>
-              {[["Todas","Todas las zonas"],["Medellín","Medellín"],["Área Metropolitana","Área Metropolitana"],["Oriente Cercano","Oriente Cercano"]].map(([val,label]) => (
-                <button key={val} className={`filter-chip ${activeZona===val?"active":""}`} onClick={() => { setActiveZona(val); trackEvent({ action: "filtro_zona", category: "Filtros", label: val }); }}>{label}</button>
+              {[["Todas","/","Todas las zonas"],["Medellín","/medellin","Medellín"],["Área Metropolitana","/area-metropolitana","Área Metropolitana"],["Oriente Cercano","/oriente-cercano","Oriente Cercano"]].map(([val,path,label]) => (
+                <Link key={val} to={path} className={`filter-chip ${location.pathname===path?"active":""}`} onClick={() => trackEvent({ action: "filtro_zona", category: "Filtros", label: val })}>{label}</Link>
               ))}
               <button className={`filter-chip ${cercaDeMi?"active":""}`} onClick={activarCercaDeMi} disabled={buscandoUbicacion} style={{whiteSpace:'nowrap'}}>
                 {buscandoUbicacion ? "Buscando ubicación..." : cercaDeMi ? "✕ Cerca de mí" : "📍 Cerca de mí"}
