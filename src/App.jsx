@@ -14,6 +14,7 @@ import FindePage from "./FindePage";
 import HeroBanner from "./HeroBanner";
 import NewsletterCTAs from "./NewsletterCTAs";
 import FiltroCalendario, { eventoOcurreEnFecha } from "./FiltroCalendario";
+import BackToTop from "./BackToTop";
 
 import catMusica from "./assets/cat-musica.jpg";
 import catArte from "./assets/cat-arte.jpg";
@@ -1368,6 +1369,7 @@ export default function App() {
   })();
 
   return (
+    <>
     <Routes>
       <Route path="/evento/:slug" element={<EventoPage />} />
       <Route path="/organizador/:slug" element={<OrganizadorPage />} />
@@ -2516,5 +2518,7 @@ export default function App() {
       </div>
     </>} />
     </Routes>
+    <BackToTop />
+    </>
   );
 }
