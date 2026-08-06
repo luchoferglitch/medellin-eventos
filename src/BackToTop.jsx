@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ArrowUp } from "lucide-react";
 
 const SCROLL_THRESHOLD = 400;
@@ -12,6 +12,18 @@ export default function BackToTop({ hideForOverlay = false }) {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Capa defensiva: si un overlay se cierra sin que el navegador dispare
+  // un nuevo evento de scroll (overscroll/momentum en Android), esto
+  // vuelve a leer scrollY en el momento del cierre en vez de esperar
+  // al próximo scroll real.
+  const overlayEraActivoRef = useRef(hideForOverlay);
+  useEffect(() => {
+    if (overlayEraActivoRef.current && !hideForOverlay) {
+      setVisible(window.scrollY > SCROLL_THRESHOLD);
+    }
+    overlayEraActivoRef.current = hideForOverlay;
+  }, [hideForOverlay]);
 
   const mostrar = visible && !hideForOverlay;
 
