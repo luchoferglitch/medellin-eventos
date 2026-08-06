@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { ArrowUp } from "lucide-react";
 
 const SCROLL_THRESHOLD = 400;
@@ -11,6 +11,27 @@ export default function BackToTop({ hideForOverlay = false }) {
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Mide la altura real de .bottom-nav (barra fija de navegación móvil) y la
+  // expone como variable CSS, para que el botón siempre flote por encima de
+  // ella aunque su altura cambie (texto más grande por accesibilidad, etc).
+  // En desktop .bottom-nav no se renderiza visible, así que esto no aplica.
+  useLayoutEffect(() => {
+    const nav = document.querySelector(".bottom-nav");
+    if (!nav) return;
+
+    const updateHeight = () => {
+      document.documentElement.style.setProperty(
+        "--mv-bottom-nav-height",
+        `${nav.getBoundingClientRect().height}px`
+      );
+    };
+
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(nav);
+    return () => observer.disconnect();
   }, []);
 
   // Capa defensiva: si un overlay se cierra sin que el navegador dispare
@@ -72,7 +93,7 @@ export default function BackToTop({ hideForOverlay = false }) {
           --mv-btt-color: #f0f0f0;
         }
         @media (max-width: 767px) {
-          .mv-back-to-top { right: 16px; bottom: 84px; }
+          .mv-back-to-top { right: 16px; bottom: calc(var(--mv-bottom-nav-height, 68px) + 16px); }
         }
         @media (prefers-reduced-motion: reduce) {
           .mv-back-to-top { transition: opacity 0.15s linear; transform: none; }
