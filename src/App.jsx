@@ -286,6 +286,11 @@ const style = `
   .filter-chip-finde { background: #059669; color: white !important; border-color: #059669 !important; font-weight: 700; padding: 10px 22px; font-size: 14px; box-shadow: 0 2px 8px rgba(5,150,105,0.3); }
   .filter-chip-finde::before { content: "✦"; display: inline-block; margin-right: 6px; color: white; }
   .filter-chip-finde:hover:not(.active) { background: #047857; color: white !important; }
+  .zona-group-wrap { padding: 12px 24px 0; background: white; }
+  .zona-group-title { margin-bottom: 8px; }
+  .zona-filter-group { display: flex; gap: 8px; flex-shrink: 0; padding: 6px; border: 1px solid var(--gold); border-radius: 100px; background: rgba(200,134,10,0.1); }
+  .dark-mode .zona-group-wrap { background: #1e1e1e; }
+  .dark-mode .zona-filter-group { background: rgba(200,134,10,0.15); }
   .main { flex: 1; padding: 32px 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
   .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; scroll-margin-top: 76px; }
   .section-title { font-family: var(--font-display); font-size: 28px; letter-spacing: 0.5px; color: var(--text); }
@@ -1420,20 +1425,25 @@ export default function App() {
             <HeroBanner search={search} setSearch={(val) => { setSearch(val); if(val.length > 2) trackEvent({ action: "busqueda", category: "Interaccion", label: val }); }} stats={stats} t={t} lang={lang} heroTitle={zonaPageConfig?.heroTitle} heroSubtitle={zonaPageConfig?.heroSubtitle} />
 
             <NewsletterCTAs alreadySubscribed={alreadySubscribed} showPopup={showPopup} showStickyFooter={showStickyFooter} subEmail={subEmail} setSubEmail={setSubEmail} handleSubscribe={handleSubscribe} dismissPopup={dismissPopup} dismissSticky={dismissSticky} />
-            <div className="filters-bar" style={{borderBottom:'none',paddingBottom:4,paddingTop:12}}>
-              {[["Todas","/","Todas las zonas"],["Medellín","/medellin","Medellín"],["Área Metropolitana","/area-metropolitana","Área Metropolitana"],["Oriente Cercano","/oriente-cercano","Oriente Cercano"]].map(([val,path,label]) => (
-                <Link key={val} to={path} className={`filter-chip ${location.pathname===path?"active":""}`} onClick={() => trackEvent({ action: "filtro_zona", category: "Filtros", label: val })}>{label}</Link>
-              ))}
-              <button className={`filter-chip ${cercaDeMi?"active":""}`} onClick={activarCercaDeMi} disabled={buscandoUbicacion} style={{whiteSpace:'nowrap'}}>
-                {buscandoUbicacion ? "Buscando ubicación..." : cercaDeMi ? "✕ Cerca de mí" : "📍 Cerca de mí"}
-              </button>
-              {cercaDeMi && (
-                <select value={radioKm} onChange={(e) => setRadioKm(Number(e.target.value))} className="filter-chip" style={{cursor:'pointer'}}>
-                  <option value={10}>10 km</option>
-                  <option value={20}>20 km</option>
-                  <option value={50}>50 km</option>
-                </select>
-              )}
+            <div className="zona-group-wrap">
+              <div className="section-title zona-group-title">Filtrar por zona</div>
+              <div className="filters-bar" style={{borderBottom:'none',paddingBottom:4,paddingTop:0}}>
+                <div className="zona-filter-group">
+                  {[["Todas","/","Todas las zonas"],["Medellín","/medellin","Medellín"],["Área Metropolitana","/area-metropolitana","Área Metropolitana"],["Oriente Cercano","/oriente-cercano","Oriente Cercano"]].map(([val,path,label]) => (
+                    <Link key={val} to={path} className={`filter-chip ${location.pathname===path?"active":""}`} onClick={() => trackEvent({ action: "filtro_zona", category: "Filtros", label: val })}>{label}</Link>
+                  ))}
+                </div>
+                <button className={`filter-chip ${cercaDeMi?"active":""}`} onClick={activarCercaDeMi} disabled={buscandoUbicacion} style={{whiteSpace:'nowrap'}}>
+                  {buscandoUbicacion ? "Buscando ubicación..." : cercaDeMi ? "✕ Cerca de mí" : "📍 Cerca de mí"}
+                </button>
+                {cercaDeMi && (
+                  <select value={radioKm} onChange={(e) => setRadioKm(Number(e.target.value))} className="filter-chip" style={{cursor:'pointer'}}>
+                    <option value={10}>10 km</option>
+                    <option value={20}>20 km</option>
+                    <option value={50}>50 km</option>
+                  </select>
+                )}
+              </div>
             </div>
             <div className="filters-bar" style={{borderBottom:'none',paddingBottom:8}}>
               <FiltroCalendario
