@@ -15,6 +15,7 @@ import HeroBanner from "./HeroBanner";
 import NewsletterCTAs from "./NewsletterCTAs";
 import FiltroCalendario, { eventoOcurreEnFecha } from "./FiltroCalendario";
 import BackToTop from "./BackToTop";
+import HreflangTags from "./components/HreflangTags";
 
 import catMusica from "./assets/cat-musica.jpg";
 import catArte from "./assets/cat-arte.jpg";
@@ -50,6 +51,21 @@ const CAT_CONFIG = {
 
 const getCatConfig = (cat) => CAT_CONFIG[cat] || { img: null, color: "#C8860A" };
 
+// El valor de `cat` filtra contra events.category en Supabase y nunca se traduce.
+// Esta clave solo indica en qué campo de translations.js vive la etiqueta visible.
+const CAT_LABEL_KEY = {
+  "Música": "catLabelMusica",
+  "Arte": "catLabelArte",
+  "Comedia": "catLabelComedia",
+  "Tech": "catLabelTech",
+  "Gastronomía": "catLabelGastronomia",
+  "Baile": "catLabelBaile",
+  "Deportes": "catLabelDeportes",
+  "Teatro": "catLabelTeatro",
+  "Bienestar": "catLabelBienestar",
+  "Académicos": "catLabelAcademicos",
+};
+
 // Sistema de tags editoriales
 const TAGS_CONFIG = {
   "Destacado":        { emoji: "⭐", color: "#C8860A", bg: "rgba(200,134,10,0.12)", border: "rgba(200,134,10,0.3)" },
@@ -57,6 +73,19 @@ const TAGS_CONFIG = {
   "Agotado":          { emoji: "🔥", color: "#7C3AED", bg: "rgba(124,58,237,0.10)", border: "rgba(124,58,237,0.3)" },
   "Nuevo":            { emoji: "🆕", color: "#059669", bg: "rgba(5,150,105,0.10)",  border: "rgba(5,150,105,0.3)"  },
   "Próximo":          { emoji: "", color: "#C8860A", bg: "rgba(200,134,10,0.12)", border: "rgba(200,134,10,0.3)" },
+};
+
+// El valor de `tag` filtra contra events.tag en Supabase y nunca se traduce.
+const TAG_LABEL_KEY = {
+  "Destacado": "tagLabelDestacado",
+  "Últimas entradas": "tagLabelUltimasEntradas",
+  "Agotado": "tagLabelAgotado",
+  "Nuevo": "tagLabelNuevo",
+  "Próximo": "tagLabelProximo",
+  // Estos dos son los valores EXACTOS (mayúsculas) que escribe el cron
+  // actualizar-tags-semanal — distintos de "Próximo" por el casing, no se tocan.
+  "ESTA SEMANA": "tagLabelEstaSemanaCron",
+  "PRÓXIMO": "tagLabelProximoCron",
 };
 
 const ADMIN_TAGS = ["Destacado", "Últimas entradas", "Agotado"]; // asignables manualmente
@@ -439,36 +468,52 @@ const addToCalendar = (ev) => {
 
 const CATS = ["Todos","Música","Arte","Comedia","Tech","Gastronomía","Baile","Deportes","Teatro","Bienestar","Académicos"];
 
+// Idiomas con URL propia (prefijo de ruta). Español vive sin prefijo en "/".
+const LANG_PREFIXES = ["en", "pt", "fr"];
+
+// "antes|después" → línea normal + línea con acento rojo (heroTitle de zona)
+const splitAccentLine = (str) => {
+  const [before, after] = (str || "").split("|");
+  return (<>{before}<br /><span className="accent-red">{after}</span></>);
+};
+
+// "antes|después" → texto normal + texto en negrita dorada (heroSubtitle de zona)
+const splitBoldTagline = (str) => {
+  const [before, after] = (str || "").split("|");
+  return (<>{before} <strong style={{ color: "#F5A623" }}>{after}</strong></>);
+};
+
 // Páginas de zona indexables: pre-filtran el listado por zona sin bloquear el chip de zona.
-const ZONA_PAGES = {
+// `zona` es el valor real de la columna en Supabase (join contra events.zona) — nunca se traduce.
+const getZonaPages = (t) => ({
   "/medellin": {
     zona: "Medellín",
-    title: "Eventos en Medellín hoy y esta semana — Medellín Vibra",
-    description: "La agenda de conciertos, teatro, arte y gastronomía en Medellín: Teatro Metropolitano, Pablo Tobón Uribe, Plaza Mayor, El Poblado y Laureles. Filtra por categoría, fecha o cercanía.",
-    heroTitle: (<>QUÉ HACER<br /><span className="accent-red">EN MEDELLÍN</span></>),
-    heroSubtitle: (<>Conciertos, teatro, arte y gastronomía en el centro de la ciudad — de Laureles al Poblado.{" "}<strong style={{ color: "#F5A623" }}>Tu agenda cultural, actualizada cada semana.</strong></>),
-    heading: "Qué hacer en Medellín",
-    intro: "La agenda de eventos dentro de Medellín: desde el Teatro Metropolitano y el Pablo Tobón Uribe hasta planes en Laureles, El Poblado y el centro. Filtra por categoría, fecha o activa \"Cerca de mí\" para ver qué está pasando cerca de ti ahora mismo.",
+    title: t.zonaMedellinTitle,
+    description: t.zonaMedellinDescription,
+    heroTitle: splitAccentLine(t.zonaMedellinHeroTitle),
+    heroSubtitle: splitBoldTagline(t.zonaMedellinHeroSubtitle),
+    heading: t.zonaMedellinHeading,
+    intro: t.zonaMedellinIntro,
   },
   "/area-metropolitana": {
     zona: "Área Metropolitana",
-    title: "Eventos en el Área Metropolitana de Medellín (Envigado, Sabaneta, Itagüí) — Medellín Vibra",
-    description: "Agenda de eventos culturales en Envigado, Sabaneta, Itagüí, Caldas y los demás municipios del Área Metropolitana de Medellín. Conciertos, teatro, deportes y gastronomía, filtrables por categoría y fecha.",
-    heroTitle: (<>QUÉ HACER EN EL<br /><span className="accent-red">ÁREA METROPOLITANA</span></>),
-    heroSubtitle: (<>Los planes del Valle de Aburrá fuera del centro: Envigado, Sabaneta, Itagüí y alrededores.{" "}<strong style={{ color: "#F5A623" }}>Tu agenda cultural, actualizada cada semana.</strong></>),
-    heading: "Qué hacer en el Área Metropolitana",
-    intro: "Estos son los planes del Valle de Aburrá fuera del centro de Medellín: hoy la agenda está más activa en Envigado y Sabaneta, con eventos también en Itagüí y Caldas — además de Bello, La Estrella, Copacabana, Girardota y Barbosa, que también hacen parte de esta zona. Filtra por categoría, fecha o activa \"Cerca de mí\" para ver qué está pasando cerca de ti.",
+    title: t.zonaAreaMetropolitanaTitle,
+    description: t.zonaAreaMetropolitanaDescription,
+    heroTitle: splitAccentLine(t.zonaAreaMetropolitanaHeroTitle),
+    heroSubtitle: splitBoldTagline(t.zonaAreaMetropolitanaHeroSubtitle),
+    heading: t.zonaAreaMetropolitanaHeading,
+    intro: t.zonaAreaMetropolitanaIntro,
   },
   "/oriente-cercano": {
     zona: "Oriente Cercano",
-    title: "Eventos en el Oriente Cercano: La Ceja, Rionegro, El Retiro y Marinilla — Medellín Vibra",
-    description: "La agenda cultural del Oriente Cercano antioqueño: eventos en La Ceja, Rionegro, El Retiro y Marinilla. Conciertos, ferias, teatro y gastronomía, filtrables por categoría y fecha.",
-    heroTitle: (<>QUÉ HACER EN EL<br /><span className="accent-red">ORIENTE CERCANO</span></>),
-    heroSubtitle: (<>Los mejores planes en La Ceja, Rionegro, El Retiro y Marinilla.{" "}<strong style={{ color: "#F5A623" }}>Tu agenda cultural, actualizada cada semana.</strong></>),
-    heading: "Qué hacer en el Oriente Cercano",
-    intro: "La agenda cultural de La Ceja, Rionegro, El Retiro y Marinilla — los municipios del Oriente Cercano con más eventos activos ahora mismo. Filtra por categoría, fecha o activa \"Cerca de mí\" para ver qué está pasando cerca de ti.",
+    title: t.zonaOrienteCercanoTitle,
+    description: t.zonaOrienteCercanoDescription,
+    heroTitle: splitAccentLine(t.zonaOrienteCercanoHeroTitle),
+    heroSubtitle: splitBoldTagline(t.zonaOrienteCercanoHeroSubtitle),
+    heading: t.zonaOrienteCercanoHeading,
+    intro: t.zonaOrienteCercanoIntro,
   },
-};
+});
 
 const GEO_BOUNDS = { latMin: 5.90, latMax: 6.50, lngMin: -75.80, lngMax: -75.10 };
 const inRegion = (lat, lng) =>
@@ -534,7 +579,12 @@ const matchVenueConocido = (place) => {
 
 export default function App() {
   const location = useLocation();
-  const zonaPageConfig = ZONA_PAGES[location.pathname];
+  const firstSegment = location.pathname.split("/")[1];
+  const lang = LANG_PREFIXES.includes(firstSegment) ? firstSegment : "es";
+  const langPrefix = lang === "es" ? "" : `/${lang}`;
+  const basePath = lang === "es" ? location.pathname : (location.pathname.slice(langPrefix.length) || "/");
+  const t = translations[lang];
+  const zonaPageConfig = getZonaPages(t)[basePath];
   const activeZona = zonaPageConfig?.zona || "Todas";
   const [activeFilter, setActiveFilter] = useState("Todos");
   const [activeDateFilter, setActiveDateFilter] = useState("Todos");
@@ -573,6 +623,14 @@ export default function App() {
   const [saved, setSaved] = useState([]);
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
+  // El selector de idioma navega a la URL con prefijo correspondiente (Fase 1: home + 3 zonas).
+  // Fuera de esas rutas (páginas todavía sin versión por idioma) cae al home del idioma elegido.
+  const changeLang = (newLang) => {
+    const knownPaths = ["/", "/medellin", "/area-metropolitana", "/oriente-cercano"];
+    const targetBase = knownPaths.includes(basePath) ? basePath : "/";
+    const newPrefix = newLang === "es" ? "" : `/${newLang}`;
+    navigate(targetBase === "/" ? (newPrefix || "/") : `${newPrefix}${targetBase}`);
+  };
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
@@ -590,8 +648,6 @@ export default function App() {
   const [newPassword, setNewPassword] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
   const [viewMode, setViewMode] = useState("grid");
-  const [lang, setLang] = useState("es");
-  const t = translations[lang];
   const resultsRef = useRef(null);
   const isFirstFilterRender = useRef(true);
 
@@ -605,15 +661,17 @@ export default function App() {
   }, [location]);
 
   useEffect(() => {
-    document.title = zonaPageConfig ? zonaPageConfig.title : "Medellín Vibra — Agenda cultural de Medellín";
+    document.title = zonaPageConfig ? zonaPageConfig.title : t.homeTitle;
+    document.documentElement.lang = lang;
 
     let canonicalEl = document.querySelector('link[rel="canonical"]');
     if (!canonicalEl) { canonicalEl = document.createElement("link"); canonicalEl.setAttribute("rel", "canonical"); document.head.appendChild(canonicalEl); }
-    canonicalEl.setAttribute("href", `https://www.medellinvibra.co${zonaPageConfig ? location.pathname : "/"}`);
+    const canonicalPath = zonaPageConfig ? `${langPrefix}${basePath}` : (langPrefix || "/");
+    canonicalEl.setAttribute("href", `https://www.medellinvibra.co${canonicalPath}`);
 
     let metaDesc = document.querySelector('meta[name="description"]');
     if (!metaDesc) { metaDesc = document.createElement("meta"); metaDesc.setAttribute("name", "description"); document.head.appendChild(metaDesc); }
-    metaDesc.setAttribute("content", zonaPageConfig ? zonaPageConfig.description : "La agenda cultural de Medellín, el Área Metropolitana y el Oriente Cercano. Conciertos, teatro, gastronomía, arte, deportes y más — todo en un solo lugar.");
+    metaDesc.setAttribute("content", zonaPageConfig ? zonaPageConfig.description : t.homeDescription);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -1373,28 +1431,23 @@ export default function App() {
     return upcoming[hourTick % upcoming.length];
   })();
 
-  return (
+  // Home + páginas de zona (Fase 1 i18n): un solo árbol JSX montado bajo /, /en, /pt y /fr
+  // para no duplicar este bloque por idioma — el contenido ya varía solo porque `lang`,
+  // `t` y `zonaPageConfig` se derivan de la URL más arriba en este mismo render.
+  const homeAndZonaElement = (
     <>
-    <Routes>
-      <Route path="/evento/:slug" element={<EventoPage />} />
-      <Route path="/organizador/:slug" element={<OrganizadorPage />} />
-      <Route path="/para-organizadores" element={<OrganizadoresLanding />} />
-      <Route path="/preguntas-frecuentes" element={<FaqPage />} />
-      <Route path="/hoy" element={<HoyPage />} />
-      <Route path="/esta-semana" element={<EstaSemanaPage />} />
-      <Route path="/finde" element={<FindePage />} />
-      <Route path="*" element={<>
+      <HreflangTags basePath={zonaPageConfig ? basePath : "/"} />
       <style>{style}</style>
       <div className="app">
         <nav className="nav">
           <div className="nav-logo" style={{cursor:'pointer'}} onClick={()=>{setActiveTab("home"); trackEvent({ action: "cambiar_tab", category: "Navegacion", label: "home" });}}>MEDELLÍN VIBRA</div>
           <div className="nav-links">
-            {[[t.tabExplore,"explore"],["Mapa","map"],[t.tabSaved,"saved"]].map(([label,tab]) => (
+            {[[t.tabExplore,"explore"],[t.navMap,"map"],[t.tabSaved,"saved"]].map(([label,tab]) => (
               <button key={tab} className={`nav-link ${activeTab===tab?"active":""}`} onClick={()=>{setActiveTab(tab); trackEvent({ action: "cambiar_tab", category: "Navegacion", label: tab });}}>{label}</button>
             ))}
           </div>
           <div className="nav-actions">
-            <select value={lang} onChange={e=>setLang(e.target.value)} style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,padding:'6px 10px',fontFamily:'var(--font-body)',fontSize:13,color:'var(--text)',cursor:'pointer',outline:'none'}}>
+            <select value={lang} onChange={e=>changeLang(e.target.value)} style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,padding:'6px 10px',fontFamily:'var(--font-body)',fontSize:13,color:'var(--text)',cursor:'pointer',outline:'none'}}>
               <option value="es">ES</option>
               <option value="en">EN</option>
               <option value="pt">PT</option>
@@ -1424,17 +1477,17 @@ export default function App() {
           <>
             <HeroBanner search={search} setSearch={(val) => { setSearch(val); if(val.length > 2) trackEvent({ action: "busqueda", category: "Interaccion", label: val }); }} stats={stats} t={t} lang={lang} heroTitle={zonaPageConfig?.heroTitle} heroSubtitle={zonaPageConfig?.heroSubtitle} />
 
-            <NewsletterCTAs alreadySubscribed={alreadySubscribed} showPopup={showPopup} showStickyFooter={showStickyFooter} subEmail={subEmail} setSubEmail={setSubEmail} handleSubscribe={handleSubscribe} dismissPopup={dismissPopup} dismissSticky={dismissSticky} />
+            <NewsletterCTAs t={t} alreadySubscribed={alreadySubscribed} showPopup={showPopup} showStickyFooter={showStickyFooter} subEmail={subEmail} setSubEmail={setSubEmail} handleSubscribe={handleSubscribe} dismissPopup={dismissPopup} dismissSticky={dismissSticky} />
             <div className="zona-group-wrap">
-              <div className="section-title zona-group-title">Filtrar por zona</div>
+              <div className="section-title zona-group-title">{t.zonaFilterSectionTitle}</div>
               <div className="filters-bar" style={{borderBottom:'none',paddingBottom:4,paddingTop:0}}>
                 <div className="zona-filter-group">
-                  {[["Todas","/","Todas las zonas"],["Medellín","/medellin","Medellín"],["Área Metropolitana","/area-metropolitana","Área Metropolitana"],["Oriente Cercano","/oriente-cercano","Oriente Cercano"]].map(([val,path,label]) => (
-                    <Link key={val} to={path} className={`filter-chip ${location.pathname===path?"active":""}`} onClick={() => trackEvent({ action: "filtro_zona", category: "Filtros", label: val })}>{label}</Link>
+                  {[["Todas","/",t.zonaChipAll],["Medellín","/medellin",t.zonaChipMedellin],["Área Metropolitana","/area-metropolitana",t.zonaChipAreaMetropolitana],["Oriente Cercano","/oriente-cercano",t.zonaChipOrienteCercano]].map(([val,path,label]) => (
+                    <Link key={val} to={path === "/" ? (langPrefix || "/") : `${langPrefix}${path}`} className={`filter-chip ${basePath===path?"active":""}`} onClick={() => trackEvent({ action: "filtro_zona", category: "Filtros", label: val })}>{label}</Link>
                   ))}
                 </div>
                 <button className={`filter-chip ${cercaDeMi?"active":""}`} onClick={activarCercaDeMi} disabled={buscandoUbicacion} style={{whiteSpace:'nowrap'}}>
-                  {buscandoUbicacion ? "Buscando ubicación..." : cercaDeMi ? "✕ Cerca de mí" : "📍 Cerca de mí"}
+                  {buscandoUbicacion ? t.cercaDeMiLoading : cercaDeMi ? t.cercaDeMiActive : t.cercaDeMiDefault}
                 </button>
                 {cercaDeMi && (
                   <select value={radioKm} onChange={(e) => setRadioKm(Number(e.target.value))} className="filter-chip" style={{cursor:'pointer'}}>
@@ -1450,8 +1503,12 @@ export default function App() {
                 eventos={events.map(paraCalendario)}
                 fechaSeleccionada={fechaElegida}
                 onSeleccionar={handleFechaElegida}
+                pickDateLabel={t.pickDate}
+                meses={t.mesesLargos.split(",")}
+                diasAbrev={t.diasSemanaAbrev.split(",")}
+                mesesAbrev={t.mesesAbrev.split(",")}
               />
-              {[["Todos",t.filterAll],["Hoy",t.filterToday],["FinDeSemana",t.filterWeekend],["EstaSemana",t.filterWeek],["EsteMes",t.filterMonth],["Gratis",t.filterFree],["ConCobro","De pago"]].map(([val,label]) => (
+              {[["Todos",t.filterAll],["Hoy",t.filterToday],["FinDeSemana",t.filterWeekend],["EstaSemana",t.filterWeek],["EsteMes",t.filterMonth],["Gratis",t.filterFree],["ConCobro",t.filterPaid]].map(([val,label]) => (
                 <button key={val} className={`filter-chip ${val==="Hoy"?"filter-chip-hoy":""} ${val==="EstaSemana"?"filter-chip-semana":""} ${val==="FinDeSemana"?"filter-chip-finde":""} ${activeDateFilter===val?"active":""}`} onClick={() => {
                   trackEvent({ action: "filtro_fecha", category: "Filtros", label: val });
                   val==="Hoy" ? navigate("/hoy") : val==="FinDeSemana" ? navigate("/finde") : val==="EstaSemana" ? navigate("/esta-semana") : setActiveDateFilter(val);
@@ -1467,7 +1524,7 @@ export default function App() {
                 onClick={() => { setActiveFilter("Todos"); trackEvent({ action: "filtro_categoria", category: "Filtros", label: "Todos" }); }}
                 style={{width:"100%", justifyContent:"center", fontSize:15, padding:"12px 20px", marginBottom:8, display:"flex"}}
               >
-                Todos los eventos
+                {t.allCategoriesBtn}
                 <span style={{fontSize:12, opacity:0.8, marginLeft:6}}>({stats.eventos})</span>
               </button>
               <div style={{display:"grid", gridTemplateColumns:"repeat(5, 1fr)", gap:8}}>
@@ -1481,12 +1538,12 @@ export default function App() {
                         style={{justifyContent:"center", flexDirection:"column", padding:"10px 4px", gap:3, fontSize:12, textAlign:"center", lineHeight:1.2, display:"flex", alignItems:"center"}}
                       >
                         <span style={{fontSize:18}}>{ EMO[c] }</span>
-                        <span>{c}</span>
+                        <span>{t[CAT_LABEL_KEY[c]] || c}</span>
                         {count > 0 && <span style={{fontSize:10,opacity:0.7}}>({count})</span>}
                       </button>
                     );
                   });
-                })()} 
+                })()}
               </div>
             </div>
 
@@ -1511,7 +1568,7 @@ export default function App() {
                       border: `1px solid ${!activeTagFilter ? "var(--gold)" : "var(--border)"}`,
                     }}
                   >
-                    Todos los tags
+                    {t.allTagsBtn}
                   </button>
                   {Object.entries(TAGS_CONFIG).map(([tag, cfg]) => {
                     if (tagCounts[tag] === 0) return null;
@@ -1527,7 +1584,7 @@ export default function App() {
                           border: `1px solid ${isActive ? cfg.color : cfg.border}`,
                         }}
                       >
-                        {cfg.emoji} {tag}
+                        {cfg.emoji} {t[TAG_LABEL_KEY[tag]] || tag}
                         <span style={{opacity:0.7, fontWeight:400, marginLeft:2}}>({tagCounts[tag]})</span>
                       </button>
                     );
@@ -1564,7 +1621,8 @@ export default function App() {
                 e.fechaReal <= sunStr && (e.fechaFin || e.fechaReal) >= friStr
               ).slice(0, 6);
               if (findeEvents.length === 0) return null;
-              const label = (day === 6 || day === 0) ? "Este Fin de Semana" : "El Próximo Fin de Semana";
+              const label = (day === 6 || day === 0) ? t.weekendThisLabel : t.weekendNextLabel;
+              const planLabel = (findeEvents.length !== 1 ? t.weekendPlanPlural : t.weekendPlanSingular).replace("{N}", findeEvents.length);
               return (
                 <div className="desktop-only" style={{background:'linear-gradient(135deg, #1a1a1a, #2a2020)', padding:'32px 24px', borderBottom:'1px solid var(--border)'}}>
                   <div style={{maxWidth:1200, margin:'0 auto'}}>
@@ -1574,12 +1632,12 @@ export default function App() {
                           <PartyPopper size={22} style={{display:'inline', verticalAlign:'-3px', marginRight:8, color:'var(--gold)'}} /><span style={{color:'var(--gold)'}}>{label}</span>
                         </div>
                         <div style={{fontSize:13, color:'rgba(255,255,255,0.5)', marginTop:4}}>
-                          {findeEvents.length} plan{findeEvents.length !== 1 ? 'es' : ''} para no quedarte en casa
+                          {planLabel}
                         </div>
                       </div>
                       <button onClick={() => setActiveDateFilter("FinDeSemana")}
                         style={{background:'rgba(200,134,10,0.2)', border:'1px solid rgba(200,134,10,0.4)', color:'var(--gold)', borderRadius:100, padding:'8px 16px', fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'var(--font-body)', whiteSpace:'nowrap'}}>
-                        Ver todos →
+                        {t.weekendSeeAll}
                       </button>
                     </div>
                     <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:12}}>
@@ -1593,7 +1651,7 @@ export default function App() {
                           >
                             {ev.imageUrl && <img src={ev.imageUrl} alt={ev.title} style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover'}} />}
                             <div style={{position:'absolute', inset:0, background:'linear-gradient(to top, rgba(0,0,0,0.85) 40%, transparent 70%)'}} />
-                            <div style={{position:'absolute', top:10, left:10, background:cfg.color, color:'white', padding:'3px 10px', borderRadius:100, fontSize:10, fontWeight:700}}>{ev.cat}</div>
+                            <div style={{position:'absolute', top:10, left:10, background:cfg.color, color:'white', padding:'3px 10px', borderRadius:100, fontSize:10, fontWeight:700}}>{t[CAT_LABEL_KEY[ev.cat]] || ev.cat}</div>
                             {ev.price === "Gratis" && <div style={{position:'absolute', top:10, right:10, background:'#059669', color:'white', padding:'3px 10px', borderRadius:100, fontSize:10, fontWeight:700}}>Gratis</div>}
                             <div style={{position:'absolute', bottom:0, left:0, right:0, padding:'14px 12px'}}>
                               <div style={{fontWeight:700, fontSize:13, color:'white', lineHeight:1.3, marginBottom:4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden'}}>{ev.title}</div>
@@ -1620,8 +1678,8 @@ export default function App() {
                 <div className="desktop-only" style={{background:'white', padding:'32px 24px', borderBottom:'1px solid var(--border)'}}>
                   <div style={{maxWidth:1200, margin:'0 auto'}}>
                     <div className="section-header">
-                      <div className="section-title">🗓️ Esta <span>Semana</span></div>
-                      <span className="section-link" onClick={() => setActiveDateFilter("EstaSemana")}>{weekEvents.length} eventos →</span>
+                      <div className="section-title">{t.estaSemanaTitle}<span>{t.estaSemanaTitleSpan}</span></div>
+                      <span className="section-link" onClick={() => setActiveDateFilter("EstaSemana")}>{t.estaSemanaCount.replace("{N}", weekEvents.length)}</span>
                     </div>
                     <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(240px, 1fr))', gap:16}}>
                       {weekEvents.map(ev => (
@@ -1677,7 +1735,7 @@ export default function App() {
               <div className="section-header" ref={resultsRef}>
                 <div className="section-title">{search ? `Resultados para "${search}"` : activeFilter === "Todos" ? <>{t.allEvents} <span>{t.allEventsSpan}</span></> : <span>{activeFilter}</span>}</div>
                 <div style={{display:'flex', alignItems:'center', gap:12}}>
-                  <span className="section-link">{filtered.length} evento{filtered.length !== 1 ? "s" : ""} encontrado{filtered.length !== 1 ? "s" : ""}</span>
+                  <span className="section-link">{(filtered.length !== 1 ? t.eventsFoundPlural : t.eventsFoundSingular).replace("{N}", filtered.length)}</span>
                   <div style={{display:'flex', gap:4, background:'var(--surface2)', borderRadius:8, padding:3, border:'1px solid var(--border)'}}>
                     <button onClick={()=>setViewMode("grid")} style={{padding:'4px 8px', borderRadius:6, border:'none', cursor:'pointer', background: viewMode==="grid" ? 'var(--gold)' : 'none', color: viewMode==="grid" ? 'white' : 'var(--muted)', fontSize:14}}>⊞</button>
                     <button onClick={()=>setViewMode("list")} style={{padding:'4px 8px', borderRadius:6, border:'none', cursor:'pointer', background: viewMode==="list" ? 'var(--gold)' : 'none', color: viewMode==="list" ? 'white' : 'var(--muted)', fontSize:14}}>☰</button>
@@ -1701,12 +1759,12 @@ export default function App() {
                     <div key={ev.id} className="event-card" onClick={() => { setSelectedEvent(ev); trackEvent({ action: "ver_detalle_evento", category: "Interaccion", label: ev.title }); }}>
                       <div className="event-card-img" style={{backgroundImage: `url(${ev.imageUrl || getCatConfig(ev.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}}>
                         <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.35)'}} />
-                        <span className="event-card-cat" style={{zIndex:1}}>{ev.cat}</span>
+                        <span className="event-card-cat" style={{zIndex:1}}>{t[CAT_LABEL_KEY[ev.cat]] || ev.cat}</span>
                         {(() => {
                           const effTag = getEffectiveTag(ev);
                           if (!effTag) return null;
                           const cfg = TAGS_CONFIG[effTag];
-                          return <span style={{position:'absolute',top:12,right:12,background:cfg?.color||'var(--red)',color:'white',padding:'3px 8px',borderRadius:'100px',fontSize:'10px',fontWeight:700,zIndex:1}}>{effTag}</span>;
+                          return <span style={{position:'absolute',top:12,right:12,background:cfg?.color||'var(--red)',color:'white',padding:'3px 8px',borderRadius:'100px',fontSize:'10px',fontWeight:700,zIndex:1}}>{t[TAG_LABEL_KEY[effTag]] || effTag}</span>;
                         })()}
                       </div>
                       <div className="event-card-body">
@@ -1770,12 +1828,12 @@ export default function App() {
                           <span><MapPin size={11} style={{display:'inline',marginRight:3}} />{ev.place}</span>
                         </div>
                         <div style={{marginTop:6, display:'flex', gap:6, alignItems:'center'}}>
-                          <span style={{background:'var(--surface2)', padding:'2px 8px', borderRadius:100, fontSize:11, color:'var(--muted)', fontWeight:600}}>{ev.cat}</span>
+                          <span style={{background:'var(--surface2)', padding:'2px 8px', borderRadius:100, fontSize:11, color:'var(--muted)', fontWeight:600}}>{t[CAT_LABEL_KEY[ev.cat]] || ev.cat}</span>
                           {(() => {
                             const effTag = getEffectiveTag(ev);
                             if (!effTag) return null;
                             const cfg = TAGS_CONFIG[effTag];
-                            return <span style={{background:cfg?.color||'var(--red)', padding:'2px 8px', borderRadius:100, fontSize:11, color:'white', fontWeight:700}}>{effTag}</span>;
+                            return <span style={{background:cfg?.color||'var(--red)', padding:'2px 8px', borderRadius:100, fontSize:11, color:'white', fontWeight:700}}>{t[TAG_LABEL_KEY[effTag]] || effTag}</span>;
                           })()}
                         </div>
                       </div>
@@ -1791,9 +1849,9 @@ export default function App() {
                 <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20}}>
                   <div>
                     <div style={{fontFamily:'var(--font-display)', fontSize:28, color:'white', letterSpacing:0.5}}>
-                      <MapPin size={24} style={{display:'inline', verticalAlign:'-3px', marginRight:8, color:'var(--gold)'}} />Lugares para <span style={{color:'var(--gold)'}}>explorar</span>
+                      <MapPin size={24} style={{display:'inline', verticalAlign:'-3px', marginRight:8, color:'var(--gold)'}} />{t.lugaresTitle}<span style={{color:'var(--gold)'}}>{t.lugaresTitleSpan}</span>
                     </div>
-                    <div style={{fontSize:13, color:'rgba(255,255,255,0.5)', marginTop:4}}>Los espacios más visitados de Medellín</div>
+                    <div style={{fontSize:13, color:'rgba(255,255,255,0.5)', marginTop:4}}>{t.lugaresSubtitle}</div>
                   </div>
                 </div>
                 <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(160px, 1fr))', gap:12}}>
@@ -1847,7 +1905,7 @@ export default function App() {
                   <div key={ev.id} className="event-card" onClick={() => setSelectedEvent(ev)}>
                     <div className="event-card-img" style={{backgroundImage: `url(${ev.imageUrl || getCatConfig(ev.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}}>
                       <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.35)'}} />
-                      <span className="event-card-cat" style={{zIndex:1}}>{ev.cat}</span>
+                      <span className="event-card-cat" style={{zIndex:1}}>{t[CAT_LABEL_KEY[ev.cat]] || ev.cat}</span>
                     </div>
                     <div className="event-card-body">
                       <div className="event-card-title">{ev.title}</div>
@@ -2179,25 +2237,25 @@ export default function App() {
             {subDone ? (
               <div>
                 <div style={{marginBottom:12}}><PartyPopper size={36} color="var(--gold)" /></div>
-                <div style={{fontFamily:'var(--font-display)', fontSize:24, color:'var(--gold)', marginBottom:8}}>¡YA ESTÁS SUSCRITO!</div>
-                <div style={{color:'rgba(255,255,255,0.7)', fontSize:14}}>Cada viernes te mandamos los mejores eventos de la semana.</div>
+                <div style={{fontFamily:'var(--font-display)', fontSize:24, color:'var(--gold)', marginBottom:8}}>{t.newsletterConfirmTitle}</div>
+                <div style={{color:'rgba(255,255,255,0.7)', fontSize:14}}>{t.newsletterConfirmSubtitle}</div>
               </div>
             ) : (
               <>
-                <div style={{fontFamily:'var(--font-display)', fontSize:26, color:'white', marginBottom:4}}><Mail size={22} style={{display:'inline', verticalAlign:'-2px', marginRight:8, color:'var(--gold)'}} />AGENDA SEMANAL</div>
-                <div style={{color:'rgba(255,255,255,0.6)', fontSize:14, marginBottom:20}}>Recibe cada viernes los mejores eventos de Medellín</div>
+                <div style={{fontFamily:'var(--font-display)', fontSize:26, color:'white', marginBottom:4}}><Mail size={22} style={{display:'inline', verticalAlign:'-2px', marginRight:8, color:'var(--gold)'}} />{t.newsletterTitle}</div>
+                <div style={{color:'rgba(255,255,255,0.6)', fontSize:14, marginBottom:20}}>{t.newsletterSubtitle}</div>
                 <div style={{display:'flex', flexDirection:'column', gap:10, maxWidth:360, margin:'0 auto'}}>
                   <input type="text" value={honeypot} onChange={e => setHoneypot(e.target.value)} style={{position:'absolute', left:'-9999px', opacity:0, height:0, width:0}} tabIndex={-1} autoComplete="off" />
-                  <input type="text" placeholder="Tu nombre (opcional)" value={subNombre} onChange={e => setSubNombre(e.target.value)}
+                  <input type="text" placeholder={t.newsletterNamePlaceholder} value={subNombre} onChange={e => setSubNombre(e.target.value)}
                     style={{padding:'12px 16px', borderRadius:10, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.08)', color:'white', fontSize:14, fontFamily:'var(--font-body)', outline:'none'}} />
-                  <input type="email" placeholder="Tu correo electrónico" value={subEmail} onChange={e => setSubEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSubscribe()}
+                  <input type="email" placeholder={t.newsletterEmailPlaceholder} value={subEmail} onChange={e => setSubEmail(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSubscribe()}
                     style={{padding:'12px 16px', borderRadius:10, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.08)', color:'white', fontSize:14, fontFamily:'var(--font-body)', outline:'none'}} />
                   <button onClick={() => handleSubscribe("footer")} disabled={subLoading}
                     style={{padding:'13px', borderRadius:10, background:'var(--gold)', color:'white', border:'none', fontWeight:700, fontSize:15, fontFamily:'var(--font-body)', cursor:'pointer', opacity: subLoading ? 0.7 : 1}}>
-                    {subLoading ? "Suscribiendo..." : "Suscribirme gratis →"}
+                    {subLoading ? t.newsletterSubscribingBtn : t.newsletterSubscribeBtn}
                   </button>
                 </div>
-                <div style={{color:'rgba(255,255,255,0.3)', fontSize:11, marginTop:12}}>Sin spam. Cancela cuando quieras.</div>
+                <div style={{color:'rgba(255,255,255,0.3)', fontSize:11, marginTop:12}}>{t.newsletterLegal}</div>
               </>
             )}
           </div>
@@ -2214,7 +2272,7 @@ export default function App() {
                 <Mail size={14} />hola@medellinvibra.co
               </a>
               <button onClick={() => navigate('/preguntas-frecuentes')} style={{background:'none', border:'none', color:'var(--gold)', fontWeight:600, fontSize:13, fontFamily:'var(--font-body)', cursor:'pointer', padding:0}}>
-                Preguntas frecuentes
+                {t.faqLink}
               </button>
               <span style={{fontSize:12, color:'var(--muted)'}}>{t.copyright}</span>
             </div>
@@ -2222,7 +2280,7 @@ export default function App() {
         </footer>
 
         <nav className="bottom-nav">
-          {[[Home,t.tabHome,"home"],[Search,t.tabExplore,"explore"],[MapIcon,"Mapa","map"],[Heart,t.tabSaved,"saved"],[User,t.tabProfile,"profile"]].map(([Icon,label,tab])=>(
+          {[[Home,t.tabHome,"home"],[Search,t.tabExplore,"explore"],[MapIcon,t.navMap,"map"],[Heart,t.tabSaved,"saved"],[User,t.tabProfile,"profile"]].map(([Icon,label,tab])=>(
             <button key={tab} className={`bottom-nav-item ${activeTab===tab?"active":""}`} onClick={()=>{setActiveTab(tab); trackEvent({ action: "cambiar_tab_bottom", category: "Navegacion", label: tab });}}>
               <span><Icon size={20} fill={tab==="saved" && saved.length > 0 ? "#E8353A" : "none"} color={tab==="saved" && saved.length > 0 ? "#E8353A" : "currentColor"} /></span><span>{label}</span>
             </button>
@@ -2292,7 +2350,7 @@ export default function App() {
                   const effTag = getEffectiveTag(selectedEvent);
                   if (!effTag) return null;
                   const cfg = TAGS_CONFIG[effTag];
-                  return <span className="detail-badge" style={{background:cfg?.color||'var(--red)',color:'white'}}>{cfg?.emoji} {effTag}</span>;
+                  return <span className="detail-badge" style={{background:cfg?.color||'var(--red)',color:'white'}}>{cfg?.emoji} {t[TAG_LABEL_KEY[effTag]] || effTag}</span>;
                 })()}
                 <div className="detail-title">{selectedEvent.title}</div>
                 <div className="detail-info-grid">
@@ -2526,7 +2584,23 @@ export default function App() {
         )}
 
       </div>
-    </>} />
+    </>
+  );
+
+  return (
+    <>
+    <Routes>
+      <Route path="/evento/:slug" element={<EventoPage />} />
+      <Route path="/organizador/:slug" element={<OrganizadorPage />} />
+      <Route path="/para-organizadores" element={<OrganizadoresLanding />} />
+      <Route path="/preguntas-frecuentes" element={<FaqPage />} />
+      <Route path="/hoy" element={<HoyPage />} />
+      <Route path="/esta-semana" element={<EstaSemanaPage />} />
+      <Route path="/finde" element={<FindePage />} />
+      <Route path="/en/*" element={homeAndZonaElement} />
+      <Route path="/pt/*" element={homeAndZonaElement} />
+      <Route path="/fr/*" element={homeAndZonaElement} />
+      <Route path="*" element={homeAndZonaElement} />
     </Routes>
     <BackToTop hideForOverlay={(showPopup || showStickyFooter) && !alreadySubscribed} />
     </>

@@ -12,6 +12,42 @@ function slugify(str) {
     .slice(0, 80) || "";
 }
 
+// Paginas con URL propia por idioma (Fase 1 de i18n). Espanol vive sin
+// prefijo en "/"; home y las 3 zonas ya tienen contenido traducido, hoy/
+// esta-semana/finde/FAQ todavia no (ver CLAUDE.md) pero de todas formas
+// necesitan su entrada en el sitemap con hreflang apuntando entre si.
+const LANGS = ["es", "en", "pt", "fr"];
+const LOCALIZED_PAGES = [
+  { path: "/", changefreq: "daily", priority: "1.0" },
+  { path: "/preguntas-frecuentes", changefreq: "monthly", priority: "0.7" },
+  { path: "/hoy", changefreq: "daily", priority: "0.9" },
+  { path: "/esta-semana", changefreq: "daily", priority: "0.9" },
+  { path: "/finde", changefreq: "daily", priority: "0.9" },
+  { path: "/medellin", changefreq: "daily", priority: "0.85" },
+  { path: "/area-metropolitana", changefreq: "daily", priority: "0.85" },
+  { path: "/oriente-cercano", changefreq: "daily", priority: "0.85" },
+];
+
+function langUrl(lang, path) {
+  const prefix = lang === "es" ? "" : `/${lang}`;
+  const suffix = path === "/" ? (prefix || "/") : `${prefix}${path}`;
+  return `${BASE_URL}${suffix}`;
+}
+
+function localizedUrlEntries(page, today) {
+  const alternates = [
+    ...LANGS.map(l => `    <xhtml:link rel="alternate" hreflang="${l}" href="${langUrl(l, page.path)}" />`),
+    `    <xhtml:link rel="alternate" hreflang="x-default" href="${langUrl("es", page.path)}" />`,
+  ].join("\n");
+  return LANGS.map(lang => `  <url>
+    <loc>${langUrl(lang, page.path)}</loc>
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority}</priority>
+    <lastmod>${today}</lastmod>
+${alternates}
+  </url>`);
+}
+
 export default async function handler(_req) {
   // Traer eventos aprobados
   const eventsRes = await fetch(
@@ -26,63 +62,8 @@ export default async function handler(_req) {
   const today = new Date().toISOString().split("T")[0];
 
   const urls = [
-    // Home
-    `  <url>
-    <loc>${BASE_URL}/</loc>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-    <lastmod>${today}</lastmod>
-  </url>`,
-
-    // FAQ (AEO/SEO)
-    ` <url>
-    <loc>${BASE_URL}/preguntas-frecuentes</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-    <lastmod>${today}</lastmod>
-  </url>`,
-
-    // Página HOY (URL propia, contenido dinámico)
-`  <url>
-    <loc>${BASE_URL}/hoy</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-    <lastmod>${today}</lastmod>
-  </url>`,
-
-    // Páginas Esta Semana y Fin de Semana
-`  <url>
-    <loc>${BASE_URL}/esta-semana</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-    <lastmod>${today}</lastmod>
-  </url>`,
-`  <url>
-    <loc>${BASE_URL}/finde</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-    <lastmod>${today}</lastmod>
-  </url>`,
-
-    // Páginas de zona (SEO)
-`  <url>
-    <loc>${BASE_URL}/medellin</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-    <lastmod>${today}</lastmod>
-  </url>`,
-`  <url>
-    <loc>${BASE_URL}/area-metropolitana</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-    <lastmod>${today}</lastmod>
-  </url>`,
-`  <url>
-    <loc>${BASE_URL}/oriente-cercano</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-    <lastmod>${today}</lastmod>
-  </url>`,
+    // Home, FAQ, hoy, esta-semana, finde y las 3 zonas — 8 páginas x 4 idiomas = 32 URLs
+    ...LOCALIZED_PAGES.flatMap(page => localizedUrlEntries(page, today)),
 
     // Páginas de eventos
     ...events.map(e => `  <url>
@@ -102,7 +83,7 @@ export default async function handler(_req) {
   ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${urls.join("\n")}
 </urlset>`;
 

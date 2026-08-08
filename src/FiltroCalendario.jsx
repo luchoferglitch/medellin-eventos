@@ -89,18 +89,31 @@ export function eventoOcurreEnFecha(evento, ymd) {
    COMPONENTE
    ============================================================ */
 
-const MESES = [
+const MESES_DEFAULT = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ];
-const INICIALES_DIAS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+const DIAS_ABREV_DEFAULT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const MESES_ABREV_DEFAULT = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
 /**
  * @param {Array}    eventos          Lista completa de eventos aprobados (para marcar días con actividad)
  * @param {string?}  fechaSeleccionada 'YYYY-MM-DD' o null
  * @param {Function} onSeleccionar    (ymd|null) => void
+ * @param {Array}    meses            Nombres completos de mes en el idioma activo
+ * @param {Array}    diasAbrev        Nombres de día abreviados (3 letras) en el idioma activo
+ * @param {Array}    mesesAbrev       Nombres de mes abreviados (minúscula) en el idioma activo —
+ *                                    no derivar con slice(0,3): en francés "Juin"/"Juillet" colisionan.
  */
-export default function FiltroCalendario({ eventos = [], fechaSeleccionada, onSeleccionar }) {
+export default function FiltroCalendario({
+  eventos = [],
+  fechaSeleccionada,
+  onSeleccionar,
+  pickDateLabel = 'Elegir fecha',
+  meses = MESES_DEFAULT,
+  diasAbrev = DIAS_ABREV_DEFAULT,
+  mesesAbrev = MESES_ABREV_DEFAULT,
+}) {
   const [abierto, setAbierto] = useState(false);
   const hoyYMD = aYMD(new Date());
 
@@ -207,12 +220,12 @@ export default function FiltroCalendario({ eventos = [], fechaSeleccionada, onSe
 
   // Etiqueta del chip: "Elegir fecha" o "Vie 14 ago"
   const etiqueta = useMemo(() => {
-    if (!fechaSeleccionada) return 'Elegir fecha';
+    if (!fechaSeleccionada) return pickDateLabel;
     const f = desdeYMD(fechaSeleccionada);
-    const dia = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'][f.getDay()];
-    const mes = MESES[f.getMonth()].slice(0, 3).toLowerCase();
+    const dia = diasAbrev[f.getDay()];
+    const mes = mesesAbrev[f.getMonth()];
     return `${dia} ${f.getDate()} ${mes}`;
-  }, [fechaSeleccionada]);
+  }, [fechaSeleccionada, pickDateLabel, diasAbrev, mesesAbrev]);
 
   // No dejamos retroceder antes del mes actual
   const hoy = new Date();
@@ -265,7 +278,7 @@ export default function FiltroCalendario({ eventos = [], fechaSeleccionada, onSe
               <ChevronLeft size={17} aria-hidden="true" />
             </button>
             <span className="mvcal-mes">
-              {MESES[mesVisible.mes]} {mesVisible.anio}
+              {meses[mesVisible.mes]} {mesVisible.anio}
             </span>
             <button
               type="button"
@@ -278,8 +291,8 @@ export default function FiltroCalendario({ eventos = [], fechaSeleccionada, onSe
           </div>
 
           <div className="mvcal-grid mvcal-grid--encabezado" aria-hidden="true">
-            {INICIALES_DIAS.map((d, i) => (
-              <span key={i} className="mvcal-inicial">{d}</span>
+            {diasAbrev.map((d, i) => (
+              <span key={i} className="mvcal-inicial">{d.charAt(0).toUpperCase()}</span>
             ))}
           </div>
 
@@ -307,7 +320,7 @@ export default function FiltroCalendario({ eventos = [], fechaSeleccionada, onSe
                   onClick={() => seleccionar(ymd)}
                   aria-pressed={elegido}
                   aria-label={
-                    `${numero} de ${MESES[mesVisible.mes]}` +
+                    `${numero} de ${meses[mesVisible.mes]}` +
                     (tieneEventos ? ', con eventos' : ', sin eventos')
                   }
                 >

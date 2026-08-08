@@ -8,23 +8,27 @@ function diasVivos() {
   return diff;
 }
 
-const DEFAULT_TITLE = (
-  <>
-    DESCUBRE<br />
-    <span className="accent">LO QUE</span><br />
-    <span className="accent-red">VIBRA</span>
-  </>
-);
-
-const DEFAULT_SUBTITLE = (
-  <>
-    Los mejores eventos de Medellín, el Área Metropolitana y el Oriente Cercano.{" "}
-    <strong style={{ color: "#F5A623" }}>Tu agenda cultural, actualizada cada semana.</strong>
-  </>
-);
-
 export default function HeroBanner({ search, setSearch, stats, t, lang, heroTitle, heroSubtitle }) {
   const dias = diasVivos();
+
+  const [titleLine1, titleLine2, titleLine3] = (t.heroDefaultTitle || "").split("|");
+  const defaultTitle = (
+    <>
+      {titleLine1}<br />
+      <span className="accent">{titleLine2}</span><br />
+      <span className="accent-red">{titleLine3}</span>
+    </>
+  );
+
+  const [subtitleBefore, subtitleAfter] = (t.heroDefaultSubtitle || "").split("|");
+  const defaultSubtitle = (
+    <>
+      {subtitleBefore}{" "}
+      <strong style={{ color: "#F5A623" }}>{subtitleAfter}</strong>
+    </>
+  );
+
+  const [bornBefore, bornDate, bornAfter] = (t.heroBornLine || "").split("|");
 
   return (
     <div className="hero">
@@ -38,13 +42,13 @@ export default function HeroBanner({ search, setSearch, stats, t, lang, heroTitl
           style={{ textDecoration: "none" }}
         >
           <MapPin size={12} style={{ display: "inline", verticalAlign: "-2px", marginRight: 4 }} />
-          Medellín, Área Metropolitana y Oriente Cercano
+          {t.heroBreadcrumb}
         </a>
         <h1 className="hero-title">
-          {heroTitle || DEFAULT_TITLE}
+          {heroTitle || defaultTitle}
         </h1>
         <p className="hero-sub">
-          {heroSubtitle || DEFAULT_SUBTITLE}
+          {heroSubtitle || defaultSubtitle}
         </p>
 
         {/* Fecha de nacimiento */}
@@ -62,7 +66,7 @@ export default function HeroBanner({ search, setSearch, stats, t, lang, heroTitl
           backdropFilter: "blur(4px)",
         }}>
           <span style={{ fontSize: 15 }}>🚀</span>
-          <span>Nacimos el <strong style={{ color: "#F5A623" }}>13 de mayo de 2026</strong> — {dias} días conectando la región con su cultura</span>
+          <span>{bornBefore} <strong style={{ color: "#F5A623" }}>{bornDate}</strong> {(bornAfter || "").replace("{days}", dias)}</span>
         </div>
 
         <div className="search-bar">

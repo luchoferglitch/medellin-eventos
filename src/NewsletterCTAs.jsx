@@ -1,4 +1,5 @@
 export default function NewsletterCTAs({
+  t,
   alreadySubscribed,
   showPopup,
   showStickyFooter,
@@ -27,10 +28,10 @@ export default function NewsletterCTAs({
         }}>
           <div style={{ flex: "1 1 260px", minWidth: 0 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: "#5a3f00" }}>
-              No te pierdas nada. Suscríbete al newsletter.
+              {t.ctaBannerTitle}
             </div>
             <div style={{ fontSize: 13, color: "#7a5a1a", marginTop: 2 }}>
-              Los mejores eventos filtrados por tu zona, cada viernes en tu correo. 100% gratis.
+              {t.ctaBannerText}
             </div>
           </div>
           <form
@@ -39,7 +40,7 @@ export default function NewsletterCTAs({
           >
             <input
               type="email"
-              placeholder="Tu correo"
+              placeholder={t.ctaEmailPlaceholder}
               value={subEmail}
               onChange={(e) => setSubEmail(e.target.value)}
               style={{ flex: 1, minWidth: 0, padding: "10px 14px", border: "1px solid #d4a747", borderRadius: 8, fontSize: 14, background: "white" }}
@@ -48,7 +49,7 @@ export default function NewsletterCTAs({
               type="submit"
               style={{ background: "#C8860A", color: "white", border: "none", borderRadius: 8, padding: "10px 20px", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", fontSize: 14 }}
             >
-              Suscribirme
+              {t.ctaSubscribeBtn}
             </button>
           </form>
         </div>
@@ -66,26 +67,26 @@ export default function NewsletterCTAs({
           >
             <button onClick={dismissPopup} style={{ position: "absolute", top: 12, right: 12, background: "none", border: "none", fontSize: 24, cursor: "pointer", color: "#888" }} aria-label="Cerrar">×</button>
             <div style={{ fontSize: 38, textAlign: "center", marginBottom: 12 }}>📩</div>
-            <h3 style={{ margin: "0 0 8px", fontSize: 22, color: "#1a1a1a", textAlign: "center" }}>No te pierdas nada</h3>
+            <h3 style={{ margin: "0 0 8px", fontSize: 22, color: "#1a1a1a", textAlign: "center" }}>{t.ctaPopupTitle}</h3>
             <p style={{ margin: "0 0 20px", color: "#555", textAlign: "center", fontSize: 14 }}>
-              Todos los eventos filtrados por tu zona, cada viernes en tu correo. Gratis, sin spam.
+              {t.ctaPopupText}
             </p>
             <form onSubmit={(e) => { e.preventDefault(); handleSubscribe("popup"); }} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <input
                 type="email"
-                placeholder="Tu correo"
+                placeholder={t.ctaEmailPlaceholder}
                 value={subEmail}
                 onChange={(e) => setSubEmail(e.target.value)}
                 style={{ padding: "12px 14px", border: "1px solid #d8d3c5", borderRadius: 8, fontSize: 15 }}
                 required
               />
               <button type="submit" style={{ background: "#C8860A", color: "white", border: "none", borderRadius: 8, padding: "12px 20px", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
-                Suscribirme gratis
+                {t.ctaPopupBtn}
               </button>
             </form>
             <div style={{ marginTop: 14, textAlign: "center" }}>
               <button onClick={dismissPopup} style={{ background: "none", border: "none", color: "#888", fontSize: 13, cursor: "pointer", textDecoration: "underline" }}>
-                Ahora no
+                {t.ctaPopupDismiss}
               </button>
             </div>
           </div>
@@ -101,8 +102,8 @@ export default function NewsletterCTAs({
           gap: 12, zIndex: 9998, boxShadow: "0 -4px 20px rgba(0,0,0,0.2)", flexWrap: "wrap",
         }}>
           <div style={{ flex: "1 1 240px", minWidth: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: 14 }}>💌 Recibe los planes de la semana</div>
-            <div style={{ fontSize: 12, color: "#bbb" }}>Newsletter gratis cada viernes</div>
+            <div style={{ fontWeight: 700, fontSize: 14 }}>{t.ctaStickyTitle}</div>
+            <div style={{ fontSize: 12, color: "#bbb" }}>{t.ctaStickySubtitle}</div>
           </div>
           <form
             onSubmit={(e) => { e.preventDefault(); handleSubscribe("sticky_footer"); }}
@@ -110,14 +111,14 @@ export default function NewsletterCTAs({
           >
             <input
               type="email"
-              placeholder="Tu correo"
+              placeholder={t.ctaEmailPlaceholder}
               value={subEmail}
               onChange={(e) => setSubEmail(e.target.value)}
               style={{ flex: 1, minWidth: 0, padding: "8px 12px", border: "none", borderRadius: 6, fontSize: 13 }}
               required
             />
             <button type="submit" style={{ background: "#C8860A", color: "white", border: "none", borderRadius: 6, padding: "8px 16px", fontWeight: 700, cursor: "pointer", fontSize: 13, whiteSpace: "nowrap" }}>
-              Suscribirme
+              {t.ctaSubscribeBtn}
             </button>
           </form>
           <button onClick={dismissSticky} style={{ background: "none", border: "none", color: "#888", fontSize: 22, cursor: "pointer", padding: "0 4px" }} aria-label="Cerrar">×</button>
