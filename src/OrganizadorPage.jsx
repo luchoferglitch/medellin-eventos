@@ -36,17 +36,20 @@ export default function OrganizadorPage() {
       if (data) {
         const matched = data.filter(e => e.organizer_name && slugify(e.organizer_name) === slug);
         setEvents(matched);
-        if (matched.length > 0) {
-          setOrganizerName(matched[0].organizer_name);
-          document.title = `${matched[0].organizer_name} — Medellín Vibra`;
-          let canonicalEl = document.querySelector('link[rel="canonical"]');
-          if (!canonicalEl) { canonicalEl = document.createElement("link"); canonicalEl.setAttribute("rel", "canonical"); document.head.appendChild(canonicalEl); }
-          const canonicalUrl = `https://www.medellinvibra.co/organizador/${slug}`;
-          canonicalEl.setAttribute("href", canonicalUrl);
-          let ogUrl = document.querySelector('meta[property="og:url"]'); if (!ogUrl) { ogUrl = document.createElement("meta"); ogUrl.setAttribute("property","og:url"); document.head.appendChild(ogUrl); } ogUrl.setAttribute("content", canonicalUrl);
-          let ogTitle = document.querySelector('meta[property="og:title"]'); if (!ogTitle) { ogTitle = document.createElement("meta"); ogTitle.setAttribute("property","og:title"); document.head.appendChild(ogTitle); } ogTitle.setAttribute("content", `${matched[0].organizer_name} — Medellín Vibra`);
-          let ogDesc = document.querySelector('meta[property="og:description"]'); if (!ogDesc) { ogDesc = document.createElement("meta"); ogDesc.setAttribute("property","og:description"); document.head.appendChild(ogDesc); } ogDesc.setAttribute("content", `Eventos de ${matched[0].organizer_name} en Medellín Vibra — la agenda cultural de Medellín y la región.`);
-        }
+        const name = matched.length > 0 ? matched[0].organizer_name : "";
+        setOrganizerName(name);
+
+        // El canonical debe apuntar siempre a la página propia del organizador,
+        // exista o no un evento activo para mostrar (si no, queda con el canonical
+        // de la página anterior y Search Console lo marca como duplicado).
+        document.title = name ? `${name} — Medellín Vibra` : "Organizador — Medellín Vibra";
+        let canonicalEl = document.querySelector('link[rel="canonical"]');
+        if (!canonicalEl) { canonicalEl = document.createElement("link"); canonicalEl.setAttribute("rel", "canonical"); document.head.appendChild(canonicalEl); }
+        const canonicalUrl = `https://www.medellinvibra.co/organizador/${slug}`;
+        canonicalEl.setAttribute("href", canonicalUrl);
+        let ogUrl = document.querySelector('meta[property="og:url"]'); if (!ogUrl) { ogUrl = document.createElement("meta"); ogUrl.setAttribute("property","og:url"); document.head.appendChild(ogUrl); } ogUrl.setAttribute("content", canonicalUrl);
+        let ogTitle = document.querySelector('meta[property="og:title"]'); if (!ogTitle) { ogTitle = document.createElement("meta"); ogTitle.setAttribute("property","og:title"); document.head.appendChild(ogTitle); } ogTitle.setAttribute("content", name ? `${name} — Medellín Vibra` : "Organizador — Medellín Vibra");
+        let ogDesc = document.querySelector('meta[property="og:description"]'); if (!ogDesc) { ogDesc = document.createElement("meta"); ogDesc.setAttribute("property","og:description"); document.head.appendChild(ogDesc); } ogDesc.setAttribute("content", name ? `Eventos de ${name} en Medellín Vibra — la agenda cultural de Medellín y la región.` : "Página de organizador en Medellín Vibra — la agenda cultural de Medellín y la región.");
       }
       setLoading(false);
     };
