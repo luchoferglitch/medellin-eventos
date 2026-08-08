@@ -172,6 +172,10 @@ const style = `
   .nav-logo { font-family: var(--font-display); font-size: 26px; letter-spacing: 1px; color: var(--gold); }
   .nav-logo span { color: var(--red); }
   .nav-actions { display: flex; gap: 10px; align-items: center; }
+  .lang-switcher { display: flex; gap: 2px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 3px; }
+  .lang-btn { padding: 6px 10px; border-radius: 6px; border: none; background: transparent; color: var(--muted); font-size: 14px; font-weight: 700; letter-spacing: 0.3px; cursor: pointer; font-family: var(--font-body); transition: all 0.15s ease; }
+  .lang-btn:hover:not(.active) { color: var(--gold); }
+  .lang-btn.active { background: var(--gold); color: white; }
   .nav-links { display: none; }
   @media (max-width: 767px) { .desktop-only { display: none !important; } }
   @media (min-width: 768px) {
@@ -187,6 +191,7 @@ const style = `
     .nav-actions { gap: 6px; }
     .nav-actions .btn-ghost { padding: 8px 10px; }
     .nav-actions .btn-primary { padding: 8px 12px; white-space: nowrap; }
+    .lang-btn { padding: 5px 7px; font-size: 12px; }
   }
   .btn-ghost {
     background: none; border: 1px solid var(--border); color: var(--text);
@@ -1447,12 +1452,13 @@ export default function App() {
             ))}
           </div>
           <div className="nav-actions">
-            <select value={lang} onChange={e=>changeLang(e.target.value)} style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,padding:'6px 10px',fontFamily:'var(--font-body)',fontSize:13,color:'var(--text)',cursor:'pointer',outline:'none'}}>
-              <option value="es">ES</option>
-              <option value="en">EN</option>
-              <option value="pt">PT</option>
-              <option value="fr">FR</option>
-            </select>
+            <div className="lang-switcher" role="group" aria-label="Idioma">
+              {["es","en","pt","fr"].map(l => (
+                <button key={l} type="button" className={`lang-btn ${lang===l?"active":""}`} onClick={()=>changeLang(l)} aria-pressed={lang===l}>
+                  {l.toUpperCase()}
+                </button>
+              ))}
+            </div>
             <button onClick={toggleDarkMode} title={darkMode ? "Modo claro" : "Modo oscuro"}
               style={{background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:8, padding:'7px 10px', cursor:'pointer', display:'flex', alignItems:'center', color:'var(--text)'}}>
               {darkMode ? <Sun size={16} /> : <Moon size={16} />}
