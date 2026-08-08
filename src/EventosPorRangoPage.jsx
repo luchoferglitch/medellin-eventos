@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "./supabase";
 import { registrarClic } from "./registrarClic";
@@ -53,6 +53,8 @@ export default function EventosPorRangoPage({
   const [radioKm, setRadioKm] = useState(20);
   const [buscandoUbicacion, setBuscandoUbicacion] = useState(false);
   const [toast, setToast] = useState("");
+  const mainRef = useRef(null);
+  const isFirstFilterRender = useRef(true);
 
   const showToast = (msg) => {
     setToast(msg);
@@ -107,6 +109,11 @@ export default function EventosPorRangoPage({
       { enableHighAccuracy: true, timeout: 10000 }
     );
   };
+
+  useEffect(() => {
+    if (isFirstFilterRender.current) { isFirstFilterRender.current = false; return; }
+    mainRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [cercaDeMi]);
 
   const compartir = async () => {
     const url = window.location.href;
@@ -179,7 +186,8 @@ export default function EventosPorRangoPage({
         .rp-cerca-btn:hover:not(.activo) { background: #fff8ec; }
         .rp-cerca-btn:disabled { opacity: 0.6; cursor: wait; }
         .rp-radio-select { padding: 10px 14px; border-radius: 100px; border: 1px solid #C8860A; background: white; color: #C8860A; font-weight: 600; font-size: 14px; cursor: pointer; }
-        .rp-main { max-width: 900px; margin: 0 auto; padding: 0 20px 60px; }
+        .rp-main { max-width: 900px; margin: 0 auto; padding: 0 20px 60px; scroll-margin-top: 70px; }
+        .rp-results-count { color: #888; font-size: 13px; font-weight: 600; padding-top: 20px; }
         .rp-dia-title { font-size: 20px; color: #1a1a1a; margin: 36px 0 4px; padding-bottom: 8px; border-bottom: 2px solid #C8860A; text-transform: capitalize; font-weight: 800; }
         .rp-zona-title { font-size: 16px; color: #555; margin: 18px 0 12px; font-weight: 600; padding-left: 10px; border-left: 3px solid #e5e1d8; }
         .rp-card { background: white; border-radius: 12px; overflow: hidden; margin-bottom: 14px; border: 1px solid #ece8dd; transition: box-shadow 0.15s; display: flex; }
@@ -244,8 +252,12 @@ export default function EventosPorRangoPage({
         )}
       </div>
 
-      <main className="rp-main">
+      <main className="rp-main" ref={mainRef}>
         {loading && <div className="rp-loading">Cargando eventos…</div>}
+
+        {!loading && total > 0 && (
+          <div className="rp-results-count">{total} evento{total !== 1 ? "s" : ""} encontrado{total !== 1 ? "s" : ""}</div>
+        )}
 
         {!loading && total === 0 && (
           <div className="rp-empty">

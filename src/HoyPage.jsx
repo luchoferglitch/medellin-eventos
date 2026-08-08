@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "./supabase";
 import { registrarClic } from "./registrarClic";
@@ -42,6 +42,8 @@ export default function HoyPage() {
   const [radioKm, setRadioKm] = useState(20);
   const [buscandoUbicacion, setBuscandoUbicacion] = useState(false);
   const [toast, setToast] = useState("");
+  const mainRef = useRef(null);
+  const isFirstFilterRender = useRef(true);
 
   const showToast = (msg) => {
     setToast(msg);
@@ -89,6 +91,11 @@ export default function HoyPage() {
       { enableHighAccuracy: true, timeout: 10000 }
     );
   };
+
+  useEffect(() => {
+    if (isFirstFilterRender.current) { isFirstFilterRender.current = false; return; }
+    mainRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [cercaDeMi]);
 
   const compartir = async () => {
     const url = window.location.href;
@@ -151,7 +158,8 @@ export default function HoyPage() {
         .hoy-cerca-btn:hover:not(.activo) { background: #fff8ec; }
         .hoy-cerca-btn:disabled { opacity: 0.6; cursor: wait; }
         .hoy-radio-select { padding: 10px 14px; border-radius: 100px; border: 1px solid #C8860A; background: white; color: #C8860A; font-weight: 600; font-size: 14px; cursor: pointer; }
-        .hoy-main { max-width: 900px; margin: 0 auto; padding: 0 20px 60px; }
+        .hoy-main { max-width: 900px; margin: 0 auto; padding: 0 20px 60px; scroll-margin-top: 70px; }
+        .hoy-results-count { color: #888; font-size: 13px; font-weight: 600; padding-top: 20px; }
         .hoy-zona-title { font-size: 22px; color: #1a1a1a; margin: 32px 0 16px; border-left: 4px solid #C8860A; padding-left: 12px; }
         .hoy-card { background: white; border-radius: 12px; overflow: hidden; margin-bottom: 16px; border: 1px solid #ece8dd; transition: box-shadow 0.15s; display: flex; }
         .hoy-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.05); }
@@ -219,8 +227,12 @@ export default function HoyPage() {
         )}
       </div>
 
-      <main className="hoy-main">
+      <main className="hoy-main" ref={mainRef}>
         {loading && <div className="hoy-loading">Cargando eventos de hoy...</div>}
+
+        {!loading && total > 0 && (
+          <div className="hoy-results-count">{total} evento{total !== 1 ? "s" : ""} encontrado{total !== 1 ? "s" : ""}</div>
+        )}
 
         {!loading && total === 0 && (
           <div className="hoy-empty">
