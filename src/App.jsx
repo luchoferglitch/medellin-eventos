@@ -2,7 +2,7 @@
 import { Routes, Route, Link, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "./supabase";
 import { initGA, logPageView, trackEvent } from "./analytics";
-import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette } from "lucide-react";
+import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette, Megaphone } from "lucide-react";
 import { translations } from "./translations";
 import EventoPage from "./EventoPage";
 import OrganizadorPage from "./OrganizadorPage";
@@ -1618,6 +1618,37 @@ export default function App() {
                   {t.followUs}
                 </a>
               </div>
+            </div>
+
+            <div style={{
+              background: "linear-gradient(90deg, var(--dark) 0%, #2a2016 100%)",
+              borderRadius: 12,
+              padding: "16px 20px",
+              margin: "16px auto",
+              maxWidth: 1080,
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: 14,
+              justifyContent: "space-between",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flex: "1 1 300px", minWidth: 0 }}>
+                <Megaphone size={22} style={{ color: "var(--gold)", flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "white" }}>{t.organizerBannerTitle}</div>
+                  <div style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", marginTop: 2 }}>{t.organizerBannerText}</div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  trackEvent({ action: "click_publicar_evento", category: "Conversión", label: "banner_home" });
+                  if (user) setShowCreate(true);
+                  else { localStorage.setItem("pendingCreate", "1"); setAuthTab("register"); setShowAuth(true); }
+                }}
+                style={{ background: "var(--gold)", color: "white", border: "none", borderRadius: 8, padding: "10px 20px", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", fontSize: 14, flexShrink: 0 }}
+              >
+                {t.organizerBannerBtn}
+              </button>
             </div>
 
             {(() => {
