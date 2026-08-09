@@ -50,6 +50,7 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     attendees: "asistentes",
     loading: "Cargando eventos...",
     noEvents: "No encontramos eventos",
+    noEventsSearch: 'No encontramos eventos para "{term}"',
 
     // Detail
     date: "Fecha",
@@ -266,6 +267,7 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     attendees: "attendees",
     loading: "Loading events...",
     noEvents: "No events found",
+    noEventsSearch: 'No events found for "{term}"',
     date: "Date",
     time: "Time",
     place: "Venue",
@@ -468,6 +470,7 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     attendees: "participantes",
     loading: "Carregando eventos...",
     noEvents: "Nenhum evento encontrado",
+    noEventsSearch: 'Nenhum evento encontrado para "{term}"',
     date: "Data",
     time: "Hora",
     place: "Local",
@@ -670,6 +673,7 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     attendees: "participants",
     loading: "Chargement des événements...",
     noEvents: "Aucun événement trouvé",
+    noEventsSearch: 'Aucun événement trouvé pour "{term}"',
     date: "Date",
     time: "Heure",
     place: "Lieu",

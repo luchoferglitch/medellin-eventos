@@ -655,6 +655,7 @@ export default function App() {
   const [viewMode, setViewMode] = useState("grid");
   const resultsRef = useRef(null);
   const isFirstFilterRender = useRef(true);
+  const isFirstSearchRender = useRef(true);
 
   // ── INTEGRACIÓN GOOGLE ANALYTICS 4 ──
   useEffect(() => {
@@ -910,6 +911,15 @@ export default function App() {
     if (activeTab !== "home") return;
     resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [activeFilter, activeDateFilter, activeZona, fechaElegida, cercaDeMi]);
+
+  useEffect(() => {
+    if (isFirstSearchRender.current) { isFirstSearchRender.current = false; return; }
+    if (activeTab !== "home" || !search) return;
+    const timer = setTimeout(() => {
+      resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
@@ -1757,7 +1767,7 @@ export default function App() {
               ) : filtered.length === 0 ? (
                 <div style={{textAlign:'center',padding:'60px 0',color:'var(--muted)'}}>
                   <div style={{marginBottom:12}}><Search size={44} strokeWidth={1.5} /></div>
-                  <div style={{fontSize:16}}>{t.noEvents}</div>
+                  <div style={{fontSize:16}}>{search ? t.noEventsSearch.replace("{term}", search) : t.noEvents}</div>
                 </div>
               ) : viewMode === "grid" ? (
                 <div className="events-grid">
