@@ -13,6 +13,7 @@ import EstaSemanaPage from "./EstaSemanaPage";
 import FindePage from "./FindePage";
 import HeroBanner from "./HeroBanner";
 import NewsletterCTAs from "./NewsletterCTAs";
+import PushBell from "./PushBell";
 import FiltroCalendario, { eventoOcurreEnFecha } from "./FiltroCalendario";
 import BackToTop from "./BackToTop";
 import HreflangTags from "./components/HreflangTags";
@@ -1473,6 +1474,7 @@ export default function App() {
               style={{background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:8, padding:'7px 10px', cursor:'pointer', display:'flex', alignItems:'center', color:'var(--text)'}}>
               {darkMode ? <Sun size={16} /> : <Moon size={16} />}
             </button>
+            <PushBell t={t} />
             {user ? (
               <>
                 <button className="btn-ghost" onClick={handleLogout}>{t.logout}</button>

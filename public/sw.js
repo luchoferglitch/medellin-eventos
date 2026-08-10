@@ -69,3 +69,39 @@ self.addEventListener('fetch', (event) => {
       })
   );
 });
+
+// Push: muestra la notificación que envía enviar-push
+self.addEventListener('push', (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { title: 'Medellín Vibra', body: event.data ? event.data.text() : '' };
+  }
+
+  const title = data.title || 'Medellín Vibra';
+  const options = {
+    body: data.body || '',
+    icon: '/icon-192x192.png',
+    badge: '/icon-192x192.png',
+    data: { url: data.url || '/' },
+    tag: data.tag || undefined,
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Click en la notificación: enfoca una pestaña existente o abre una nueva
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url === url && 'focus' in client) return client.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
+    })
+  );
+});
