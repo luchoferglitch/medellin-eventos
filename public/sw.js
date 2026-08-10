@@ -83,11 +83,7 @@ self.addEventListener('push', (event) => {
   const options = {
     body: data.body || '',
     icon: '/icon-192x192.png',
-    // Sin "badge": Android lo procesa como máscara monocroma (solo canal alfa),
-    // y una foto a color con el círculo entero opaco se renderiza como un
-    // recuadro blanco sólido en vez del logo. No hay hoy un asset diseñado
-    // para esto (silueta con transparencia interna); mejor omitirlo que
-    // forzar un ícono roto.
+    badge: '/badge-mv-96x96.png',
     data: { url: data.url || '/' },
     tag: data.tag || undefined,
   };
