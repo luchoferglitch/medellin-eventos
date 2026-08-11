@@ -1,4 +1,4 @@
-const CACHE_NAME = 'medellin-vibra-v1';
+const CACHE_NAME = 'medellin-vibra-v2';
 const STATIC_ASSETS = [
   '/',
   '/icon-192x192.png',
@@ -37,10 +37,11 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
   
   // Skip API calls and external resources
-  if (request.url.includes('supabase.co') || 
+  if (request.url.includes('supabase.co') ||
       request.url.includes('resend.com') ||
       request.url.includes('nominatim.openstreetmap.org') ||
-      request.url.includes('googletagmanager.com')) {
+      request.url.includes('googletagmanager.com') ||
+      request.url.includes('pub-c5ba255ea192436da56e91e3ef3ecfa5.r2.dev')) {
     return;
   }
 
