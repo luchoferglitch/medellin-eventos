@@ -442,6 +442,8 @@ const style = `
 
 const ADMINS = ["luchofer2001@gmail.com"];
 
+const clicksLabel = (n) => `${n} ${n === 1 ? "clic" : "clics"}`;
+
 const rateLimiter = {};
 const checkRateLimit = (key, maxAttempts = 3, windowMs = 60000) => {
   const now = Date.now();
@@ -602,6 +604,12 @@ export default function App() {
   const [pendingEvents, setPendingEvents] = useState([]);
   const [adminSection, setAdminSection] = useState("pending");
   const [adminStats, setAdminStats] = useState(null);
+  const [topEventsShown, setTopEventsShown] = useState(20);
+  const [topEventsLoadingMore, setTopEventsLoadingMore] = useState(false);
+  const [eventClickSearch, setEventClickSearch] = useState("");
+  const [eventClickSearchResults, setEventClickSearchResults] = useState(null);
+  const [eventClickSearchLoading, setEventClickSearchLoading] = useState(false);
+  const eventClickSearchTimeout = useRef(null);
   const [subEmail, setSubEmail] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [showStickyFooter, setShowStickyFooter] = useState(false);
@@ -1157,11 +1165,50 @@ export default function App() {
       try { const domain = new URL(c.ticket_url).hostname.replace("www.", ""); clicksByBoleteria[domain] = (clicksByBoleteria[domain] || 0) + 1; } catch {}
       if (c.event_id) clicksByEvent[c.event_id] = (clicksByEvent[c.event_id] || 0) + 1;
     });
-    const topEventIds = Object.entries(clicksByEvent).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([id])=>parseInt(id));
-    const { data: topEvData } = topEventIds.length ? await supabase.from("events").select("id, title").in("id", topEventIds) : { data: [] };
-    const topClickedEvents = topEventIds.map(id => ({ title: topEvData?.find(e=>e.id===id)?.title || `Evento #${id}`, clicks: clicksByEvent[id] }));
-    setAdminStats({ byEstado, byCat, byZona, byMes, topOrgs, totalSubs: totalSubs || 0, total: allEvents.length, totalClicks, clicksByPage, clicksByBoleteria, topClickedEvents });
+    const allClickedEventIds = Object.entries(clicksByEvent).sort((a,b)=>b[1]-a[1]).map(([id,count])=>({id:parseInt(id), clicks:count}));
+    const firstBatchIds = allClickedEventIds.slice(0, 20).map(e=>e.id);
+    const { data: topEvData } = firstBatchIds.length ? await supabase.from("events").select("id, title").in("id", firstBatchIds) : { data: [] };
+    const topClickedEvents = allClickedEventIds.slice(0, 20).map(({id, clicks}) => ({ id, title: topEvData?.find(e=>e.id===id)?.title || `Evento #${id}`, clicks }));
+    setTopEventsShown(20);
+    setEventClickSearch("");
+    setEventClickSearchResults(null);
+    setAdminStats({ byEstado, byCat, byZona, byMes, topOrgs, totalSubs: totalSubs || 0, total: allEvents.length, totalClicks, clicksByPage, clicksByBoleteria, topClickedEvents, allClickedEventIds });
   };
+
+  const handleLoadMoreTopEvents = async () => {
+    if (!adminStats) return;
+    const nextIds = adminStats.allClickedEventIds.slice(topEventsShown, topEventsShown + 20);
+    if (nextIds.length === 0) return;
+    setTopEventsLoadingMore(true);
+    const { data: evData } = await supabase.from("events").select("id, title").in("id", nextIds.map(e=>e.id));
+    const nextEvents = nextIds.map(({id, clicks}) => ({ id, title: evData?.find(e=>e.id===id)?.title || `Evento #${id}`, clicks }));
+    setAdminStats(s => ({ ...s, topClickedEvents: [...s.topClickedEvents, ...nextEvents] }));
+    setTopEventsShown(n => n + 20);
+    setTopEventsLoadingMore(false);
+  };
+
+  const runEventClickSearch = async (query) => {
+    if (query.trim().length < 2) { setEventClickSearchResults(null); return; }
+    setEventClickSearchLoading(true);
+    const { data: matches } = await supabase.from("events").select("id, title").ilike("title", `%${query.trim()}%`).limit(5);
+    if (!matches || matches.length === 0) { setEventClickSearchResults([]); setEventClickSearchLoading(false); return; }
+    const ids = matches.map(e => e.id);
+    const { data: clicksData } = await supabase.from("clicks").select("event_id").in("event_id", ids);
+    const counts = {};
+    (clicksData || []).forEach(c => { counts[c.event_id] = (counts[c.event_id] || 0) + 1; });
+    const results = matches
+      .map(e => ({ id: e.id, title: e.title, clicks: counts[e.id] || 0 }))
+      .sort((a, b) => b.clicks - a.clicks);
+    setEventClickSearchResults(results);
+    setEventClickSearchLoading(false);
+  };
+
+  useEffect(() => {
+    clearTimeout(eventClickSearchTimeout.current);
+    if (eventClickSearch.trim().length < 2) { setEventClickSearchResults(null); return; }
+    eventClickSearchTimeout.current = setTimeout(() => runEventClickSearch(eventClickSearch), 400);
+    return () => clearTimeout(eventClickSearchTimeout.current);
+  }, [eventClickSearch]);
 
   const handleApprove = async (id) => {
     const { error } = await supabase.from("events").update({ estado: "aprobado" }).eq("id", id);
@@ -2261,16 +2308,51 @@ export default function App() {
                               </div>
                             </div>
                           )}
+                          <div style={{marginBottom:16}}>
+                            <div style={{fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:8}}>Buscar evento específico</div>
+                            <input
+                              type="text"
+                              value={eventClickSearch}
+                              onChange={e => setEventClickSearch(e.target.value)}
+                              placeholder="ej. Acción Impro"
+                              style={{width:"100%", padding:"8px 12px", borderRadius:8, border:"1px solid var(--border)", background:"var(--surface2)", color:"var(--text)", fontSize:13, fontFamily:"var(--font-body)", boxSizing:"border-box"}}
+                            />
+                            {eventClickSearchLoading && (
+                              <div style={{fontSize:12, color:"var(--muted)", marginTop:8}}>Buscando...</div>
+                            )}
+                            {!eventClickSearchLoading && eventClickSearchResults && eventClickSearchResults.length === 0 && (
+                              <div style={{fontSize:12, color:"var(--muted)", marginTop:8}}>No se encontraron eventos con "{eventClickSearch.trim()}"</div>
+                            )}
+                            {!eventClickSearchLoading && eventClickSearchResults && eventClickSearchResults.length > 0 && (
+                              <div style={{marginTop:8}}>
+                                {eventClickSearchResults.map((ev, i) => (
+                                  <div key={ev.id} style={{display:"flex", alignItems:"center", gap:10, padding:"6px 0", borderBottom: i < eventClickSearchResults.length-1 ? "1px solid var(--border)" : "none"}}>
+                                    <div style={{flex:1, fontSize:12, fontWeight:600, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{ev.title}</div>
+                                    <div style={{background:"#059669", color:"white", borderRadius:100, padding:"2px 10px", fontSize:11, fontWeight:700, flexShrink:0}}>{clicksLabel(ev.clicks)}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                           {adminStats.topClickedEvents.length > 0 && (
                             <div>
                               <div style={{fontSize:11, fontWeight:700, color:"var(--muted)", textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:8}}>Top eventos</div>
                               {adminStats.topClickedEvents.map((ev, i) => (
-                                <div key={i} style={{display:"flex", alignItems:"center", gap:10, padding:"6px 0", borderBottom: i < adminStats.topClickedEvents.length-1 ? "1px solid var(--border)" : "none"}}>
+                                <div key={ev.id} style={{display:"flex", alignItems:"center", gap:10, padding:"6px 0", borderBottom: i < adminStats.topClickedEvents.length-1 ? "1px solid var(--border)" : "none"}}>
                                   <div style={{width:22, height:22, borderRadius:"50%", background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, fontWeight:700, color:"var(--muted)", flexShrink:0}}>{i+1}</div>
                                   <div style={{flex:1, fontSize:12, fontWeight:600, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{ev.title}</div>
-                                  <div style={{background:"#059669", color:"white", borderRadius:100, padding:"2px 10px", fontSize:11, fontWeight:700, flexShrink:0}}>{ev.clicks} clics</div>
+                                  <div style={{background:"#059669", color:"white", borderRadius:100, padding:"2px 10px", fontSize:11, fontWeight:700, flexShrink:0}}>{clicksLabel(ev.clicks)}</div>
                                 </div>
                               ))}
+                              {topEventsShown < adminStats.allClickedEventIds.length && (
+                                <button
+                                  onClick={handleLoadMoreTopEvents}
+                                  disabled={topEventsLoadingMore}
+                                  style={{display:"block", margin:"12px auto 0", padding:"6px 16px", borderRadius:100, border:"1px solid var(--border)", background:"var(--surface2)", color:"var(--text)", fontSize:12, fontWeight:600, cursor: topEventsLoadingMore ? "default" : "pointer", fontFamily:"var(--font-body)"}}
+                                >
+                                  {topEventsLoadingMore ? "Cargando..." : "Ver más eventos ↓"}
+                                </button>
+                              )}
                             </div>
                           )}
                         </>
