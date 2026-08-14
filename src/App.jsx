@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect, useRef, useCallback } from "react";
 import { Routes, Route, Link, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "./supabase";
+import { registrarClic } from "./registrarClic";
 import { initGA, logPageView, trackEvent } from "./analytics";
 import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette, Megaphone } from "lucide-react";
 import { translations } from "./translations";
@@ -2425,7 +2426,7 @@ export default function App() {
                 </div>
                 {selectedEvent.ticketPlatform && (
                   <div style={{marginBottom:12,display:'flex',alignItems:'center',gap:8,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 14px',cursor: selectedEvent.link ? 'pointer' : 'default'}}
-                    onClick={() => selectedEvent.link && window.open(selectedEvent.link, '_blank')}>
+                    onClick={() => selectedEvent.link && registrarClic(selectedEvent.id, selectedEvent.link, "home_modal", selectedEvent.title, selectedEvent.cat)}>
                     <Ticket size={18} color="var(--gold)" style={{flexShrink:0}} />
                     <div>
                       <div style={{fontSize:11,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'0.5px'}}>{t.officialTickets}</div>
@@ -2453,7 +2454,7 @@ export default function App() {
                   <button className="btn-buy" onClick={() => {
                     trackEvent({ action: "comprar_boleta", category: "Conversion", label: selectedEvent.title });
                     if (selectedEvent.link) {
-                      window.open(selectedEvent.link,'_blank');
+                      registrarClic(selectedEvent.id, selectedEvent.link, "home_modal", selectedEvent.title, selectedEvent.cat);
                     } else handleReserve();
                   }}>
                     {selectedEvent.price === "Gratis" ? t.registerFree : selectedEvent.price.startsWith("En") ? t.buyTickets : `${t.buy} · ${selectedEvent.price} →`}

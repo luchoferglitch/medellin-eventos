@@ -339,11 +339,8 @@ function EventCard({ ev, navigate, page = "rango" }) {
             Ver detalle
           </button>
           {ev.ticket_link && (
-            <a
+            <button
               className="rp-btn rp-btn-ticket"
-              href={ev.ticket_link}
-              target="_blank"
-              rel="noopener noreferrer"
               onClick={() => {
                 if (typeof window.gtag === "function") {
                   window.gtag("event", "comprar_boleta", {
@@ -352,10 +349,11 @@ function EventCard({ ev, navigate, page = "rango" }) {
                     evento_categoria: ev.category,
                   });
                 }
+                registrarClic(ev.id, ev.ticket_link, page, ev.title, ev.category);
               }}
             >
               Comprar boleta
-            </a>
+            </button>
           )}
           {ev.organizer_name && (
             <button
