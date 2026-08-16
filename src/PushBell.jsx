@@ -156,8 +156,6 @@ export default function PushBell({ t }) {
     zIndex: 50,
   };
 
-  if (!supported) return null;
-
   if (isIOS && !isStandalone) {
     return (
       <div style={{ position: "relative" }} ref={panelRef}>
@@ -170,6 +168,8 @@ export default function PushBell({ t }) {
       </div>
     );
   }
+
+  if (!supported) return null;
 
   const FREQ_OPTIONS = [
     ["diaria", t.pushFreqDaily],
