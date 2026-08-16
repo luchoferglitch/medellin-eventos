@@ -159,8 +159,12 @@ alto riesgo.
 
 Lo que ya está implementado y no se debe romper:
 
-- Canonical dinámico **con `www`** en Home, `EventoPage`, `OrganizadorPage`, `FaqPage` y
-  `OrganizadoresLanding`
+- Canonical dinámico **con `www`** en Home, `EventoPage`, `OrganizadorPage`, `FaqPage`,
+  `OrganizadoresLanding`, `HoyPage` y `EventosPorRangoPage` (`EstaSemanaPage`/`FindePage`).
+  Cada página con ruta propia fija su propio `<link rel="canonical">` — `App.jsx` tiene una
+  lista (`STANDALONE_BASE_PATHS`) para no pisarlo con el canonical del home/zona en cada
+  navegación. Si agregas una página nueva con su propia ruta, súmala a esa lista o su
+  canonical va a quedar siempre apuntando al home.
 - Schema `Event` completo por evento (performer, organizer, offers, endDate)
 - Schema `Organization` / `WebSite` en `index.html`
 - Schema `FAQPage` en `/preguntas-frecuentes`

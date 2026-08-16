@@ -128,6 +128,16 @@ export default function EventoPage() {
   }, [slug]);
 
   useEffect(() => {
+    if (!event) return;
+    // <SEO> (Helmet) maneja title/og/twitter, pero no toca el <link rel="canonical">
+    // que ya trae index.html — si Helmet agregara el suyo quedarían dos tags
+    // compitiendo. Se reusa/actualiza el mismo nodo que las demás páginas.
+    let canonicalEl = document.querySelector('link[rel="canonical"]');
+    if (!canonicalEl) { canonicalEl = document.createElement("link"); canonicalEl.setAttribute("rel", "canonical"); document.head.appendChild(canonicalEl); }
+    canonicalEl.setAttribute("href", `https://www.medellinvibra.co/evento/${slugify(event.title)}-${event.id}`);
+  }, [event]);
+
+  useEffect(() => {
     if (user && event) {
       const mine = reviews.find(r => r.user_id === user.id);
       if (mine) { setMyReview(mine); setRating(mine.rating); setComment(mine.comment || ""); }

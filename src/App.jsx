@@ -18,6 +18,8 @@ import PushBell from "./PushBell";
 import FiltroCalendario, { eventoOcurreEnFecha } from "./FiltroCalendario";
 import BackToTop from "./BackToTop";
 import HreflangTags from "./components/HreflangTags";
+import { getLangFromPath, getLangPrefix } from "./lang";
+import { CAT_LABEL_KEY } from "./categoryLabels";
 
 import catMusica from "./assets/cat-musica.jpg";
 import catArte from "./assets/cat-arte.jpg";
@@ -52,21 +54,6 @@ const CAT_CONFIG = {
 };
 
 const getCatConfig = (cat) => CAT_CONFIG[cat] || { img: null, color: "#C8860A" };
-
-// El valor de `cat` filtra contra events.category en Supabase y nunca se traduce.
-// Esta clave solo indica en qué campo de translations.js vive la etiqueta visible.
-const CAT_LABEL_KEY = {
-  "Música": "catLabelMusica",
-  "Arte": "catLabelArte",
-  "Comedia": "catLabelComedia",
-  "Tech": "catLabelTech",
-  "Gastronomía": "catLabelGastronomia",
-  "Baile": "catLabelBaile",
-  "Deportes": "catLabelDeportes",
-  "Teatro": "catLabelTeatro",
-  "Bienestar": "catLabelBienestar",
-  "Académicos": "catLabelAcademicos",
-};
 
 // Sistema de tags editoriales
 const TAGS_CONFIG = {
@@ -477,8 +464,13 @@ const addToCalendar = (ev) => {
 
 const CATS = ["Todos","Música","Arte","Comedia","Tech","Gastronomía","Baile","Deportes","Teatro","Bienestar","Académicos"];
 
-// Idiomas con URL propia (prefijo de ruta). Español vive sin prefijo en "/".
-const LANG_PREFIXES = ["en", "pt", "fr"];
+// Rutas que tienen su propia página (con su propio title/canonical/meta-description),
+// distinta del home/zona que maneja este componente. Sin este chequeo, el efecto de
+// App de más abajo corre en cada navegación —sin importar qué ruta esté activa— y
+// pisa el title/canonical que esas páginas ya fijaron, dejando siempre el del home.
+const STANDALONE_BASE_PATHS = ["/evento/", "/organizador/", "/para-organizadores", "/preguntas-frecuentes", "/hoy", "/esta-semana", "/finde"];
+const isStandaloneBasePath = (basePath) =>
+  STANDALONE_BASE_PATHS.some((p) => (p.endsWith("/") ? basePath.startsWith(p) : basePath === p));
 
 // "antes|después" → línea normal + línea con acento rojo (heroTitle de zona)
 const splitAccentLine = (str) => {
@@ -588,9 +580,8 @@ const matchVenueConocido = (place) => {
 
 export default function App() {
   const location = useLocation();
-  const firstSegment = location.pathname.split("/")[1];
-  const lang = LANG_PREFIXES.includes(firstSegment) ? firstSegment : "es";
-  const langPrefix = lang === "es" ? "" : `/${lang}`;
+  const lang = getLangFromPath(location.pathname);
+  const langPrefix = getLangPrefix(lang);
   const basePath = lang === "es" ? location.pathname : (location.pathname.slice(langPrefix.length) || "/");
   const t = translations[lang];
   const zonaPageConfig = getZonaPages(t)[basePath];
@@ -677,8 +668,13 @@ export default function App() {
   }, [location]);
 
   useEffect(() => {
-    document.title = zonaPageConfig ? zonaPageConfig.title : t.homeTitle;
     document.documentElement.lang = lang;
+
+    // Las rutas con página propia (evento, organizador, hoy, esta-semana, finde, FAQ,
+    // para-organizadores) fijan su propio title/canonical/meta-description — no pisarlo.
+    if (isStandaloneBasePath(basePath)) return;
+
+    document.title = zonaPageConfig ? zonaPageConfig.title : t.homeTitle;
 
     let canonicalEl = document.querySelector('link[rel="canonical"]');
     if (!canonicalEl) { canonicalEl = document.createElement("link"); canonicalEl.setAttribute("rel", "canonical"); document.head.appendChild(canonicalEl); }
@@ -2723,12 +2719,30 @@ export default function App() {
     <>
     <Routes>
       <Route path="/evento/:slug" element={<EventoPage />} />
+      <Route path="/en/evento/:slug" element={<EventoPage />} />
+      <Route path="/pt/evento/:slug" element={<EventoPage />} />
+      <Route path="/fr/evento/:slug" element={<EventoPage />} />
       <Route path="/organizador/:slug" element={<OrganizadorPage />} />
+      <Route path="/en/organizador/:slug" element={<OrganizadorPage />} />
+      <Route path="/pt/organizador/:slug" element={<OrganizadorPage />} />
+      <Route path="/fr/organizador/:slug" element={<OrganizadorPage />} />
       <Route path="/para-organizadores" element={<OrganizadoresLanding />} />
       <Route path="/preguntas-frecuentes" element={<FaqPage />} />
+      <Route path="/en/preguntas-frecuentes" element={<FaqPage />} />
+      <Route path="/pt/preguntas-frecuentes" element={<FaqPage />} />
+      <Route path="/fr/preguntas-frecuentes" element={<FaqPage />} />
       <Route path="/hoy" element={<HoyPage />} />
+      <Route path="/en/hoy" element={<HoyPage />} />
+      <Route path="/pt/hoy" element={<HoyPage />} />
+      <Route path="/fr/hoy" element={<HoyPage />} />
       <Route path="/esta-semana" element={<EstaSemanaPage />} />
+      <Route path="/en/esta-semana" element={<EstaSemanaPage />} />
+      <Route path="/pt/esta-semana" element={<EstaSemanaPage />} />
+      <Route path="/fr/esta-semana" element={<EstaSemanaPage />} />
       <Route path="/finde" element={<FindePage />} />
+      <Route path="/en/finde" element={<FindePage />} />
+      <Route path="/pt/finde" element={<FindePage />} />
+      <Route path="/fr/finde" element={<FindePage />} />
       <Route path="/en/*" element={homeAndZonaElement} />
       <Route path="/pt/*" element={homeAndZonaElement} />
       <Route path="/fr/*" element={homeAndZonaElement} />

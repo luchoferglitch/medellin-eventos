@@ -59,8 +59,11 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
+    <script type="module">
+      // Solo en producción: en dev, un Service Worker registrado queda cacheando
+      // el sitio entre sesiones y sirve versiones viejas incluso con hard-reload,
+      // dando falsos negativos al probar cambios en localhost.
+      if (import.meta.env.PROD && 'serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
             .then(reg => console.log('SW registered:', reg.scope))

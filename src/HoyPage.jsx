@@ -57,6 +57,10 @@ export default function HoyPage() {
     meta.content = "Todos los eventos culturales de hoy en Medellín, Área Metropolitana y Oriente Cercano. Encuentra qué hacer hoy cerca de ti.";
     document.head.appendChild(meta);
 
+    let canonicalEl = document.querySelector('link[rel="canonical"]');
+    if (!canonicalEl) { canonicalEl = document.createElement("link"); canonicalEl.setAttribute("rel", "canonical"); document.head.appendChild(canonicalEl); }
+    canonicalEl.setAttribute("href", "https://www.medellinvibra.co/hoy");
+
     const cargar = async () => {
       const hoy = new Date().toISOString().split("T")[0];
       const { data, error } = await supabase
