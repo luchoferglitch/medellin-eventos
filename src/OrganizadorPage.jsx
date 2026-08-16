@@ -26,11 +26,14 @@ export default function OrganizadorPage() {
   useEffect(() => {
     const fetchOrgEvents = async () => {
       setLoading(true);
-      // Traer todos los eventos aprobados y filtrar por slug del organizador
+      // Traer eventos aprobados y archivados (no pendientes) y filtrar por slug del
+      // organizador. Incluir archivados evita que un organizador cuyo único evento ya
+      // pasó caiga en el bloque "no encontrado": conserva su nombre y su historial en
+      // "Eventos pasados", mismo criterio que ya aplicamos en EventoPage con "Ya finalizó".
       const { data } = await supabase
         .from("events")
         .select("*")
-        .eq("estado", "aprobado")
+        .in("estado", ["aprobado", "archivado"])
         .order("fecha_real", { ascending: true });
 
       if (data) {
@@ -68,12 +71,16 @@ export default function OrganizadorPage() {
     </div>
   );
 
+  // Con la query trayendo aprobados + archivados, este bloque solo se alcanza para
+  // slugs que nunca tuvieron ningún evento (caso genuino de "no encontrado"). Un
+  // organizador con historial, aunque esté todo archivado, sigue de largo hacia el
+  // perfil normal y aparece en "Eventos pasados".
   if (events.length === 0) return (
     <div style={{minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#f5f3ef', fontFamily:'sans-serif'}}>
       <div style={{textAlign:'center'}}>
         <div style={{fontSize:64, marginBottom:16}}>🔍</div>
         <div style={{fontWeight:700, fontSize:22, marginBottom:8}}>Organizador no encontrado</div>
-        <div style={{color:'#888', marginBottom:24}}>No hay eventos publicados para este organizador.</div>
+        <div style={{color:'#888', marginBottom:24}}>Este organizador no tiene eventos registrados en Medellín Vibra.</div>
         <button onClick={() => navigate("/")} style={{background:'#C8860A', color:'white', border:'none', padding:'12px 24px', borderRadius:100, fontWeight:700, cursor:'pointer', fontSize:15}}>
           Ver todos los eventos →
         </button>
