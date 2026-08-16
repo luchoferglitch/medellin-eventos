@@ -1,6 +1,15 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Mail } from "lucide-react";
+import { translations } from "./translations";
+
+function detectarIdioma() {
+  const nav = (navigator.language || "es").toLowerCase();
+  if (nav.startsWith("en")) return "en";
+  if (nav.startsWith("pt")) return "pt";
+  if (nav.startsWith("fr")) return "fr";
+  return "es";
+}
 
 const faqs = [
   {
@@ -45,27 +54,50 @@ const faqs = [
   },
 ];
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": faqs.map(f => ({
-    "@type": "Question",
-    "name": f.q,
-    "acceptedAnswer": {
-      "@type": "Answer",
-      "text": f.a
-    }
-  }))
-};
+function buildInstallFaq(t) {
+  const iosSteps = [t.faqInstallIOSStep1, t.faqInstallIOSStep2, t.faqInstallIOSStep3, t.faqInstallIOSStep4];
+  const androidSteps = [t.faqInstallAndroidStep1, t.faqInstallAndroidStep2, t.faqInstallAndroidStep3];
+  return {
+    id: "instalar-app",
+    q: t.faqInstallQuestion,
+    a: [t.faqInstallIntro, t.faqInstallIOSTitle, ...iosSteps, t.faqInstallIOSNote, t.faqInstallAndroidTitle, ...androidSteps].join(" "),
+    iosSteps,
+    iosNote: t.faqInstallIOSNote,
+    androidSteps,
+  };
+}
 
 export default function FaqPage() {
   const navigate = useNavigate();
+  const t = translations[detectarIdioma()];
+  const installFaq = buildInstallFaq(t);
+  const allFaqs = [...faqs, installFaq];
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": allFaqs.map(f => ({
+      "@type": "Question",
+      "name": f.q,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": f.a
+      }
+    }))
+  };
 
   useEffect(() => {
     document.title = "Preguntas Frecuentes — Medellín Vibra";
     let canonicalEl = document.querySelector('link[rel="canonical"]');
     if (!canonicalEl) { canonicalEl = document.createElement("link"); canonicalEl.setAttribute("rel", "canonical"); document.head.appendChild(canonicalEl); }
     canonicalEl.setAttribute("href", "https://www.medellinvibra.co/preguntas-frecuentes");
+  }, []);
+
+  useEffect(() => {
+    if (window.location.hash) {
+      const el = document.getElementById(window.location.hash.slice(1));
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   }, []);
 
   return (
@@ -89,10 +121,25 @@ export default function FaqPage() {
       </div>
 
       <div style={{maxWidth:720, margin:'0 auto', padding:'32px 24px 64px'}}>
-        {faqs.map((f, i) => (
-          <section key={i} style={{background:'white', borderRadius:14, border:'1px solid #e5e1d8', padding:'24px 28px', marginBottom:16}}>
+        {allFaqs.map((f, i) => (
+          <section key={i} id={f.id} style={{background:'white', borderRadius:14, border:'1px solid #e5e1d8', padding:'24px 28px', marginBottom:16, scrollMarginTop:24}}>
             <h2 style={{fontSize:18, fontWeight:700, color:'#1a1a1a', margin:'0 0 10px'}}>{f.q}</h2>
-            <p style={{fontSize:15, lineHeight:1.6, color:'#444', margin:0}}>{f.a}</p>
+            {f.iosSteps ? (
+              <>
+                <p style={{fontSize:15, lineHeight:1.6, color:'#444', margin:'0 0 16px'}}>{t.faqInstallIntro}</p>
+                <h3 style={{fontSize:15, fontWeight:700, color:'#1a1a1a', margin:'0 0 8px'}}>{t.faqInstallIOSTitle}</h3>
+                <ol style={{fontSize:15, lineHeight:1.6, color:'#444', margin:'0 0 12px', paddingLeft:20}}>
+                  {f.iosSteps.map((step, j) => <li key={j}>{step}</li>)}
+                </ol>
+                <p style={{fontSize:13, lineHeight:1.5, color:'#7a5a10', background:'#fdf3e0', border:'1px solid #f0dba8', borderRadius:8, padding:'10px 12px', margin:'0 0 16px'}}>{f.iosNote}</p>
+                <h3 style={{fontSize:15, fontWeight:700, color:'#1a1a1a', margin:'0 0 8px'}}>{t.faqInstallAndroidTitle}</h3>
+                <ol style={{fontSize:15, lineHeight:1.6, color:'#444', margin:0, paddingLeft:20}}>
+                  {f.androidSteps.map((step, j) => <li key={j}>{step}</li>)}
+                </ol>
+              </>
+            ) : (
+              <p style={{fontSize:15, lineHeight:1.6, color:'#444', margin:0}}>{f.a}</p>
+            )}
           </section>
         ))}
 

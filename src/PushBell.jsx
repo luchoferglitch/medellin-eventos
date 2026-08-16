@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { Bell, BellRing } from "lucide-react";
 import { supabase } from "./supabase";
 
@@ -26,6 +27,7 @@ export default function PushBell({ t }) {
   const [open, setOpen] = useState(false);
   const [supported, setSupported] = useState(true);
   const [isIOS, setIsIOS] = useState(false);
+  const [isSafari, setIsSafari] = useState(true);
   const [isStandalone, setIsStandalone] = useState(false);
   const [subscription, setSubscription] = useState(null);
   const [frecuencia, setFrecuencia] = useState(() => localStorage.getItem("pushFrecuencia") || "semanal");
@@ -36,6 +38,10 @@ export default function PushBell({ t }) {
 
   useEffect(() => {
     setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream);
+    // En iOS, Chrome/Firefox/Edge/Opera usan el motor de Safari pero se identifican
+    // en el user agent (CriOS, FxiOS, EdgiOS, OPiOS): solo Safari real permite
+    // instalar la PWA con soporte completo de notificaciones push.
+    setIsSafari(!/CriOS|FxiOS|EdgiOS|OPiOS/.test(navigator.userAgent));
     setIsStandalone(window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator?.standalone === true);
 
     if (!("serviceWorker" in navigator) || !("PushManager" in window) || typeof Notification === "undefined") {
@@ -162,7 +168,12 @@ export default function PushBell({ t }) {
         {bellButton(false)}
         {open && (
           <div style={panelStyle}>
-            <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.5 }}>{t.pushIOSInstructions}</div>
+            <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.5, marginBottom: 8 }}>
+              {isSafari ? t.pushIOSInstructions : t.pushIOSNotSafari}
+            </div>
+            <Link to="/preguntas-frecuentes#instalar-app" style={{ fontSize: 12, color: "var(--gold)", fontWeight: 600, textDecoration: "underline" }}>
+              {t.pushIOSMoreInfo}
+            </Link>
           </div>
         )}
       </div>
