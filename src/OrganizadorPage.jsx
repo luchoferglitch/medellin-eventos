@@ -4,6 +4,7 @@ import { supabase } from "./supabase";
 import { getLangFromPath, getLangPrefix } from "./lang";
 import { translations } from "./translations";
 import { CAT_LABEL_KEY } from "./categoryLabels";
+import { LanguageSelectorCompact } from "./components/LanguageSelector";
 
 const slugify = (str) =>
   str?.toLowerCase()
@@ -31,6 +32,7 @@ export default function OrganizadorPage() {
   const lang = getLangFromPath(location.pathname);
   const langPrefix = getLangPrefix(lang);
   const t = translations[lang];
+  const changeLang = (newLang) => navigate(`${getLangPrefix(newLang)}/organizador/${slug}`);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [organizerName, setOrganizerName] = useState("");
@@ -169,11 +171,11 @@ export default function OrganizadorPage() {
 
       {/* Header */}
       <div style={{background:'white', borderBottom:'1px solid #e5e1d8', padding:'14px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:100}}>
-        <button onClick={() => navigate("/")} style={{background:'none', border:'none', cursor:'pointer', color:'#C8860A', fontWeight:700, fontSize:14, fontFamily:'inherit'}}>
+        <button onClick={() => navigate(`${langPrefix}/`)} style={{background:'none', border:'none', cursor:'pointer', color:'#C8860A', fontWeight:700, fontSize:14, fontFamily:'inherit'}}>
           ← {t.backLabel}
         </button>
         <span style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:20, color:'#C8860A', letterSpacing:1}}>MEDELLÍN VIBRA</span>
-        <div style={{width:60}} />
+        <LanguageSelectorCompact lang={lang} onChange={changeLang} />
       </div>
 
       {/* Hero del organizador */}

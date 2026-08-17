@@ -5,8 +5,9 @@ import { registrarClic } from "./registrarClic";
 import SEO from "./components/SEO"; // 👈 IMPORTACIÓN DEL COMPONENTE SEO
 import { Calendar, Clock, MapPin, Banknote, User, Share2, CalendarPlus, Search, Star, PartyPopper, Drama } from "lucide-react";
 import { translations } from "./translations";
-import { getLangFromPath, getLocale } from "./lang";
+import { getLangFromPath, getLangPrefix, getLocale } from "./lang";
 import { CAT_LABEL_KEY } from "./categoryLabels";
+import { LanguageSelectorCompact } from "./components/LanguageSelector";
 
 const CAT_COLORS = {
   "Música": "#7C3AED", "Arte": "#EA580C", "Comedia": "#D97706",
@@ -60,7 +61,9 @@ export default function EventoPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const lang = getLangFromPath(location.pathname);
+  const langPrefix = getLangPrefix(lang);
   const t = translations[lang];
+  const changeLang = (newLang) => navigate(`${getLangPrefix(newLang)}/evento/${slug}`);
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -252,9 +255,9 @@ export default function EventoPage() {
 
       {/* Header */}
       <div style={{background:'white', borderBottom:'1px solid #e5e1d8', padding:'14px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:100}}>
-        <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")} style={{background:'none', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:8, color:'#C8860A', fontWeight:700, fontSize:14, fontFamily:'inherit'}}>← {t.backLabel}</button>
+        <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate(`${langPrefix}/`)} style={{background:'none', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:8, color:'#C8860A', fontWeight:700, fontSize:14, fontFamily:'inherit'}}>← {t.backLabel}</button>
         <span style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:20, color:'#C8860A', letterSpacing:1}}>MEDELLÍN VIBRA</span>
-        <div style={{width:60}} />
+        <LanguageSelectorCompact lang={lang} onChange={changeLang} />
       </div>
 
       {/* Hero */}

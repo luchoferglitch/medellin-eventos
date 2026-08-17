@@ -4,6 +4,7 @@ import { ChevronLeft, Mail } from "lucide-react";
 import { translations } from "./translations";
 import { getLangFromPath, getLangPrefix } from "./lang";
 import HreflangTags from "./components/HreflangTags";
+import { LanguageSelectorChips } from "./components/LanguageSelector";
 
 function buildFaqs(t) {
   return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({
@@ -33,6 +34,7 @@ export default function FaqPage() {
   const t = translations[lang];
   const installFaq = buildInstallFaq(t);
   const allFaqs = [...buildFaqs(t), installFaq];
+  const changeLang = (newLang) => navigate(`${getLangPrefix(newLang)}/preguntas-frecuentes`);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -69,9 +71,12 @@ export default function FaqPage() {
 
       <div style={{background:'#1a1a1a', padding:'20px 24px'}}>
         <div style={{maxWidth:720, margin:'0 auto', display:'flex', alignItems:'center', gap:12}}>
-          <button onClick={() => navigate('/')} style={{background:'none', border:'none', color:'#C8860A', cursor:'pointer', display:'flex', alignItems:'center', gap:4, fontSize:14, fontWeight:600, padding:0}}>
+          <button onClick={() => navigate(`${langPrefix}/`)} style={{background:'none', border:'none', color:'#C8860A', cursor:'pointer', display:'flex', alignItems:'center', gap:4, fontSize:14, fontWeight:600, padding:0}}>
             <ChevronLeft size={18} /> {t.backLabel}
           </button>
+          <div style={{marginLeft:'auto'}}>
+            <LanguageSelectorChips lang={lang} onChange={changeLang} theme="dark" />
+          </div>
         </div>
         <div style={{maxWidth:720, margin:'20px auto 0'}}>
           <div style={{fontFamily:'var(--font-display, sans-serif)', fontSize:34, color:'white', letterSpacing:0.5}}>

@@ -7,6 +7,7 @@ import { translations } from "./translations";
 import { getLangFromPath, getLangPrefix, getLocale } from "./lang";
 import { CAT_LABEL_KEY } from "./categoryLabels";
 import HreflangTags from "./components/HreflangTags";
+import { LanguageSelectorChips } from "./components/LanguageSelector";
 
 const CAT_EMOJI = {
   "Música": "🎵", "Arte": "🎨", "Comedia": "😂", "Tech": "💻",
@@ -128,6 +129,8 @@ export default function EventosPorRangoPage({
     mainRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [cercaDeMi]);
 
+  const changeLang = (newLang) => navigate(`${getLangPrefix(newLang)}/${page}`);
+
   const compartir = async () => {
     const url = window.location.href;
     if (navigator.share) {
@@ -235,12 +238,15 @@ export default function EventosPorRangoPage({
       <HreflangTags basePath={`/${page}`} />
 
       <nav className="rp-nav">
-        <button className="rp-back" onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")}>
+        <button className="rp-back" onClick={() => window.history.length > 1 ? navigate(-1) : navigate(`${langPrefix}/`)}>
           <ArrowLeft size={18} /> {t.backLabel}
         </button>
-        <button className="rp-share" onClick={compartir}>
-          <Share2 size={14} /> {t.shareLabel}
-        </button>
+        <div style={{display:"flex", alignItems:"center", gap:8}}>
+          <LanguageSelectorChips lang={lang} onChange={changeLang} theme="light" />
+          <button className="rp-share" onClick={compartir}>
+            <Share2 size={14} /> {t.shareLabel}
+          </button>
+        </div>
       </nav>
 
       <div className="rp-hero">
