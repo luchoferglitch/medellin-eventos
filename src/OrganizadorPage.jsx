@@ -12,6 +12,11 @@ const slugify = (str) =>
     .trim().replace(/\s+/g, "-")
     .slice(0, 80) || "";
 
+const truncateDesc = (text, max = 140) => {
+  if (!text) return "";
+  return text.length > max ? `${text.slice(0, max).trimEnd()}\u2026` : text;
+};
+
 const CAT_COLORS = {
   "Música": "#7C3AED", "Arte": "#EA580C", "Comedia": "#D97706",
   "Tech": "#2563EB", "Baile": "#DB2777", "Deportes": "#16A34A",
@@ -64,6 +69,16 @@ export default function OrganizadorPage() {
         let ogUrl = document.querySelector('meta[property="og:url"]'); if (!ogUrl) { ogUrl = document.createElement("meta"); ogUrl.setAttribute("property","og:url"); document.head.appendChild(ogUrl); } ogUrl.setAttribute("content", canonicalUrl);
         let ogTitle = document.querySelector('meta[property="og:title"]'); if (!ogTitle) { ogTitle = document.createElement("meta"); ogTitle.setAttribute("property","og:title"); document.head.appendChild(ogTitle); } ogTitle.setAttribute("content", name ? `${name} — Medellín Vibra` : `${t.organizer} — Medellín Vibra`);
         let ogDesc = document.querySelector('meta[property="og:description"]'); if (!ogDesc) { ogDesc = document.createElement("meta"); ogDesc.setAttribute("property","og:description"); document.head.appendChild(ogDesc); } ogDesc.setAttribute("content", name ? t.organizadorOgDescriptionWithName.replace("{name}", name) : t.organizadorOgDescriptionGeneric);
+
+        // <meta name="description"> nunca se fijaba aquí — quedaba con la del home
+        // (App.jsx no la toca en esta ruta, ver STANDALONE_BASE_PATHS). Con nombre,
+        // usa la plantilla propia del organizador; sin nombre (0 eventos), reusa el
+        // texto genérico de arriba.
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (!metaDesc) { metaDesc = document.createElement("meta"); metaDesc.setAttribute("name", "description"); document.head.appendChild(metaDesc); }
+        metaDesc.setAttribute("content", name
+          ? (matched.length === 1 ? t.organizadorMetaDescriptionSingular : t.organizadorMetaDescriptionPlural).replace("{name}", name).replace("{N}", matched.length)
+          : t.organizadorOgDescriptionGeneric);
       }
       setLoading(false);
     };
@@ -119,14 +134,37 @@ export default function OrganizadorPage() {
           <div style={{fontWeight:700, fontSize:14, color:'#1a1a1a', marginBottom:6, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden'}}>{ev.title}</div>
           <div style={{fontSize:12, color:'#888', marginBottom:3}}>📅 {ev.date}{ev.time ? ` · ${ev.time}` : ''}</div>
           <div style={{fontSize:12, color:'#888', marginBottom:8}}>📍 {ev.place}</div>
+          {ev.description && (
+            <div style={{fontSize:12, color:'#666', lineHeight:1.5, marginBottom:8}}>{truncateDesc(ev.description)}</div>
+          )}
           <div style={{fontWeight:700, fontSize:13, color: ev.price === 'Gratis' ? '#059669' : '#C8860A'}}>{ev.price}</div>
         </div>
       </div>
     );
   };
 
+  // Schema propio del organizador — antes esta página no emitía nada más que el
+  // Organization/WebSite genérico de index.html (el mismo en todo el sitio, sin
+  // mencionar al organizador). Referencia sus eventos para que Google tenga una
+  // señal estructurada de que esta URL es la entidad "organizador X" en el sitio.
+  const organizadorJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: organizerName,
+    url: `https://www.medellinvibra.co/organizador/${slug}`,
+    event: events.map(ev => ({
+      "@type": "Event",
+      name: ev.title,
+      startDate: ev.fecha_real || undefined,
+      endDate: ev.fecha_fin || ev.fecha_real || undefined,
+      url: `https://www.medellinvibra.co/evento/${slugify(ev.title)}-${ev.id}`,
+      ...(ev.place ? { location: { "@type": "Place", name: ev.place } } : {}),
+    })),
+  };
+
   return (
     <div style={{minHeight:'100vh', background:'#f5f3ef', fontFamily:"'DM Sans', sans-serif"}}>
+      <script type="application/ld+json">{JSON.stringify(organizadorJsonLd)}</script>
       <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
 
       {/* Header */}
