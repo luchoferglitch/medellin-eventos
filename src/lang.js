@@ -11,3 +11,11 @@ export function getLangFromPath(pathname) {
 export function getLangPrefix(lang) {
   return lang === "es" ? "" : `/${lang}`;
 }
+
+// Para toLocaleDateString(...) — solo afecta cómo se formatea la fecha de HOY
+// (generada en el cliente), nunca el contenido de un evento (eso viene ya
+// formateado en español desde la BD y no se toca).
+const LOCALE_MAP = { es: "es-CO", en: "en-US", pt: "pt-BR", fr: "fr-FR" };
+export function getLocale(lang) {
+  return LOCALE_MAP[lang] || "es-CO";
+}

@@ -1,6 +1,9 @@
-﻿import EventosPorRangoPage from "./EventosPorRangoPage";
+﻿import { useLocation } from "react-router-dom";
+import EventosPorRangoPage from "./EventosPorRangoPage";
+import { translations } from "./translations";
+import { getLangFromPath, getLocale } from "./lang";
 
-function getRangoSemana() {
+function getRangoSemana(t, lang) {
   const hoy = new Date();
   const desde = hoy.toISOString().split("T")[0];
   const hasta = new Date(hoy);
@@ -8,25 +11,29 @@ function getRangoSemana() {
   const hastaStr = hasta.toISOString().split("T")[0];
 
   const opsDia = { day: "numeric", month: "long" };
-  const desdeLabel = hoy.toLocaleDateString("es-CO", opsDia);
-  const hastaLabel = hasta.toLocaleDateString("es-CO", opsDia);
+  const desdeLabel = hoy.toLocaleDateString(getLocale(lang), opsDia);
+  const hastaLabel = hasta.toLocaleDateString(getLocale(lang), opsDia);
+  const label = t.estaSemanaRangeLabel.replace("{desde}", desdeLabel).replace("{hasta}", hastaLabel);
 
-  return { desde, hasta: hastaStr, label: `Del ${desdeLabel} al ${hastaLabel}` };
+  return { desde, hasta: hastaStr, label };
 }
 
 export default function EstaSemanaPage() {
-  const { desde, hasta, label } = getRangoSemana();
+  const location = useLocation();
+  const lang = getLangFromPath(location.pathname);
+  const t = translations[lang];
+  const { desde, hasta, label } = getRangoSemana(t, lang);
   return (
     <EventosPorRangoPage
-      titulo="Qué hacer esta semana"
+      titulo={t.estaSemanaPageTitle}
       subtitulo={label}
-      pageTitle={`Eventos esta semana en Medellín — Medellín Vibra`}
-      metaDescription={`Todos los eventos culturales de esta semana en Medellín, Área Metropolitana y Oriente Cercano. ${label}.`}
-      shareText="Mira qué hay en Medellín esta semana 👇"
+      pageTitle={t.estaSemanaDocTitle}
+      metaDescription={t.estaSemanaMetaDescription.replace("{RANGE}", label)}
+      shareText={t.estaSemanaShareText}
       fechaDesde={desde}
       fechaHasta={hasta}
       page="esta-semana"
-      mensajeVacio="No encontramos eventos para esta semana. ¡Vuelve pronto, la agenda se actualiza constantemente!"
+      mensajeVacio={t.estaSemanaEmptyText}
     />
   );
 }

@@ -1,8 +1,12 @@
 ﻿import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "./supabase";
 import { registrarClic } from "./registrarClic";
 import { MapPin, Clock, ArrowLeft, Navigation, Share2 } from "lucide-react";
+import { translations } from "./translations";
+import { getLangFromPath, getLangPrefix, getLocale } from "./lang";
+import { CAT_LABEL_KEY } from "./categoryLabels";
+import HreflangTags from "./components/HreflangTags";
 
 const CAT_EMOJI = {
   "Música": "🎵", "Arte": "🎨", "Comedia": "😂", "Tech": "💻",
@@ -46,6 +50,10 @@ export default function EventosPorRangoPage({
   page = "rango",
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const lang = getLangFromPath(location.pathname);
+  const langPrefix = getLangPrefix(lang);
+  const t = translations[lang];
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cercaDeMi, setCercaDeMi] = useState(false);
@@ -63,6 +71,7 @@ export default function EventosPorRangoPage({
 
   useEffect(() => {
     document.title = pageTitle;
+    document.documentElement.lang = lang;
     const meta = document.querySelector('meta[name="description"]') || document.createElement("meta");
     meta.name = "description";
     meta.content = metaDescription;
@@ -70,7 +79,7 @@ export default function EventosPorRangoPage({
 
     let canonicalEl = document.querySelector('link[rel="canonical"]');
     if (!canonicalEl) { canonicalEl = document.createElement("link"); canonicalEl.setAttribute("rel", "canonical"); document.head.appendChild(canonicalEl); }
-    canonicalEl.setAttribute("href", `https://www.medellinvibra.co/${page}`);
+    canonicalEl.setAttribute("href", `https://www.medellinvibra.co${langPrefix}/${page}`);
 
     const cargar = async () => {
       const { data, error } = await supabase
@@ -95,7 +104,7 @@ export default function EventosPorRangoPage({
 
   const activarCercaDeMi = () => {
     if (cercaDeMi) { setCercaDeMi(false); setMiUbicacion(null); return; }
-    if (!navigator.geolocation) { showToast("Tu navegador no permite compartir ubicación"); return; }
+    if (!navigator.geolocation) { showToast(t.geoNotSupported); return; }
     setBuscandoUbicacion(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -107,7 +116,7 @@ export default function EventosPorRangoPage({
         }
       },
       () => {
-        showToast("No pudimos acceder a tu ubicación. Revisa los permisos del navegador.");
+        showToast(t.geoPermissionError);
         setBuscandoUbicacion(false);
       },
       { enableHighAccuracy: true, timeout: 10000 }
@@ -125,8 +134,8 @@ export default function EventosPorRangoPage({
       try { await navigator.share({ title: pageTitle, text: shareText, url }); }
       catch {}
     } else {
-      try { await navigator.clipboard.writeText(url); showToast("Enlace copiado"); }
-      catch { showToast("No se pudo copiar el enlace"); }
+      try { await navigator.clipboard.writeText(url); showToast(t.linkCopied); }
+      catch { showToast(t.linkCopyError); }
     }
   };
 
@@ -146,7 +155,7 @@ export default function EventosPorRangoPage({
 
   let porZona;
   if (cercaDeMi && miUbicacion) {
-    porZona = { "Cerca de ti": [...filtrados].sort((a, b) => (a.distancia ?? 999) - (b.distancia ?? 999)) };
+    porZona = { [t.nearYouLabel]: [...filtrados].sort((a, b) => (a.distancia ?? 999) - (b.distancia ?? 999)) };
   } else {
     const porDia = {};
     for (const e of filtrados) {
@@ -169,7 +178,7 @@ export default function EventosPorRangoPage({
   const formatDia = (isoDate) => {
     const [y, m, d] = isoDate.split("-").map(Number);
     const fecha = new Date(y, m - 1, d);
-    return fecha.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
+    return fecha.toLocaleDateString(getLocale(lang), { weekday: "long", day: "numeric", month: "long" });
   };
 
   return (
@@ -223,19 +232,25 @@ export default function EventosPorRangoPage({
         }
       `}</style>
 
+      <HreflangTags basePath={`/${page}`} />
+
       <nav className="rp-nav">
         <button className="rp-back" onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")}>
-          <ArrowLeft size={18} /> Volver
+          <ArrowLeft size={18} /> {t.backLabel}
         </button>
         <button className="rp-share" onClick={compartir}>
-          <Share2 size={14} /> Compartir
+          <Share2 size={14} /> {t.shareLabel}
         </button>
       </nav>
 
       <div className="rp-hero">
         <h1>{titulo}</h1>
         {subtitulo && <p>{subtitulo}</p>}
-        {!loading && <div className="rp-count">{total} {total === 1 ? "evento" : "eventos"}</div>}
+        {!loading && (
+          <div className="rp-count">
+            {(total === 1 ? t.rpHeroCountSingular : t.rpHeroCountPlural).replace("{N}", total)}
+          </div>
+        )}
       </div>
 
       <div className="rp-filter-bar">
@@ -245,7 +260,7 @@ export default function EventosPorRangoPage({
           disabled={buscandoUbicacion}
         >
           <Navigation size={16} />
-          {buscandoUbicacion ? "Buscando..." : cercaDeMi ? "Ver todos" : "Cerca de mí"}
+          {buscandoUbicacion ? t.cercaDeMiLoading : cercaDeMi ? t.cercaDeMiActive : t.cercaDeMiDefault}
         </button>
         {cercaDeMi && (
           <select className="rp-radio-select" value={radioKm} onChange={(e) => setRadioKm(Number(e.target.value))}>
@@ -257,24 +272,26 @@ export default function EventosPorRangoPage({
       </div>
 
       <main className="rp-main" ref={mainRef}>
-        {loading && <div className="rp-loading">Cargando eventos…</div>}
+        {loading && <div className="rp-loading">{t.loading}</div>}
 
         {!loading && total > 0 && (
-          <div className="rp-results-count">{total} evento{total !== 1 ? "s" : ""} encontrado{total !== 1 ? "s" : ""}</div>
+          <div className="rp-results-count">
+            {(total !== 1 ? t.eventsFoundPlural : t.eventsFoundSingular).replace("{N}", total)}
+          </div>
         )}
 
         {!loading && total === 0 && (
           <div className="rp-empty">
-            <h2>{cercaDeMi ? "Sin eventos cerca" : "Sin eventos por ahora"}</h2>
-            <p>{cercaDeMi ? "Prueba a ampliar el radio o desactiva el filtro." : mensajeVacio}</p>
+            <h2>{cercaDeMi ? t.hoyEmptyCercaTitle : t.rpEmptyTitle}</h2>
+            <p>{cercaDeMi ? t.hoyEmptyCercaText : mensajeVacio}</p>
           </div>
         )}
 
         {!loading && cercaDeMi && miUbicacion && total > 0 && (
           <section>
-            <h2 className="rp-zona-title">Cerca de ti</h2>
+            <h2 className="rp-zona-title">{t.nearYouLabel}</h2>
             {[...filtrados].sort((a, b) => (a.distancia ?? 999) - (b.distancia ?? 999)).map(ev => (
-              <EventCard key={ev.id} ev={ev} navigate={navigate} page={page} />
+              <EventCard key={ev.id} ev={ev} navigate={navigate} page={page} t={t} langPrefix={langPrefix} />
             ))}
           </section>
         )}
@@ -291,7 +308,7 @@ export default function EventosPorRangoPage({
                 return (
                   <div key={zona}>
                     <h3 className="rp-zona-title">{zona} <span style={{ fontSize: 13, color: "#aaa", fontWeight: 400 }}>({evs.length})</span></h3>
-                    {evs.map(ev => <EventCard key={ev.id} ev={ev} navigate={navigate} page={page} />)}
+                    {evs.map(ev => <EventCard key={ev.id} ev={ev} navigate={navigate} page={page} t={t} langPrefix={langPrefix} />)}
                   </div>
                 );
               })}
@@ -305,7 +322,7 @@ export default function EventosPorRangoPage({
   );
 }
 
-function EventCard({ ev, navigate, page = "rango" }) {
+function EventCard({ ev, navigate, page = "rango", t, langPrefix = "" }) {
   return (
     <div className="rp-card">
       <img
@@ -316,7 +333,7 @@ function EventCard({ ev, navigate, page = "rango" }) {
       />
       <div className="rp-card-body">
         <div className="rp-card-cat" style={{ color: CAT_COLORS[ev.category] || "#888" }}>
-          {CAT_EMOJI[ev.category] || "📅"} {ev.category}
+          {CAT_EMOJI[ev.category] || "📅"} {t[CAT_LABEL_KEY[ev.category]] || ev.category}
         </div>
         <h3 className="rp-card-title">{ev.title}</h3>
         {ev.time && (
@@ -338,9 +355,9 @@ function EventCard({ ev, navigate, page = "rango" }) {
         <div className="rp-card-actions">
           <button
             className="rp-btn rp-btn-detalle"
-            onClick={() => navigate(`/evento/${slugify(ev.title)}-${ev.id}`)}
+            onClick={() => navigate(`${langPrefix}/evento/${slugify(ev.title)}-${ev.id}`)}
           >
-            Ver detalle
+            {t.viewDetail}
           </button>
           {ev.ticket_link && (
             <button
@@ -356,13 +373,13 @@ function EventCard({ ev, navigate, page = "rango" }) {
                 registrarClic(ev.id, ev.ticket_link, page, ev.title, ev.category);
               }}
             >
-              Comprar boleta
+              {t.buyTicketBtn}
             </button>
           )}
           {ev.organizer_name && (
             <button
               className="rp-btn rp-btn-organizer"
-              onClick={() => navigate(`/organizador/${slugify(ev.organizer_name)}`)}
+              onClick={() => navigate(`${langPrefix}/organizador/${slugify(ev.organizer_name)}`)}
             >
               {ev.organizer_name}
             </button>

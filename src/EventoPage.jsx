@@ -1,9 +1,12 @@
 ﻿import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "./supabase";
 import { registrarClic } from "./registrarClic";
 import SEO from "./components/SEO"; // 👈 IMPORTACIÓN DEL COMPONENTE SEO
 import { Calendar, Clock, MapPin, Banknote, User, Share2, CalendarPlus, Search, Star, PartyPopper, Drama } from "lucide-react";
+import { translations } from "./translations";
+import { getLangFromPath, getLocale } from "./lang";
+import { CAT_LABEL_KEY } from "./categoryLabels";
 
 const CAT_COLORS = {
   "Música": "#7C3AED", "Arte": "#EA580C", "Comedia": "#D97706",
@@ -55,6 +58,9 @@ const StarRating = ({ value, onChange, readonly = false }) => (
 export default function EventoPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const lang = getLangFromPath(location.pathname);
+  const t = translations[lang];
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -128,10 +134,17 @@ export default function EventoPage() {
   }, [slug]);
 
   useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
+  useEffect(() => {
     if (!event) return;
     // <SEO> (Helmet) maneja title/og/twitter, pero no toca el <link rel="canonical">
     // que ya trae index.html — si Helmet agregara el suyo quedarían dos tags
     // compitiendo. Se reusa/actualiza el mismo nodo que las demás páginas.
+    // Siempre en español, sin importar el idioma detectado en la URL: el
+    // contenido del evento no se traduce, así que no hay variantes que indexar
+    // por separado (decisión de Fase 2, sin HreflangTags en esta página).
     let canonicalEl = document.querySelector('link[rel="canonical"]');
     if (!canonicalEl) { canonicalEl = document.createElement("link"); canonicalEl.setAttribute("rel", "canonical"); document.head.appendChild(canonicalEl); }
     canonicalEl.setAttribute("href", `https://www.medellinvibra.co/evento/${slugify(event.title)}-${event.id}`);
@@ -169,7 +182,7 @@ export default function EventoPage() {
 
   if (loading) return (
     <div style={{minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#f5f3ef', fontFamily:'sans-serif'}}>
-      <div style={{textAlign:'center'}}><div style={{marginBottom:16}}><Drama size={44} color="#C8860A" strokeWidth={1.5} /></div><div style={{color:'#888', fontSize:15}}>Cargando evento…</div></div>
+      <div style={{textAlign:'center'}}><div style={{marginBottom:16}}><Drama size={44} color="#C8860A" strokeWidth={1.5} /></div><div style={{color:'#888', fontSize:15}}>{t.eventoLoading}</div></div>
     </div>
   );
 
@@ -233,13 +246,13 @@ export default function EventoPage() {
 
       {isArchived && (
         <div style={{background:'#1a1a1a', color:'white', textAlign:'center', padding:'14px 20px', fontSize:14}}>
-          📅 Este evento ya finalizó ({event.date}). <a href="/" style={{color:'#C8860A', fontWeight:700, textDecoration:'none'}}>Descubre los próximos eventos en Medellín →</a>
+          📅 {t.eventoArchivedNotice.replace("{date}", event.date)} <a href="/" style={{color:'#C8860A', fontWeight:700, textDecoration:'none'}}>{t.eventoArchivedLink}</a>
         </div>
       )}
 
       {/* Header */}
       <div style={{background:'white', borderBottom:'1px solid #e5e1d8', padding:'14px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:100}}>
-        <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")} style={{background:'none', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:8, color:'#C8860A', fontWeight:700, fontSize:14, fontFamily:'inherit'}}>← Volver</button>
+        <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")} style={{background:'none', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:8, color:'#C8860A', fontWeight:700, fontSize:14, fontFamily:'inherit'}}>← {t.backLabel}</button>
         <span style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:20, color:'#C8860A', letterSpacing:1}}>MEDELLÍN VIBRA</span>
         <div style={{width:60}} />
       </div>
@@ -256,24 +269,24 @@ export default function EventoPage() {
       {/* Contenido */}
       <div style={{maxWidth:680, margin:'0 auto', padding:'0 20px 60px', textAlign:'left'}}>
         <div style={{marginTop:24, marginBottom:8}}>
-          <span style={{background:catColor, color:'white', padding:'4px 12px', borderRadius:100, fontSize:12, fontWeight:700}}>{event.cat}</span>
+          <span style={{background:catColor, color:'white', padding:'4px 12px', borderRadius:100, fontSize:12, fontWeight:700}}>{t[CAT_LABEL_KEY[event.cat]] || event.cat}</span>
         </div>
         <h1 style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:36, lineHeight:1.1, color:'#1a1a1a', margin:'8px 0 20px'}}>{event.title}</h1>
 
         <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:20}}>
-          {[["Fecha", event.date, Calendar],["Hora", event.time, Clock],["Lugar", event.place, MapPin],["Precio", event.price, Banknote]]
-            .filter(([, value]) => value && value !== "Por confirmar")
-            .map(([label, value, Icono]) => (
-            <div key={label} style={{background:'white', border:'1px solid #e5e1d8', borderRadius:12, padding:'14px 16px'}}>
+          {[["date", t.date, event.date, Calendar],["time", t.time, event.time, Clock],["place", t.place, event.place, MapPin],["price", t.price, event.price, Banknote]]
+            .filter(([, , value]) => value && value !== "Por confirmar")
+            .map(([field, label, value, Icono]) => (
+            <div key={field + label} style={{background:'white', border:'1px solid #e5e1d8', borderRadius:12, padding:'14px 16px'}}>
               <div style={{fontSize:11, color:'#888', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:4, display:'flex', alignItems:'center', gap:5}}><Icono size={12} />{label}</div>
-              <div style={{fontSize:14, fontWeight:600, color: label === "Precio" && value === "Gratis" ? "#059669" : label === "Precio" ? "#C8860A" : "#1a1a1a"}}>{value}</div>
+              <div style={{fontSize:14, fontWeight:600, color: field === "price" && value === "Gratis" ? "#059669" : field === "price" ? "#C8860A" : "#1a1a1a"}}>{value}</div>
             </div>
           ))}
         </div>
 
         {event.desc && (
           <div style={{background:'white', border:'1px solid #e5e1d8', borderRadius:14, padding:'20px', marginBottom:16}}>
-            <div style={{fontSize:11, color:'#888', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:10}}>Acerca del evento</div>
+            <div style={{fontSize:11, color:'#888', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:10}}>{t.aboutEvent}</div>
             <p style={{fontSize:15, lineHeight:1.7, color:'#444', margin:0, whiteSpace:'pre-line'}}>{event.desc}</p>
           </div>
         )}
@@ -281,7 +294,7 @@ export default function EventoPage() {
         <div style={{marginBottom:16}}>
           <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.place)}`} target="_blank" rel="noopener noreferrer"
             style={{display:'flex', alignItems:'center', gap:8, background:'white', border:'1px solid #e5e1d8', borderRadius:12, padding:'14px 16px', textDecoration:'none', color:'#C8860A', fontWeight:600, fontSize:14}}>
-            <MapPin size={15} style={{flexShrink:0}} />Ver ubicación en Google Maps · {event.place} ↗
+            <MapPin size={15} style={{flexShrink:0}} />{t.viewOnMaps.replace("{place}", event.place)}
           </a>
         </div>
 
@@ -289,7 +302,7 @@ export default function EventoPage() {
           <div style={{background:'white', border:'1px solid #e5e1d8', borderRadius:14, padding:'16px 20px', marginBottom:16, display:'flex', gap:14, alignItems:'center'}}>
             <div style={{width:44, height:44, borderRadius:'50%', background:'#f5f3ef', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}><User size={20} color="#C8860A" /></div>
             <div>
-              <div style={{fontSize:11, color:'#888', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:2}}>Organizador</div>
+              <div style={{fontSize:11, color:'#888', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:2}}>{t.organizer}</div>
               <div style={{fontWeight:700, fontSize:14}}>{event.organizerName}</div>
               {event.organizerContact && (event.organizerContact.startsWith("http")
                 ? <a href={event.organizerContact} target="_blank" rel="noopener noreferrer" style={{fontSize:13, color:'#C8860A', textDecoration:'none'}}>{event.organizerContact} ↗</a>
@@ -303,7 +316,7 @@ export default function EventoPage() {
             onClick={() => event.link && registrarClic(event.id, event.link, "evento", event.title, event.cat)}>
             <div style={{width:44, height:44, borderRadius:'50%', background:'#f5f3ef', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C8860A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg></div>
             <div>
-              <div style={{fontSize:11, color:'#888', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:2}}>Plataforma de tickets</div>
+              <div style={{fontSize:11, color:'#888', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:2}}>{t.ticketPlatformLabel}</div>
               <div style={{fontWeight:700, fontSize:14, color:'#C8860A'}}>{event.ticketPlatform} {event.link && "↗"}</div>
             </div>
           </div>
@@ -311,24 +324,24 @@ export default function EventoPage() {
 
         <button onClick={() => event.link ? registrarClic(event.id, event.link, "evento", event.title, event.cat) : navigate("/")}
           style={{width:'100%', padding:'16px', background:'#C8860A', color:'white', border:'none', borderRadius:14, fontWeight:700, fontSize:16, cursor:'pointer', fontFamily:'inherit', marginBottom:12}}>
-          {event.price === "Gratis" ? "Registro gratuito →" : event.link ? `Comprar entradas · ${event.price} →` : "Ver más eventos →"}
+          {event.price === "Gratis" ? t.registerFree : event.link ? `${t.buy} · ${event.price} →` : t.seeMoreEventsBtn}
         </button>
 
         <button onClick={() => { if (navigator.share) navigator.share({ title: event.title, url: canonicalUrl }); else navigator.clipboard.writeText(canonicalUrl); }}
           style={{width:'100%', padding:'13px', background:'white', color:'#1a1a1a', border:'1px solid #e5e1d8', borderRadius:14, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit', marginBottom:12}}>
-          <Share2 size={15} style={{display:'inline', verticalAlign:'-2px', marginRight:6}} />Compartir evento
+          <Share2 size={15} style={{display:'inline', verticalAlign:'-2px', marginRight:6}} />{t.shareEventBtn}
         </button>
 
         <button onClick={() => addToCalendar(event)}
           style={{width:'100%', padding:'13px', background:'white', color:'#1a1a1a', border:'1px solid #e5e1d8', borderRadius:14, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit', marginBottom:32, display:'flex', alignItems:'center', justifyContent:'center', gap:6}}>
-          <CalendarPlus size={15} />Agregar al calendario
+          <CalendarPlus size={15} />{t.addToCalendarBtn}
         </button>
 
         {/* SECCIÓN DE RESEÑAS */}
         <div style={{marginTop:8}}>
           <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16}}>
             <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:26, color:'#1a1a1a'}}>
-              Reseñas <span style={{color:'#C8860A'}}>{reviews.length > 0 ? `(${reviews.length})` : ''}</span>
+              {t.reviewsTitle} <span style={{color:'#C8860A'}}>{reviews.length > 0 ? `(${reviews.length})` : ''}</span>
             </div>
             {avgRating && (
               <div style={{display:'flex', alignItems:'center', gap:8}}>
@@ -342,35 +355,35 @@ export default function EventoPage() {
           {!user ? (
             <div style={{background:'white', border:'1px solid #e5e1d8', borderRadius:14, padding:'20px', textAlign:'center', marginBottom:20}}>
               <div style={{marginBottom:8}}><Star size={30} color="#C8860A" /></div>
-              <div style={{fontWeight:700, marginBottom:6}}>¿Fuiste a este evento?</div>
-              <div style={{color:'#888', fontSize:14, marginBottom:16}}>Inicia sesión para dejar tu reseña</div>
+              <div style={{fontWeight:700, marginBottom:6}}>{t.reviewPrompt}</div>
+              <div style={{color:'#888', fontSize:14, marginBottom:16}}>{t.reviewLoginPrompt}</div>
               <button onClick={() => navigate("/")} style={{background:'#C8860A', color:'white', border:'none', padding:'10px 24px', borderRadius:100, fontWeight:700, cursor:'pointer', fontFamily:'inherit', fontSize:14}}>
-                Iniciar sesión →
+                {t.login} →
               </button>
             </div>
           ) : reviewDone && !myReview ? (
             <div style={{background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:14, padding:'16px 20px', marginBottom:20, textAlign:'center'}}>
               <div style={{marginBottom:4}}><PartyPopper size={22} color="#059669" /></div>
-              <div style={{fontWeight:700, color:'#059669'}}>¡Gracias por tu reseña!</div>
+              <div style={{fontWeight:700, color:'#059669'}}>{t.reviewThanks}</div>
             </div>
           ) : (
             <div style={{background:'white', border:'1px solid #e5e1d8', borderRadius:14, padding:'20px', marginBottom:20}}>
               <div style={{fontSize:13, fontWeight:700, color:'#888', textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:12}}>
-                {myReview ? "Tu reseña" : "Deja tu reseña"}
+                {myReview ? t.myReviewTitle : t.writeReviewTitle}
               </div>
               <div style={{marginBottom:14}}>
                 <StarRating value={rating} onChange={setRating} />
               </div>
-              <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Cuéntanos cómo estuvo el evento (opcional)"
+              <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder={t.reviewPlaceholder}
                 style={{width:'100%', minHeight:80, padding:'12px', border:'1px solid #e5e1d8', borderRadius:10, fontFamily:'inherit', fontSize:14, resize:'vertical', outline:'none', boxSizing:'border-box', color:'#1a1a1a'}} />
               <div style={{display:'flex', gap:8, marginTop:10}}>
                 <button onClick={handleSubmitReview} disabled={!rating || reviewLoading}
                   style={{flex:1, padding:'11px', background: rating ? '#C8860A' : '#ddd', color:'white', border:'none', borderRadius:10, fontWeight:700, cursor: rating ? 'pointer' : 'default', fontFamily:'inherit', fontSize:14}}>
-                  {reviewLoading ? "Guardando…" : myReview ? "Actualizar reseña" : "Publicar reseña"}
+                  {reviewLoading ? t.savingBtn : myReview ? t.updateReviewBtn : t.publishReviewBtn}
                 </button>
                 {myReview && (
                   <button onClick={handleDeleteReview} style={{padding:'11px 16px', background:'white', color:'#C0392B', border:'1px solid rgba(192,57,43,0.3)', borderRadius:10, fontWeight:700, cursor:'pointer', fontFamily:'inherit', fontSize:14}}>
-                    Eliminar
+                    {t.deleteBtn}
                   </button>
                 )}
               </div>
@@ -380,7 +393,7 @@ export default function EventoPage() {
           {/* Lista de reseñas */}
           {reviews.length === 0 ? (
             <div style={{textAlign:'center', color:'#888', padding:'24px 0', fontSize:14}}>
-              Aún no hay reseñas. ¡Sé el primero en opinar!
+              {t.noReviewsYet}
             </div>
           ) : (
             <div style={{display:'flex', flexDirection:'column', gap:12}}>
@@ -392,8 +405,8 @@ export default function EventoPage() {
                         {(r.user_id === user?.id ? (user?.user_metadata?.full_name || user?.email || "U") : "U")[0].toUpperCase()}
                       </div>
                       <div>
-                        <div style={{fontWeight:700, fontSize:13}}>{r.user_id === user?.id ? (user?.user_metadata?.full_name || "Tú") : "Usuario"}</div>
-                        <div style={{fontSize:11, color:'#888'}}>{new Date(r.created_at).toLocaleDateString('es-CO', {day:'numeric', month:'long', year:'numeric'})}</div>
+                        <div style={{fontWeight:700, fontSize:13}}>{r.user_id === user?.id ? (user?.user_metadata?.full_name || t.reviewerYou) : t.reviewerAnonymous}</div>
+                        <div style={{fontSize:11, color:'#888'}}>{new Date(r.created_at).toLocaleDateString(getLocale(lang), {day:'numeric', month:'long', year:'numeric'})}</div>
                       </div>
                     </div>
                     <StarRating value={r.rating} readonly />
@@ -410,10 +423,10 @@ export default function EventoPage() {
         <div style={{maxWidth:720, margin:'0 auto', padding:'0 24px'}}>
           <div style={{background:'white', border:'1px solid #e5e1d8', borderRadius:14, padding:'18px 20px', marginTop:20, marginBottom:8, display:'flex', alignItems:'center', justifyContent:'space-between', gap:16, flexWrap:'wrap'}}>
             <div>
-              <div style={{fontSize:11, color:'#888', fontWeight:700, textTransform:'uppercase', letterSpacing:0.5, marginBottom:4}}>Hotel recomendado en Medellín</div>
+              <div style={{fontSize:11, color:'#888', fontWeight:700, textTransform:'uppercase', letterSpacing:0.5, marginBottom:4}}>{t.hotelRecommendedLabel}</div>
               <div style={{fontWeight:700, fontSize:17}}>{hotelRecomendado.nombre}</div>
             </div>
-            <a href={hotelRecomendado.link_reservas} target="_blank" rel="noopener noreferrer" style={{background:'#C8860A', color:'white', padding:'10px 22px', borderRadius:100, fontWeight:700, fontSize:14, textDecoration:'none', whiteSpace:'nowrap'}}>Reservar →</a>
+            <a href={hotelRecomendado.link_reservas} target="_blank" rel="noopener noreferrer" style={{background:'#C8860A', color:'white', padding:'10px 22px', borderRadius:100, fontWeight:700, fontSize:14, textDecoration:'none', whiteSpace:'nowrap'}}>{t.reserveBtn}</a>
           </div>
         </div>
       )}

@@ -1,6 +1,9 @@
-﻿import EventosPorRangoPage from "./EventosPorRangoPage";
+﻿import { useLocation } from "react-router-dom";
+import EventosPorRangoPage from "./EventosPorRangoPage";
+import { translations } from "./translations";
+import { getLangFromPath, getLocale } from "./lang";
 
-function getRangoFinde() {
+function getRangoFinde(t, lang) {
   const hoy = new Date();
   const diaSemana = hoy.getDay(); // 0=Dom, 1=Lun, ..., 5=Vie, 6=Sab
 
@@ -20,27 +23,30 @@ function getRangoFinde() {
   const hasta = domingo.toISOString().split("T")[0];
 
   const opsDia = { weekday: "long", day: "numeric", month: "long" };
-  const viernesLabel = viernes.toLocaleDateString("es-CO", opsDia);
-  const domingoLabel = domingo.toLocaleDateString("es-CO", opsDia);
-  const label = `${viernesLabel} · noche al ${domingoLabel}`;
+  const viernesLabel = viernes.toLocaleDateString(getLocale(lang), opsDia);
+  const domingoLabel = domingo.toLocaleDateString(getLocale(lang), opsDia);
+  const label = t.findeRangeLabel.replace("{desde}", viernesLabel).replace("{hasta}", domingoLabel);
 
   return { desde, hasta, label, viernesStr: desde };
 }
 
 export default function FindePage() {
-  const { desde, hasta, label } = getRangoFinde();
+  const location = useLocation();
+  const lang = getLangFromPath(location.pathname);
+  const t = translations[lang];
+  const { desde, hasta, label } = getRangoFinde(t, lang);
   return (
     <EventosPorRangoPage
-      titulo="Qué hacer el fin de semana"
+      titulo={t.findePageTitle}
       subtitulo={label}
-      pageTitle={`Eventos este fin de semana en Medellín — Medellín Vibra`}
-      metaDescription="Planes para el fin de semana en Medellín, Área Metropolitana y Oriente Cercano. Viernes noche, sábado y domingo."
-      shareText="Mira los planes del finde en Medellín 👇"
+      pageTitle={t.findeDocTitle}
+      metaDescription={t.findeMetaDescription}
+      shareText={t.findeShareText}
       fechaDesde={desde}
       fechaHasta={hasta}
       timeMin="18:00"
       page="finde"
-      mensajeVacio="!No encontramos eventos para este fin de semana. ¡Vuelve el jueves, la agenda se actualiza constantemente!"
+      mensajeVacio={t.findeEmptyText}
     />
   );
 }

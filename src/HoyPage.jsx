@@ -1,8 +1,12 @@
 ﻿import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "./supabase";
 import { registrarClic } from "./registrarClic";
 import { MapPin, Clock, ArrowLeft, Navigation, Share2 } from "lucide-react";
+import { translations } from "./translations";
+import { getLangFromPath, getLangPrefix, getLocale } from "./lang";
+import { CAT_LABEL_KEY } from "./categoryLabels";
+import HreflangTags from "./components/HreflangTags";
 
 const CAT_EMOJI = {
   "Música": "🎵", "Arte": "🎨", "Comedia": "😂", "Tech": "💻",
@@ -35,6 +39,10 @@ const distanciaKm = (lat1, lng1, lat2, lng2) => {
 
 export default function HoyPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const lang = getLangFromPath(location.pathname);
+  const langPrefix = getLangPrefix(lang);
+  const t = translations[lang];
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cercaDeMi, setCercaDeMi] = useState(false);
@@ -51,15 +59,16 @@ export default function HoyPage() {
   };
 
   useEffect(() => {
-    document.title = "Eventos de hoy en Medellín — Medellín Vibra";
+    document.title = t.hoyDocTitle;
+    document.documentElement.lang = lang;
     const meta = document.querySelector('meta[name="description"]') || document.createElement("meta");
     meta.name = "description";
-    meta.content = "Todos los eventos culturales de hoy en Medellín, Área Metropolitana y Oriente Cercano. Encuentra qué hacer hoy cerca de ti.";
+    meta.content = t.hoyMetaDescription;
     document.head.appendChild(meta);
 
     let canonicalEl = document.querySelector('link[rel="canonical"]');
     if (!canonicalEl) { canonicalEl = document.createElement("link"); canonicalEl.setAttribute("rel", "canonical"); document.head.appendChild(canonicalEl); }
-    canonicalEl.setAttribute("href", "https://www.medellinvibra.co/hoy");
+    canonicalEl.setAttribute("href", `https://www.medellinvibra.co${langPrefix}/hoy`);
 
     const cargar = async () => {
       const hoy = new Date().toISOString().split("T")[0];
@@ -77,7 +86,7 @@ export default function HoyPage() {
 
   const activarCercaDeMi = () => {
     if (cercaDeMi) { setCercaDeMi(false); setMiUbicacion(null); return; }
-    if (!navigator.geolocation) { showToast("Tu navegador no permite compartir ubicación"); return; }
+    if (!navigator.geolocation) { showToast(t.geoNotSupported); return; }
     setBuscandoUbicacion(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -89,7 +98,7 @@ export default function HoyPage() {
         }
       },
       () => {
-        showToast("No pudimos acceder a tu ubicación. Revisa los permisos del navegador.");
+        showToast(t.geoPermissionError);
         setBuscandoUbicacion(false);
       },
       { enableHighAccuracy: true, timeout: 10000 }
@@ -103,13 +112,12 @@ export default function HoyPage() {
 
   const compartir = async () => {
     const url = window.location.href;
-    const texto = "Mira qué hacer hoy en Medellín 👇";
     if (navigator.share) {
-      try { await navigator.share({ title: "Eventos de hoy — Medellín Vibra", text: texto, url }); }
+      try { await navigator.share({ title: t.hoyShareTitle, text: t.hoyShareText, url }); }
       catch {}
     } else {
-      try { await navigator.clipboard.writeText(url); showToast("Enlace copiado"); }
-      catch { showToast("No se pudo copiar el enlace"); }
+      try { await navigator.clipboard.writeText(url); showToast(t.linkCopied); }
+      catch { showToast(t.linkCopyError); }
     }
   };
 
@@ -128,7 +136,7 @@ export default function HoyPage() {
 
   let porZona;
   if (cercaDeMi && miUbicacion) {
-    porZona = { "Cerca de ti": filtrados.sort((a, b) => (a.distancia ?? 999) - (b.distancia ?? 999)) };
+    porZona = { [t.nearYouLabel]: filtrados.sort((a, b) => (a.distancia ?? 999) - (b.distancia ?? 999)) };
   } else {
     porZona = {};
     for (const z of ZONAS_ORDEN) porZona[z] = [];
@@ -142,7 +150,7 @@ export default function HoyPage() {
   }
 
   const total = filtrados.length;
-  const hoyStr = new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
+  const hoyStr = new Date().toLocaleDateString(getLocale(lang), { weekday: "long", day: "numeric", month: "long" });
 
   return (
     <div style={{minHeight:"100vh", background:"#f5f3ef", fontFamily:"system-ui, -apple-system, sans-serif"}}>
@@ -194,19 +202,25 @@ export default function HoyPage() {
         }
       `}</style>
 
+      <HreflangTags basePath="/hoy" />
+
       <nav className="hoy-nav">
         <button className="hoy-back" onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")}>
-          <ArrowLeft size={18} /> Volver
+          <ArrowLeft size={18} /> {t.backLabel}
         </button>
         <button className="hoy-share" onClick={compartir}>
-          <Share2 size={14} /> Compartir
+          <Share2 size={14} /> {t.shareLabel}
         </button>
       </nav>
 
       <div className="hoy-hero">
-        <h1>Qué hacer hoy</h1>
+        <h1>{t.hoyPageTitle}</h1>
         <p>{hoyStr}</p>
-        {!loading && <div className="hoy-count">{total} {total === 1 ? "evento" : "eventos"} en la agenda</div>}
+        {!loading && (
+          <div className="hoy-count">
+            {(total === 1 ? t.hoyHeroCountSingular : t.hoyHeroCountPlural).replace("{N}", total)}
+          </div>
+        )}
       </div>
 
       <div className="hoy-filter-bar">
@@ -216,7 +230,7 @@ export default function HoyPage() {
           disabled={buscandoUbicacion}
         >
           <Navigation size={16} />
-          {buscandoUbicacion ? "Buscando..." : cercaDeMi ? "Ver todos" : "Cerca de mí"}
+          {buscandoUbicacion ? t.cercaDeMiLoading : cercaDeMi ? t.cercaDeMiActive : t.cercaDeMiDefault}
         </button>
         {cercaDeMi && (
           <select
@@ -232,20 +246,18 @@ export default function HoyPage() {
       </div>
 
       <main className="hoy-main" ref={mainRef}>
-        {loading && <div className="hoy-loading">Cargando eventos de hoy...</div>}
+        {loading && <div className="hoy-loading">{t.loading}</div>}
 
         {!loading && total > 0 && (
-          <div className="hoy-results-count">{total} evento{total !== 1 ? "s" : ""} encontrado{total !== 1 ? "s" : ""}</div>
+          <div className="hoy-results-count">
+            {(total !== 1 ? t.eventsFoundPlural : t.eventsFoundSingular).replace("{N}", total)}
+          </div>
         )}
 
         {!loading && total === 0 && (
           <div className="hoy-empty">
-            <h2>{cercaDeMi ? "Sin eventos cerca" : "No hay eventos programados para hoy"}</h2>
-            <p>
-              {cercaDeMi
-                ? "Prueba a ampliar el radio o desactiva el filtro de ubicación."
-                : "Vuelve mañana o mira los eventos de esta semana en la agenda."}
-            </p>
+            <h2>{cercaDeMi ? t.hoyEmptyCercaTitle : t.hoyEmptyTitle}</h2>
+            <p>{cercaDeMi ? t.hoyEmptyCercaText : t.hoyEmptyText}</p>
           </div>
         )}
 
@@ -267,7 +279,7 @@ export default function HoyPage() {
                   />
                   <div className="hoy-card-body">
                     <div className="hoy-card-cat" style={{color: CAT_COLORS[ev.category] || "#888"}}>
-                      {CAT_EMOJI[ev.category] || "📅"} {ev.category}
+                      {CAT_EMOJI[ev.category] || "📅"} {t[CAT_LABEL_KEY[ev.category]] || ev.category}
                     </div>
                     <h3 className="hoy-card-title">{ev.title}</h3>
                     {ev.time && (
@@ -287,22 +299,22 @@ export default function HoyPage() {
                     <div className="hoy-card-actions">
                       <button
                         className="hoy-btn hoy-btn-detalle"
-                        onClick={() => navigate(`/evento/${slugify(ev.title)}-${ev.id}`)}
+                        onClick={() => navigate(`${langPrefix}/evento/${slugify(ev.title)}-${ev.id}`)}
                       >
-                        Ver detalle
+                        {t.viewDetail}
                       </button>
                       {ev.ticket_link && (
                         <button
                           className="hoy-btn hoy-btn-ticket"
                           onClick={() => registrarClic(ev.id, ev.ticket_link, "hoy", ev.title, ev.category)}
                         >
-                          Comprar boleta
+                          {t.buyTicketBtn}
                         </button>
                       )}
                       {ev.organizer_name && (
                         <button
                           className="hoy-btn hoy-btn-organizer"
-                          onClick={() => navigate(`/organizador/${slugify(ev.organizer_name)}`)}
+                          onClick={() => navigate(`${langPrefix}/organizador/${slugify(ev.organizer_name)}`)}
                         >
                           {ev.organizer_name}
                         </button>

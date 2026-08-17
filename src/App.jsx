@@ -1573,7 +1573,7 @@ export default function App() {
               {[["Todos",t.filterAll],["Hoy",t.filterToday],["FinDeSemana",t.filterWeekend],["EstaSemana",t.filterWeek],["EsteMes",t.filterMonth],["Gratis",t.filterFree],["ConCobro",t.filterPaid]].map(([val,label]) => (
                 <button key={val} className={`filter-chip ${val==="Hoy"?"filter-chip-hoy":""} ${val==="EstaSemana"?"filter-chip-semana":""} ${val==="FinDeSemana"?"filter-chip-finde":""} ${activeDateFilter===val?"active":""}`} onClick={() => {
                   trackEvent({ action: "filtro_fecha", category: "Filtros", label: val });
-                  val==="Hoy" ? navigate("/hoy") : val==="FinDeSemana" ? navigate("/finde") : val==="EstaSemana" ? navigate("/esta-semana") : setActiveDateFilter(val);
+                  val==="Hoy" ? navigate(`${langPrefix}/hoy`) : val==="FinDeSemana" ? navigate(`${langPrefix}/finde`) : val==="EstaSemana" ? navigate(`${langPrefix}/esta-semana`) : setActiveDateFilter(val);
                 }}>
                   {label}
                 </button>
@@ -2399,7 +2399,7 @@ export default function App() {
               <a href="mailto:hola@medellinvibra.co" style={{display:'inline-flex', alignItems:'center', gap:6, color:'var(--gold)', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
                 <Mail size={14} />hola@medellinvibra.co
               </a>
-              <button onClick={() => navigate('/preguntas-frecuentes')} style={{background:'none', border:'none', color:'var(--gold)', fontWeight:600, fontSize:13, fontFamily:'var(--font-body)', cursor:'pointer', padding:0}}>
+              <button onClick={() => navigate(`${langPrefix}/preguntas-frecuentes`)} style={{background:'none', border:'none', color:'var(--gold)', fontWeight:600, fontSize:13, fontFamily:'var(--font-body)', cursor:'pointer', padding:0}}>
                 {t.faqLink}
               </button>
               <span style={{fontSize:12, color:'var(--muted)'}}>{t.copyright}</span>
@@ -2514,7 +2514,7 @@ export default function App() {
                 )}
                 {selectedEvent.organizerName && (
                   <div style={{marginBottom:16, display:'flex', alignItems:'center', gap:12, background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:12, padding:'12px 14px', cursor:'pointer'}}
-                    onClick={() => { setSelectedEvent(null); navigate(`/organizador/${slugify(selectedEvent.organizerName)}`); }}>
+                    onClick={() => { setSelectedEvent(null); navigate(`${langPrefix}/organizador/${slugify(selectedEvent.organizerName)}`); }}>
                     <div style={{width:40, height:40, borderRadius:'50%', background:'var(--gold)', color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:700, flexShrink:0}}>
                       {selectedEvent.organizerName[0]?.toUpperCase()}
                     </div>
@@ -2548,7 +2548,7 @@ export default function App() {
                   )}
                 </div>
                 <button
-                  onClick={() => { setSelectedEvent(null); navigate(`/evento/${slugify(selectedEvent.title)}-${selectedEvent.id}`); }}
+                  onClick={() => { setSelectedEvent(null); navigate(`${langPrefix}/evento/${slugify(selectedEvent.title)}-${selectedEvent.id}`); }}
                   style={{width:'100%', marginTop:10, padding:'13px', borderRadius:12, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontFamily:'var(--font-body)', fontSize:14, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6}}
                 >
                   <Link2 size={15} />Ver página del evento · Compartir link

@@ -1,6 +1,9 @@
 ﻿import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "./supabase";
+import { getLangFromPath, getLangPrefix } from "./lang";
+import { translations } from "./translations";
+import { CAT_LABEL_KEY } from "./categoryLabels";
 
 const slugify = (str) =>
   str?.toLowerCase()
@@ -19,6 +22,10 @@ const CAT_COLORS = {
 export default function OrganizadorPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const lang = getLangFromPath(location.pathname);
+  const langPrefix = getLangPrefix(lang);
+  const t = translations[lang];
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [organizerName, setOrganizerName] = useState("");
@@ -44,15 +51,19 @@ export default function OrganizadorPage() {
 
         // El canonical debe apuntar siempre a la página propia del organizador,
         // exista o no un evento activo para mostrar (si no, queda con el canonical
-        // de la página anterior y Search Console lo marca como duplicado).
-        document.title = name ? `${name} — Medellín Vibra` : "Organizador — Medellín Vibra";
+        // de la página anterior y Search Console lo marca como duplicado). Siempre
+        // en español, sin prefijo de idioma: el nombre/eventos del organizador no
+        // se traducen, así que no hay variantes que indexar por separado (mismo
+        // criterio que EventoPage, sin HreflangTags aquí).
+        document.documentElement.lang = lang;
+        document.title = name ? `${name} — Medellín Vibra` : `${t.organizer} — Medellín Vibra`;
         let canonicalEl = document.querySelector('link[rel="canonical"]');
         if (!canonicalEl) { canonicalEl = document.createElement("link"); canonicalEl.setAttribute("rel", "canonical"); document.head.appendChild(canonicalEl); }
         const canonicalUrl = `https://www.medellinvibra.co/organizador/${slug}`;
         canonicalEl.setAttribute("href", canonicalUrl);
         let ogUrl = document.querySelector('meta[property="og:url"]'); if (!ogUrl) { ogUrl = document.createElement("meta"); ogUrl.setAttribute("property","og:url"); document.head.appendChild(ogUrl); } ogUrl.setAttribute("content", canonicalUrl);
-        let ogTitle = document.querySelector('meta[property="og:title"]'); if (!ogTitle) { ogTitle = document.createElement("meta"); ogTitle.setAttribute("property","og:title"); document.head.appendChild(ogTitle); } ogTitle.setAttribute("content", name ? `${name} — Medellín Vibra` : "Organizador — Medellín Vibra");
-        let ogDesc = document.querySelector('meta[property="og:description"]'); if (!ogDesc) { ogDesc = document.createElement("meta"); ogDesc.setAttribute("property","og:description"); document.head.appendChild(ogDesc); } ogDesc.setAttribute("content", name ? `Eventos de ${name} en Medellín Vibra — la agenda cultural de Medellín y la región.` : "Página de organizador en Medellín Vibra — la agenda cultural de Medellín y la región.");
+        let ogTitle = document.querySelector('meta[property="og:title"]'); if (!ogTitle) { ogTitle = document.createElement("meta"); ogTitle.setAttribute("property","og:title"); document.head.appendChild(ogTitle); } ogTitle.setAttribute("content", name ? `${name} — Medellín Vibra` : `${t.organizer} — Medellín Vibra`);
+        let ogDesc = document.querySelector('meta[property="og:description"]'); if (!ogDesc) { ogDesc = document.createElement("meta"); ogDesc.setAttribute("property","og:description"); document.head.appendChild(ogDesc); } ogDesc.setAttribute("content", name ? t.organizadorOgDescriptionWithName.replace("{name}", name) : t.organizadorOgDescriptionGeneric);
       }
       setLoading(false);
     };
@@ -66,7 +77,7 @@ export default function OrganizadorPage() {
     <div style={{minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#f5f3ef', fontFamily:'sans-serif'}}>
       <div style={{textAlign:'center'}}>
         <div style={{fontSize:48, marginBottom:16}}>👤</div>
-        <div style={{color:'#888', fontSize:15}}>Cargando organizador…</div>
+        <div style={{color:'#888', fontSize:15}}>{t.organizadorLoading}</div>
       </div>
     </div>
   );
@@ -79,10 +90,10 @@ export default function OrganizadorPage() {
     <div style={{minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#f5f3ef', fontFamily:'sans-serif'}}>
       <div style={{textAlign:'center'}}>
         <div style={{fontSize:64, marginBottom:16}}>🔍</div>
-        <div style={{fontWeight:700, fontSize:22, marginBottom:8}}>Organizador no encontrado</div>
-        <div style={{color:'#888', marginBottom:24}}>Este organizador no tiene eventos registrados en Medellín Vibra.</div>
+        <div style={{fontWeight:700, fontSize:22, marginBottom:8}}>{t.organizadorNotFound}</div>
+        <div style={{color:'#888', marginBottom:24}}>{t.organizadorNotFoundText}</div>
         <button onClick={() => navigate("/")} style={{background:'#C8860A', color:'white', border:'none', padding:'12px 24px', borderRadius:100, fontWeight:700, cursor:'pointer', fontSize:15}}>
-          Ver todos los eventos →
+          {t.seeAllEventsBtn}
         </button>
       </div>
     </div>
@@ -91,7 +102,7 @@ export default function OrganizadorPage() {
   const EventCard = ({ ev }) => {
     const color = CAT_COLORS[ev.category] || '#C8860A';
     return (
-      <div onClick={() => navigate(`/evento/${slugify(ev.title)}-${ev.id}`)}
+      <div onClick={() => navigate(`${langPrefix}/evento/${slugify(ev.title)}-${ev.id}`)}
         style={{background:'white', border:'1px solid #e5e1d8', borderRadius:16, overflow:'hidden', cursor:'pointer', transition:'transform 0.2s, box-shadow 0.2s'}}
         onMouseOver={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 8px 24px rgba(0,0,0,0.1)'; }}
         onMouseOut={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='none'; }}
@@ -102,7 +113,7 @@ export default function OrganizadorPage() {
             : <span style={{fontSize:56}}>{ev.emoji || '📅'}</span>
           }
           <div style={{position:'absolute', inset:0, background:'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.5) 100%)'}} />
-          <span style={{position:'absolute', top:10, left:10, background:color, color:'white', padding:'3px 10px', borderRadius:100, fontSize:11, fontWeight:700}}>{ev.category}</span>
+          <span style={{position:'absolute', top:10, left:10, background:color, color:'white', padding:'3px 10px', borderRadius:100, fontSize:11, fontWeight:700}}>{t[CAT_LABEL_KEY[ev.category]] || ev.category}</span>
         </div>
         <div style={{padding:'14px 16px'}}>
           <div style={{fontWeight:700, fontSize:14, color:'#1a1a1a', marginBottom:6, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden'}}>{ev.title}</div>
@@ -121,7 +132,7 @@ export default function OrganizadorPage() {
       {/* Header */}
       <div style={{background:'white', borderBottom:'1px solid #e5e1d8', padding:'14px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:100}}>
         <button onClick={() => navigate("/")} style={{background:'none', border:'none', cursor:'pointer', color:'#C8860A', fontWeight:700, fontSize:14, fontFamily:'inherit'}}>
-          ← Volver
+          ← {t.backLabel}
         </button>
         <span style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:20, color:'#C8860A', letterSpacing:1}}>MEDELLÍN VIBRA</span>
         <div style={{width:60}} />
@@ -134,17 +145,17 @@ export default function OrganizadorPage() {
         </div>
         <h1 style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:32, color:'white', margin:'0 0 8px', letterSpacing:1}}>{organizerName}</h1>
         <div style={{color:'rgba(255,255,255,0.6)', fontSize:14}}>
-          {events.length} evento{events.length !== 1 ? 's' : ''} publicado{events.length !== 1 ? 's' : ''} en Medellín Vibra
+          {(events.length === 1 ? t.organizadorEventsPublishedSingular : t.organizadorEventsPublishedPlural).replace("{N}", events.length)}
         </div>
         <div style={{display:'flex', gap:16, justifyContent:'center', marginTop:16}}>
           <div style={{textAlign:'center'}}>
             <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:28, color:'#C8860A'}}>{upcoming.length}</div>
-            <div style={{color:'rgba(255,255,255,0.5)', fontSize:11, fontWeight:600}}>PRÓXIMOS</div>
+            <div style={{color:'rgba(255,255,255,0.5)', fontSize:11, fontWeight:600}}>{t.upcomingLabel}</div>
           </div>
           <div style={{width:1, background:'rgba(255,255,255,0.1)'}} />
           <div style={{textAlign:'center'}}>
             <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:28, color:'#888'}}>{past.length}</div>
-            <div style={{color:'rgba(255,255,255,0.5)', fontSize:11, fontWeight:600}}>PASADOS</div>
+            <div style={{color:'rgba(255,255,255,0.5)', fontSize:11, fontWeight:600}}>{t.pastLabel}</div>
           </div>
         </div>
       </div>
@@ -154,7 +165,7 @@ export default function OrganizadorPage() {
         {upcoming.length > 0 && (
           <>
             <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:22, color:'#1a1a1a', marginBottom:16}}>
-              Próximos eventos
+              {t.upcomingEventsTitle}
             </div>
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:32}}>
               {upcoming.map(ev => <EventCard key={ev.id} ev={ev} />)}
@@ -165,7 +176,7 @@ export default function OrganizadorPage() {
         {past.length > 0 && (
           <>
             <div style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:22, color:'#888', marginBottom:16}}>
-              Eventos pasados
+              {t.pastEventsTitle}
             </div>
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, opacity:0.7}}>
               {past.map(ev => <EventCard key={ev.id} ev={ev} />)}
