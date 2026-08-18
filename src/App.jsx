@@ -1451,7 +1451,7 @@ export default function App() {
     setSubLoading(true);
     const cleanEmail = sanitize(subEmail).trim().toLowerCase();
     const cleanNombre = sanitize(subNombre).trim().slice(0, 100) || null;
-    const { error } = await supabase.from("subscribers").insert({ email: cleanEmail, nombre: cleanNombre });
+    const { error } = await supabase.from("subscribers").insert({ email: cleanEmail, nombre: cleanNombre, idioma: lang });
     setSubLoading(false);
     if (error) {
       if (error.code === "23505") showToast("📧 Ya estás suscrito");
