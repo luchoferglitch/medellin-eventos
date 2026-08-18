@@ -151,9 +151,19 @@ Deno.serve(async (req) => {
         .update({ fail_count: 0, last_sent_at: new Date().toISOString() })
         .eq("id", sub.id);
       enviados++;
-    } catch {
+    } catch (err: any) {
+      console.error(
+        `enviar-push: fallo al enviar a sub ${sub.id} (frecuencia=${frecuencia})`,
+        "statusCode=", err?.statusCode,
+        "body=", err?.body,
+        "message=", err?.message
+      );
+
+      // 404/410 = la suscripción fue revocada o expiró del lado del navegador/push
+      // service (spec Web Push). No tiene sentido reintentar: es un fallo permanente.
+      const esFalloPermanente = err?.statusCode === 404 || err?.statusCode === 410;
       const nuevoFailCount = (sub.fail_count || 0) + 1;
-      const desactivar = nuevoFailCount >= MAX_FALLOS;
+      const desactivar = esFalloPermanente || nuevoFailCount >= MAX_FALLOS;
       if (desactivar) desactivados++;
       await supabase
         .from("push_subscriptions")
