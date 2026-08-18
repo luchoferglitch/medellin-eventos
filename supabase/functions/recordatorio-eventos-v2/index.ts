@@ -4,6 +4,7 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
 const FROM_EMAIL = "hola@medellinvibra.co";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SITE = "https://www.medellinvibra.co";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -120,7 +121,7 @@ Deno.serve(async () => {
                   <p>📅 <strong>${evento.date}</strong> · ${evento.time}</p>
                   <p>📍 ${evento.place}</p>
                   <p>💰 ${evento.price}</p>
-                  ${evento.ticket_link ? `<a href="${evento.ticket_link}" style="display: inline-block; background: #C8860A; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Ver entradas →</a>` : ""}
+                  ${evento.ticket_link ? `<a href="${SITE}/api/r?event_id=${evento.id}&page=email_recordatorio" style="display: inline-block; background: #C8860A; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Ver entradas →</a>` : ""}
                 </div>
                 <p style="color: #888; font-size: 14px;">Gracias por elegirnos. En Medellín Vibra estamos aquí para que nunca te pierdas lo que pasa en tu ciudad 🎉</p>
                 <p style="color: #888; font-size: 12px;">

@@ -17,6 +17,10 @@
       "destination": "/api/unsubscribe"
     },
     {
+      "source": "/api/r",
+      "destination": "/api/r"
+    },
+    {
       "source": "/evento/:slug",
       "has": [
         {

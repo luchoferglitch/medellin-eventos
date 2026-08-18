@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
         const fechaDisplay = formatFecha(ev.fecha_real, ev.fecha_fin);
         const horaDisplay = ev.time ? ` · ${ev.time.slice(0,5).replace(':','h')}` : "";
         const ticketBtn = ev.ticket_link
-          ? `<a href="${ev.ticket_link}" style="display:inline-block;margin-top:8px;margin-right:8px;background:#1a1a1a;color:white;padding:7px 16px;border-radius:8px;text-decoration:none;font-size:12px;font-weight:700;">${t.ticketBtn}</a>`
+          ? `<a href="${SITE}/api/r?event_id=${ev.id}&page=email_newsletter" style="display:inline-block;margin-top:8px;margin-right:8px;background:#1a1a1a;color:white;padding:7px 16px;border-radius:8px;text-decoration:none;font-size:12px;font-weight:700;">${t.ticketBtn}</a>`
           : "";
         const destacadoBadge = isDestacado
           ? `<span style="display:inline-block;background:#C8860A;color:white;font-size:11px;font-weight:800;letter-spacing:0.3px;padding:3px 9px;border-radius:100px;margin-left:8px;vertical-align:middle;white-space:nowrap;">★ Destacado</span>`
