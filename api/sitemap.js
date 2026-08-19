@@ -48,16 +48,29 @@ ${alternates}
   </url>`);
 }
 
+// Umbral de "contenido suficiente" para generar una página de categoría — debe
+// quedar igual a MIN_EVENTS_FOR_CATEGORY_PAGE en src/CategoriaPage.jsx (ver
+// CLAUDE.md, sección SEO). Este archivo corre en el runtime edge de Vercel, sin
+// import de src/, así que el número se duplica a propósito en vez de compartirlo.
+const MIN_EVENTS_FOR_CATEGORY_PAGE = 15;
+
 export default async function handler(_req) {
   // Traer eventos aprobados
   const eventsRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/events?estado=eq.aprobado&select=id,title,organizer_name,fecha_real&order=fecha_real.asc`,
+    `${SUPABASE_URL}/rest/v1/events?estado=eq.aprobado&select=id,title,organizer_name,fecha_real,category&order=fecha_real.asc`,
     { headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` } }
   );
   const events = await eventsRes.json();
 
   // Organizadores únicos
   const orgs = [...new Set(events.filter(e => e.organizer_name).map(e => e.organizer_name))];
+
+  // Categorías con eventos suficientes para sostener su propia página — se calcula
+  // en cada build del sitemap, no es una lista fija: si una categoría cruza el
+  // umbral (o cae por debajo), la URL aparece o desaparece sola.
+  const categoryCounts = {};
+  events.forEach(e => { if (e.category) categoryCounts[e.category] = (categoryCounts[e.category] || 0) + 1; });
+  const qualifyingCategories = Object.keys(categoryCounts).filter(cat => categoryCounts[cat] >= MIN_EVENTS_FOR_CATEGORY_PAGE);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -78,6 +91,14 @@ export default async function handler(_req) {
     <loc>${BASE_URL}/organizador/${slugify(org)}</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
+    <lastmod>${today}</lastmod>
+  </url>`),
+
+    // Páginas de categoría — solo español por ahora (ver CLAUDE.md, sección SEO)
+    ...qualifyingCategories.map(cat => `  <url>
+    <loc>${BASE_URL}/categoria/${slugify(cat)}</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.75</priority>
     <lastmod>${today}</lastmod>
   </url>`),
   ];

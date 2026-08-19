@@ -21,7 +21,7 @@ Responde siempre en español.
 Un error en `main` está en vivo en menos de un minuto. Trata cada commit en consecuencia.
 
 Componentes principales en `src/`: `App.jsx` (home, filtros y listado), `EventoPage.jsx`,
-`OrganizadorPage.jsx`, `HoyPage.jsx`, `OrganizadoresLanding.jsx`, `FaqPage.jsx`.
+`OrganizadorPage.jsx`, `CategoriaPage.jsx`, `HoyPage.jsx`, `OrganizadoresLanding.jsx`, `FaqPage.jsx`.
 
 ---
 
@@ -174,6 +174,16 @@ Lo que ya está implementado y no se debe romper:
 - `llms.txt` en la raíz
 - Eventos inexistentes redirigen al home (corrección de Soft 404)
 - Eventos archivados muestran "Ya finalizó" con enlace a próximos, no un 404 genérico
+- Páginas de categoría (`/categoria/:slug`, `CategoriaPage.jsx`) — SEO programático por
+  intención de búsqueda ("conciertos en Medellín", "eventos de teatro en Medellín"), solo
+  para categorías con **≥15 eventos aprobados** (umbral calculado en vivo, no una lista fija
+  — si una categoría cruza el umbral aparece sola, tanto en la ruta como en el sitemap). Hoy
+  califican Música, Comedia, Académicos, Teatro, Arte y Baile; Deportes, Gastronomía,
+  Bienestar y Tech se quedan fuera hasta que crucen las 15. El umbral vive duplicado en
+  `src/CategoriaPage.jsx` (`MIN_EVENTS_FOR_CATEGORY_PAGE`) y `api/sitemap.js` — si lo cambias,
+  cámbialo en los dos. Solo español por ahora, sin cruce con zona (ver razones en el plan
+  original). Cada página tiene meta description e intro propios mencionando venues reales
+  (sacados de consulta a la tabla, nunca inventados) y JSON-LD `ItemList` de `Event`.
 
 ---
 
@@ -224,7 +234,7 @@ sin actualizar y no siempre es evidente.
 
 > Esta sección envejece. Actualízala cuando cambie algo relevante.
 
-- ~259 eventos aprobados
+- ~203 eventos aprobados
 - 8.000+ visitas acumuladas; 900 clics orgánicos desde Google en 28 días
 - 10 suscriptores activos del newsletter
 - Supabase en plan Pro con Micro compute

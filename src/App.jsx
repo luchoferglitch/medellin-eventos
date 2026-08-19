@@ -7,6 +7,7 @@ import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, U
 import { translations } from "./translations";
 import EventoPage from "./EventoPage";
 import OrganizadorPage from "./OrganizadorPage";
+import CategoriaPage from "./CategoriaPage";
 import OrganizadoresLanding from "./OrganizadoresLanding";
 import FaqPage from "./FaqPage";
 import HoyPage from "./HoyPage";
@@ -468,7 +469,7 @@ const CATS = ["Todos","Música","Arte","Comedia","Tech","Gastronomía","Baile","
 // distinta del home/zona que maneja este componente. Sin este chequeo, el efecto de
 // App de más abajo corre en cada navegación —sin importar qué ruta esté activa— y
 // pisa el title/canonical que esas páginas ya fijaron, dejando siempre el del home.
-const STANDALONE_BASE_PATHS = ["/evento/", "/organizador/", "/para-organizadores", "/preguntas-frecuentes", "/hoy", "/esta-semana", "/finde"];
+const STANDALONE_BASE_PATHS = ["/evento/", "/organizador/", "/categoria/", "/para-organizadores", "/preguntas-frecuentes", "/hoy", "/esta-semana", "/finde"];
 const isStandaloneBasePath = (basePath) =>
   STANDALONE_BASE_PATHS.some((p) => (p.endsWith("/") ? basePath.startsWith(p) : basePath === p));
 
@@ -2726,6 +2727,11 @@ export default function App() {
       <Route path="/en/organizador/:slug" element={<OrganizadorPage />} />
       <Route path="/pt/organizador/:slug" element={<OrganizadorPage />} />
       <Route path="/fr/organizador/:slug" element={<OrganizadorPage />} />
+      {/* Solo español por ahora — ver CLAUDE.md, sección SEO programático. Sin variantes
+          /en//pt//fr/ porque el copy de cada categoría no está traducido todavía; si un
+          idioma visita /en/categoria/musica cae en homeAndZonaElement (home normal), no
+          en 404, hasta que se traduzca. */}
+      <Route path="/categoria/:slug" element={<CategoriaPage />} />
       <Route path="/para-organizadores" element={<OrganizadoresLanding />} />
       <Route path="/preguntas-frecuentes" element={<FaqPage />} />
       <Route path="/en/preguntas-frecuentes" element={<FaqPage />} />
