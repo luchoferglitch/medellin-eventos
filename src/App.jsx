@@ -3,7 +3,7 @@ import { Routes, Route, Link, useNavigate, useLocation } from "react-router-dom"
 import { supabase } from "./supabase";
 import { registrarClic } from "./registrarClic";
 import { initGA, logPageView, trackEvent } from "./analytics";
-import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette, Megaphone } from "lucide-react";
+import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette, Megaphone, MoreHorizontal, Store, HelpCircle } from "lucide-react";
 import { translations } from "./translations";
 import EventoPage from "./EventoPage";
 import OrganizadorPage from "./OrganizadorPage";
@@ -388,10 +388,17 @@ const style = `
   .btn-cancel:hover { color: var(--text); border-color: var(--text); }
   .btn-submit { flex: 1; padding: 14px; border-radius: 10px; background: var(--gold); color: white; border: none; font-weight: 700; font-size: 15px; cursor: pointer; font-family: var(--font-body); transition: all 0.2s; }
   .btn-submit:hover { background: #a06d08; }
-  .bottom-nav { position: sticky; bottom: 0; z-index: 200; background: rgba(255,255,255,0.97); backdrop-filter: blur(16px); border-top: 1px solid var(--border); display: flex; justify-around: space-around; padding: 10px 0 16px; box-shadow: 0 -4px 20px rgba(0,0,0,0.06); }
-  .bottom-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted); font-size: 11px; cursor: pointer; padding: 4px 16px; transition: color 0.2s; background: none; border: none; font-family: var(--font-body); }
+  .bottom-nav { position: sticky; bottom: 0; z-index: 200; background: rgba(255,255,255,0.97); backdrop-filter: blur(16px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 0 16px; box-shadow: 0 -4px 20px rgba(0,0,0,0.06); overflow-x: auto; }
+  .bottom-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted); font-size: 11px; cursor: pointer; padding: 4px 10px; transition: color 0.2s; background: none; border: none; font-family: var(--font-body); flex-shrink: 0; white-space: nowrap; }
   .bottom-nav-item.active { color: var(--gold); }
   .bottom-nav-item span:first-child { font-size: 20px; display: flex; align-items: center; justify-content: center; position: relative; }
+  .more-menu-overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); display: flex; align-items: flex-end; justify-content: center; animation: fadeIn 0.2s; }
+  .more-menu-panel { background: var(--surface); border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px)); animation: slideUp 0.25s cubic-bezier(0.34,1.56,0.64,1); box-shadow: 0 -8px 40px rgba(0,0,0,0.2); }
+  .more-menu-handle { width: 36px; height: 4px; border-radius: 100px; background: var(--border); margin: 0 auto 16px; }
+  .more-menu-item { display: flex; align-items: center; gap: 14px; width: 100%; background: none; border: none; padding: 14px 10px; border-radius: 12px; cursor: pointer; font-family: var(--font-body); font-size: 15px; font-weight: 600; color: var(--text); transition: background 0.15s; text-align: left; }
+  .more-menu-item:hover { background: var(--surface2); }
+  .more-menu-item svg { color: var(--gold); flex-shrink: 0; }
+  @media (min-width: 768px) { .bottom-nav { display: none; } }
   .map-container { position: relative; flex: 1; min-height: 0; }
   .map-wrap { height: 100%; width: 100%; }
   .map-popup { font-family: var(--font-body); min-width: 200px; }
@@ -627,6 +634,7 @@ export default function App() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [toast, setToast] = useState(null);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
   const [saved, setSaved] = useState([]);
   const [search, setSearch] = useState("");
@@ -2425,7 +2433,27 @@ export default function App() {
               <span>Admin</span>
             </button>
           )}
+          <button className="bottom-nav-item" onClick={()=>{setShowMoreMenu(true); trackEvent({ action: "abrir_menu_mas", category: "Navegacion", label: "mas" });}}>
+            <span><MoreHorizontal size={20} /></span><span>{t.tabMore}</span>
+          </button>
         </nav>
+
+        {showMoreMenu && (
+          <div className="more-menu-overlay" onClick={()=>setShowMoreMenu(false)}>
+            <div className="more-menu-panel" onClick={e=>e.stopPropagation()}>
+              <div className="more-menu-handle" />
+              <button className="more-menu-item" onClick={()=>{setShowMoreMenu(false); navigate("/proveedores"); trackEvent({ action: "click_nav_proveedores", category: "Navegacion", label: "proveedores_mas" });}}>
+                <Store size={20} />{t.navProveedores}
+              </button>
+              <button className="more-menu-item" onClick={()=>{setShowMoreMenu(false); navigate("/para-organizadores"); trackEvent({ action: "click_nav_organizadores", category: "Navegacion", label: "organizadores_mas" });}}>
+                <Megaphone size={20} />{t.navParaOrganizadores}
+              </button>
+              <button className="more-menu-item" onClick={()=>{setShowMoreMenu(false); navigate(`${langPrefix}/preguntas-frecuentes`); trackEvent({ action: "click_nav_faq", category: "Navegacion", label: "faq_mas" });}}>
+                <HelpCircle size={20} />{t.faqLink}
+              </button>
+            </div>
+          </div>
+        )}
 
         {showAuth && (
           <div className="auth-overlay" onClick={()=>setShowAuth(false)}>

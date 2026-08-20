@@ -204,6 +204,7 @@ export default function ProveedoresPage() {
     if (!user) { setAuthError("Inicia sesión o crea tu cuenta para publicar"); return; }
     if (!form.nombre.trim()) { setMensaje({ tipo: "error", texto: "Escribe el nombre del proveedor" }); return; }
     if (!form.contacto_whatsapp.trim() && !form.contacto_email.trim()) { setMensaje({ tipo: "error", texto: "Deja al menos un medio de contacto (WhatsApp o correo)" }); return; }
+    if (!form.image_url) { setMensaje({ tipo: "error", texto: "Sube una imagen del proveedor" }); return; }
     if (!isValidEmail(form.contacto_email)) { setMensaje({ tipo: "error", texto: "El correo no es válido" }); return; }
     if (!isValidUrl(form.sitio_web)) { setMensaje({ tipo: "error", texto: "El sitio web no es válido (debe empezar con http:// o https://)" }); return; }
     if (!checkRateLimit("crearProveedor_" + user.id, 5, 3600000)) { setMensaje({ tipo: "error", texto: "Has enviado demasiadas solicitudes, intenta más tarde" }); return; }
@@ -409,13 +410,13 @@ export default function ProveedoresPage() {
                 <input placeholder="Sitio web (opcional, https://...)" value={form.sitio_web} onChange={(e) => setForm((f) => ({ ...f, sitio_web: e.target.value }))} style={{ padding: "12px 14px", borderRadius: 10, border: `1px solid ${c.border}`, background: c.surface2, color: c.text, fontSize: 14, fontFamily: "inherit" }} />
                 <textarea placeholder="Descripción corta (opcional)" value={form.descripcion} onChange={(e) => setForm((f) => ({ ...f, descripcion: e.target.value }))} style={{ padding: "12px 14px", borderRadius: 10, border: `1px solid ${c.border}`, background: c.surface2, color: c.text, fontSize: 14, fontFamily: "inherit", minHeight: 70, resize: "vertical" }} />
 
-                <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderRadius: 10, border: `1px dashed ${c.border}`, cursor: "pointer", fontSize: 13, color: c.muted }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderRadius: 10, border: `1px dashed ${form.image_url ? c.border : gold}`, cursor: "pointer", fontSize: 13, color: c.muted }}>
                   {subiendoImagen ? <Loader2 size={16} className="proveedores-spin" /> : <ImagePlus size={16} />}
-                  {form.image_url ? "✓ Imagen subida — cambiar" : subiendoImagen ? "Subiendo…" : "Imagen (opcional)"}
+                  {form.image_url ? "✓ Imagen subida — cambiar" : subiendoImagen ? "Subiendo…" : "Imagen del proveedor * (máx. 10 MB)"}
                   <input type="file" accept="image/*" onChange={handleImagenUpload} disabled={subiendoImagen} style={{ display: "none" }} />
                 </label>
 
-                <button onClick={handleSubmit} disabled={formLoading} style={{ padding: "13px", borderRadius: 10, background: gold, color: "white", border: "none", fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>
+                <button onClick={handleSubmit} disabled={formLoading || subiendoImagen || !form.image_url} style={{ padding: "13px", borderRadius: 10, background: gold, color: "white", border: "none", fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit", opacity: (formLoading || subiendoImagen || !form.image_url) ? 0.5 : 1 }}>
                   {formLoading ? "Enviando…" : "Enviar a revisión →"}
                 </button>
                 <div style={{ fontSize: 11, color: c.muted, textAlign: "center" }}>Lo revisamos antes de publicarlo — no aparece en el directorio de inmediato.</div>
