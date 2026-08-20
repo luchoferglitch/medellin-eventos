@@ -198,7 +198,8 @@ export default function EventoPage() {
   const eventDesc = event.desc ? event.desc.slice(0, 155) : `${event.cat} en ${event.place} · ${event.date} · ${event.price}`;
 
   // Estructura JSON-LD de Evento para Google Search
-  const esGratis = (event.price || "").toLowerCase().startsWith("gratis");
+  const precioLower = (event.price || "").toLowerCase();
+  const esGratis = precioLower.startsWith("gratis") || precioLower.startsWith("entrada libre");
   const priceMatch = (event.price || "").match(/[0-9][0-9.,]*/);
   const offerPrice = esGratis ? "0" : (priceMatch ? priceMatch[0].replace(/\./g, "").replace(/,/g, "") : undefined);
   const validFrom = event.createdAt ? new Date(event.createdAt).toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
@@ -214,7 +215,11 @@ export default function EventoPage() {
     location: { "@type": "Place", name: event.place, address: { "@type": "PostalAddress", addressLocality: "Medellín", addressRegion: "Antioquia", addressCountry: "CO" } },
     ...(event.imageUrl ? { image: [event.imageUrl] } : {}),
     ...(event.desc ? { description: event.desc.slice(0, 300) } : {}),
-    performer: { "@type": "PerformingGroup", name: event.organizerName || "Medellín Vibra" },
+    // Sin "performer": no hay campo de artista/acto en la tabla, distinto de
+    // organizer_name (que suele ser el promotor o el venue, no quien se
+    // presenta) — reutilizarlo ahí sería un dato semánticamente incorrecto,
+    // no solo un campo recomendado vacío. Se omite hasta que exista un dato
+    // real que lo respalde.
     organizer: { "@type": "Organization", name: event.organizerName || "Medellín Vibra", url: event.organizerName ? `https://www.medellinvibra.co/organizador/${slugify(event.organizerName)}` : "https://www.medellinvibra.co" },
     offers: {
       "@type": "Offer",
