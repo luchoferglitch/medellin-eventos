@@ -313,7 +313,7 @@ export default function OrganizadoresLanding() {
         <a href="/" style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:22, color:'#C8860A', textDecoration:'none', letterSpacing:1}}>MEDELLÍN VIBRA</a>
         <div style={{color:'#555', fontSize:12, marginTop:8}}>La agenda cultural de Medellín · © {new Date().getFullYear()} medellinvibra.co</div>
         <div style={{marginTop:12}}>
-          <button onClick={() => navigate("/proveedores")} style={{background:'none', border:'none', color:'#C8860A', fontWeight:700, fontSize:13, fontFamily:'inherit', cursor:'pointer'}}>¿Ofreces sillas, sonido, carpas u otro servicio para eventos? Publícate gratis en el directorio de proveedores →</button>
+          <button onClick={() => navigate("/proveedores")} style={{background:'none', border:'none', color:'#C8860A', fontWeight:700, fontSize:13, fontFamily:'inherit', cursor:'pointer'}}>¿Ofreces sillas, sonido, carpas u otro servicio para eventos? Publícate en el directorio de proveedores →</button>
         </div>
         <div style={{display:'flex', gap:16, justifyContent:'center', marginTop:12}}>
           <a href="https://www.instagram.com/medellinvibra.co/" target="_blank" rel="noopener noreferrer" style={{color:'#888', fontSize:13, textDecoration:'none', display:'inline-flex', alignItems:'center', gap:5}}><InstagramIcon size={13} />Instagram</a>

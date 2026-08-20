@@ -316,7 +316,7 @@ export default function ProveedoresPage() {
           Sillas, sonido, carpas, pantallas, catering y más — servicios para montar tu evento en Medellín, el Área Metropolitana y el Oriente Cercano.
         </p>
         <button onClick={() => setShowForm(true)} style={{ marginTop: 20, background: gold, color: "white", border: "none", padding: "12px 24px", borderRadius: 100, fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>
-          + Publica tu servicio gratis
+          + Publica tu servicio
         </button>
       </div>
 
