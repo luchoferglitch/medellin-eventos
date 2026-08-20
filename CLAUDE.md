@@ -111,6 +111,29 @@ limpieza.)
 
 ---
 
+## Tabla `proveedores`
+
+Directorio de proveedores de servicios para eventos (sillas, sonido, carpas, etc.), gratuito
+por ahora. Página única `/proveedores` con filtros por tipo y zona — sin páginas individuales
+por proveedor (ver sección SEO). Convenciones:
+
+- `tipo_servicio` — solo diez valores, lista cerrada igual que `category` en events:
+  `Sillas y Mesas | Sonido e Iluminación | Carpas y Toldos | Pantallas y Video | Catering |
+  Decoración | Fotografía y Video | Mobiliario Lounge | Transporte | Seguridad`. Fijada con el
+  usuario antes de construir — cambiarla implica migrar datos.
+- `zona` — mismo dominio que events: `"Medellín" | "Área Metropolitana" | "Oriente Cercano"`.
+- `estado` — mismo patrón que events: `pendiente | aprobado | rechazado`. La autopublicación
+  requiere cuenta (RLS solo permite INSERT a `authenticated`, `estado='pendiente'` salvo admin)
+  y dispara la Edge Function `alerta-proveedor`, que solo envía el correo de aviso — la
+  aprobación es manual en el Table Editor de Supabase, igual que events (ver Edge Functions).
+- A diferencia de events, la tabla tiene CHECK constraints en `tipo_servicio`, `zona` y
+  `estado` a nivel de base de datos (events no los tiene, es solo convención de app) — al ser
+  tabla nueva sin datos legacy, se optó por reforzarlo ahí también.
+- Schema JSON-LD: `Service`/`Organization` envueltos en `ItemList`, no `Event` — un proveedor
+  de renta no es un evento.
+
+---
+
 ## Imágenes
 
 **Toda imagen se sube a R2 antes del INSERT.** El campo `image_url` nunca apunta a Supabase
@@ -140,8 +163,22 @@ Activas:
 
 - `newsletter-semanal` — boletín de los viernes, 8:00 a.m. hora Colombia (cron `newsletter-semanal-viernes`)
 - `recordatorio-eventos-v2` — recordatorio diario, 9:00 a.m. hora Colombia (cron `recordatorio-diario`)
-- `aprobar-evento` — aprobación de un clic desde el correo de alerta, firmada con HMAC
+- `alerta-evento` — envía el correo de aviso a `hola@medellinvibra.co` cuando alguien publica un evento no-admin
+- `alerta-proveedor` — mismo patrón que `alerta-evento`, pero para la tabla `proveedores`; lee `RESEND_API_KEY` de los secrets de Supabase (no la tiene escrita en código, a diferencia de `alerta-evento`)
 - `upload-imagen` — subida de imágenes desde el formulario público (`verify_jwt: true`)
+
+**La aprobación de eventos hoy es manual**: `alerta-evento` solo notifica por correo con un
+enlace al Table Editor de Supabase; el cambio de `estado` a `aprobado`/`rechazado` se hace ahí
+a mano. Existe una función `aprobar-evento` desplegada (aprobación de un clic firmada con HMAC,
+lee `APROBAR_EVENTO_SECRET`) pero **el correo de `alerta-evento` no la enlaza** — quedó huérfana.
+No asumas que el flujo de un clic está activo hasta que `alerta-evento` de hecho genere esos
+enlaces. La aprobación de proveedores sigue el mismo patrón manual, a propósito — no se
+construyó nada más sofisticado que lo que ya existe para eventos.
+
+`alerta-proveedor` verifica el status de la respuesta de Resend (a diferencia de
+`alerta-evento`, que no lo hace): si Resend rechaza el envío, la función responde 502 y
+loguea el error con `console.error` en vez de devolver 200 a ciegas. Probado en vivo con el
+secret `RESEND_API_KEY` ya configurado a nivel de proyecto — el correo sí sale.
 
 Preexistentes, activos, **no tocar**: `actualizar-tags-semanal`, `archivar-eventos-pasados`.
 

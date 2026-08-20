@@ -9,6 +9,7 @@ import EventoPage from "./EventoPage";
 import OrganizadorPage from "./OrganizadorPage";
 import CategoriaPage from "./CategoriaPage";
 import OrganizadoresLanding from "./OrganizadoresLanding";
+import ProveedoresPage from "./ProveedoresPage";
 import FaqPage from "./FaqPage";
 import HoyPage from "./HoyPage";
 import EstaSemanaPage from "./EstaSemanaPage";
@@ -469,7 +470,7 @@ const CATS = ["Todos","Música","Arte","Comedia","Tech","Gastronomía","Baile","
 // distinta del home/zona que maneja este componente. Sin este chequeo, el efecto de
 // App de más abajo corre en cada navegación —sin importar qué ruta esté activa— y
 // pisa el title/canonical que esas páginas ya fijaron, dejando siempre el del home.
-const STANDALONE_BASE_PATHS = ["/evento/", "/organizador/", "/categoria/", "/para-organizadores", "/preguntas-frecuentes", "/hoy", "/esta-semana", "/finde"];
+const STANDALONE_BASE_PATHS = ["/evento/", "/organizador/", "/categoria/", "/para-organizadores", "/proveedores", "/preguntas-frecuentes", "/hoy", "/esta-semana", "/finde"];
 const isStandaloneBasePath = (basePath) =>
   STANDALONE_BASE_PATHS.some((p) => (p.endsWith("/") ? basePath.startsWith(p) : basePath === p));
 
@@ -1506,6 +1507,7 @@ export default function App() {
             {[[t.tabExplore,"explore"],[t.navMap,"map"],[t.tabSaved,"saved"]].map(([label,tab]) => (
               <button key={tab} className={`nav-link ${activeTab===tab?"active":""}`} onClick={()=>{setActiveTab(tab); trackEvent({ action: "cambiar_tab", category: "Navegacion", label: tab });}}>{label}</button>
             ))}
+            <button className="nav-link" onClick={() => { navigate("/proveedores"); trackEvent({ action: "click_nav_proveedores", category: "Navegacion", label: "proveedores" }); }}>{t.navProveedores}</button>
           </div>
           <div className="nav-actions">
             <div className="lang-switcher" role="group" aria-label="Idioma">
@@ -2403,6 +2405,9 @@ export default function App() {
               <button onClick={() => navigate(`${langPrefix}/preguntas-frecuentes`)} style={{background:'none', border:'none', color:'var(--gold)', fontWeight:600, fontSize:13, fontFamily:'var(--font-body)', cursor:'pointer', padding:0}}>
                 {t.faqLink}
               </button>
+              <button onClick={() => navigate("/proveedores")} style={{background:'none', border:'none', color:'var(--gold)', fontWeight:600, fontSize:13, fontFamily:'var(--font-body)', cursor:'pointer', padding:0}}>
+                {t.navProveedores}
+              </button>
               <span style={{fontSize:12, color:'var(--muted)'}}>{t.copyright}</span>
             </div>
           </div>
@@ -2733,6 +2738,10 @@ export default function App() {
           en 404, hasta que se traduzca. */}
       <Route path="/categoria/:slug" element={<CategoriaPage />} />
       <Route path="/para-organizadores" element={<OrganizadoresLanding />} />
+      {/* Directorio de proveedores — página única con filtros, sin páginas individuales
+          (ver CLAUDE.md, sección SEO). Sin variantes /en//pt//fr/ por ahora, mismo
+          criterio que /categoria/. */}
+      <Route path="/proveedores" element={<ProveedoresPage />} />
       <Route path="/preguntas-frecuentes" element={<FaqPage />} />
       <Route path="/en/preguntas-frecuentes" element={<FaqPage />} />
       <Route path="/pt/preguntas-frecuentes" element={<FaqPage />} />

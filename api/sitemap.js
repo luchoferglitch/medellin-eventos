@@ -101,6 +101,15 @@ export default async function handler(_req) {
     <priority>0.75</priority>
     <lastmod>${today}</lastmod>
   </url>`),
+
+    // Directorio de proveedores — contenido de soporte, no el producto principal
+    // (ver CLAUDE.md, sección SEO): prioridad baja a propósito, no compite con /hoy.
+    `  <url>
+    <loc>${BASE_URL}/proveedores</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+    <lastmod>${today}</lastmod>
+  </url>`,
   ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
