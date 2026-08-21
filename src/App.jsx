@@ -2745,6 +2745,7 @@ export default function App() {
           </div>
         )}
 
+        {toast && <div className="toast">{toast}</div>}
       </div>
     </>
   );

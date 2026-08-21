@@ -321,7 +321,7 @@ export default function ProveedoresPage() {
       </div>
 
       {mensaje && (
-        <div style={{ maxWidth: 680, margin: "16px auto 0", padding: "0 20px" }}>
+        <div style={{ position: "relative", zIndex: 250, maxWidth: 680, margin: "16px auto 0", padding: "0 20px" }}>
           <div style={{ background: mensaje.tipo === "ok" ? "#05966922" : "#C0392B22", border: `1px solid ${mensaje.tipo === "ok" ? "#059669" : "#C0392B"}`, color: mensaje.tipo === "ok" ? "#059669" : "#C0392B", borderRadius: 12, padding: "12px 16px", fontSize: 13, fontWeight: 600, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
             <span>{mensaje.texto}</span>
             <button onClick={() => setMensaje(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "inherit" }}><X size={14} /></button>
