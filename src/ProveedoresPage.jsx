@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "./supabase";
 import {
   Armchair, Speaker, Tent, MonitorPlay, UtensilsCrossed, Palette, Camera, Sofa, Truck, ShieldCheck,
-  Store, Mail, MessageCircle, Globe, X, ImagePlus, Loader2,
+  Store, Mail, MessageCircle, Globe, X, ImagePlus, Loader2, Wheat, Users,
 } from "lucide-react";
 
 // Lista cerrada — igual patrón que `category` en events (ver CLAUDE.md). Cambiarla
@@ -12,6 +12,7 @@ import {
 const TIPOS_SERVICIO = [
   "Sillas y Mesas", "Sonido e Iluminación", "Carpas y Toldos", "Pantallas y Video",
   "Catering", "Decoración", "Fotografía y Video", "Mobiliario Lounge", "Transporte", "Seguridad",
+  "Producción Local, Artesanal y de Origen", "Personal: Hostess, Meseros, Bartenders y Recreacionistas",
 ];
 
 // Mismo dominio de `zona` que ya usa events — un proveedor cubre una de estas
@@ -22,12 +23,14 @@ const TIPO_ICON = {
   "Sillas y Mesas": Armchair, "Sonido e Iluminación": Speaker, "Carpas y Toldos": Tent,
   "Pantallas y Video": MonitorPlay, "Catering": UtensilsCrossed, "Decoración": Palette,
   "Fotografía y Video": Camera, "Mobiliario Lounge": Sofa, "Transporte": Truck, "Seguridad": ShieldCheck,
+  "Producción Local, Artesanal y de Origen": Wheat, "Personal: Hostess, Meseros, Bartenders y Recreacionistas": Users,
 };
 
 const TIPO_COLORS = {
   "Sillas y Mesas": "#B45309", "Sonido e Iluminación": "#7C3AED", "Carpas y Toldos": "#0369A1",
   "Pantallas y Video": "#2563EB", "Catering": "#C2410C", "Decoración": "#DB2777",
   "Fotografía y Video": "#059669", "Mobiliario Lounge": "#9333EA", "Transporte": "#16A34A", "Seguridad": "#DC2626",
+  "Producción Local, Artesanal y de Origen": "#65A30D", "Personal: Hostess, Meseros, Bartenders y Recreacionistas": "#0891B2",
 };
 
 // Copia local de utilidades ya definidas en App.jsx — no se exportan desde ahí,
