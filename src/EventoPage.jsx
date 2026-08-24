@@ -213,7 +213,7 @@ export default function EventoPage() {
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     eventStatus: "https://schema.org/EventScheduled",
     location: { "@type": "Place", name: event.place, address: { "@type": "PostalAddress", addressLocality: "Medellín", addressRegion: "Antioquia", addressCountry: "CO" } },
-    ...(event.imageUrl ? { image: [event.imageUrl] } : {}),
+    image: [eventImg],
     ...(event.desc ? { description: event.desc.slice(0, 300) } : {}),
     // Sin "performer": no hay campo de artista/acto en la tabla, distinto de
     // organizer_name (que suele ser el promotor o el venue, no quien se

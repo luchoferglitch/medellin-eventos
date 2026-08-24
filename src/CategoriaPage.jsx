@@ -197,8 +197,10 @@ export default function CategoriaPage() {
         name: ev.title,
         startDate: ev.fecha_real || undefined,
         endDate: ev.fecha_fin || ev.fecha_real || undefined,
+        eventStatus: "https://schema.org/EventScheduled",
         url: `https://www.medellinvibra.co/evento/${slugify(ev.title)}-${ev.id}`,
-        ...(ev.place ? { location: { "@type": "Place", name: ev.place } } : {}),
+        image: [ev.image_url || "https://pub-c5ba255ea192436da56e91e3ef3ecfa5.r2.dev/default-fallback-medellin"],
+        ...(ev.place ? { location: { "@type": "Place", name: ev.place, address: { "@type": "PostalAddress", addressLocality: "Medellín", addressRegion: "Antioquia", addressCountry: "CO" } } } : {}),
       },
     })),
   };
