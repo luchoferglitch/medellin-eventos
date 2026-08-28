@@ -3,13 +3,14 @@ import { Routes, Route, Link, useNavigate, useLocation } from "react-router-dom"
 import { supabase } from "./supabase";
 import { registrarClic } from "./registrarClic";
 import { initGA, logPageView, trackEvent } from "./analytics";
-import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette, Megaphone, MoreHorizontal, Store, HelpCircle } from "lucide-react";
+import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette, Megaphone, MoreHorizontal, Store, HelpCircle, Info } from "lucide-react";
 import { translations } from "./translations";
 import EventoPage from "./EventoPage";
 import OrganizadorPage from "./OrganizadorPage";
 import CategoriaPage from "./CategoriaPage";
 import OrganizadoresLanding from "./OrganizadoresLanding";
 import ProveedoresPage from "./ProveedoresPage";
+import NosotrosPage from "./NosotrosPage";
 import FaqPage from "./FaqPage";
 import HoyPage from "./HoyPage";
 import EstaSemanaPage from "./EstaSemanaPage";
@@ -477,7 +478,7 @@ const CATS = ["Todos","Música","Arte","Comedia","Tech","Gastronomía","Baile","
 // distinta del home/zona que maneja este componente. Sin este chequeo, el efecto de
 // App de más abajo corre en cada navegación —sin importar qué ruta esté activa— y
 // pisa el title/canonical que esas páginas ya fijaron, dejando siempre el del home.
-const STANDALONE_BASE_PATHS = ["/evento/", "/organizador/", "/categoria/", "/para-organizadores", "/proveedores", "/preguntas-frecuentes", "/hoy", "/esta-semana", "/finde"];
+const STANDALONE_BASE_PATHS = ["/evento/", "/organizador/", "/categoria/", "/para-organizadores", "/proveedores", "/nosotros", "/preguntas-frecuentes", "/hoy", "/esta-semana", "/finde"];
 const isStandaloneBasePath = (basePath) =>
   STANDALONE_BASE_PATHS.some((p) => (p.endsWith("/") ? basePath.startsWith(p) : basePath === p));
 
@@ -1708,6 +1709,38 @@ export default function App() {
               </button>
             </div>
 
+            <div style={{
+              background: "var(--surface2)",
+              border: "1px solid var(--border)",
+              borderLeft: "4px solid var(--gold)",
+              borderRadius: 12,
+              padding: "16px 20px",
+              margin: "16px auto",
+              maxWidth: 1080,
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              gap: 14,
+              justifyContent: "space-between",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flex: "1 1 300px", minWidth: 0 }}>
+                <Store size={22} style={{ color: "var(--gold)", flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text)" }}>{t.vendorBannerTitle}</div>
+                  <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>{t.vendorBannerText}</div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  trackEvent({ action: "click_banner_proveedores", category: "Conversión", label: "banner_home" });
+                  navigate("/proveedores");
+                }}
+                style={{ background: "var(--gold)", color: "white", border: "none", borderRadius: 8, padding: "10px 20px", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", fontSize: 14, flexShrink: 0 }}
+              >
+                {t.vendorBannerBtn}
+              </button>
+            </div>
+
             {(() => {
               const today = new Date(); today.setHours(0,0,0,0);
               const day = today.getDay();
@@ -2416,6 +2449,9 @@ export default function App() {
               <button onClick={() => navigate("/proveedores")} style={{background:'none', border:'none', color:'var(--gold)', fontWeight:600, fontSize:13, fontFamily:'var(--font-body)', cursor:'pointer', padding:0}}>
                 {t.navProveedores}
               </button>
+              <button onClick={() => navigate("/nosotros")} style={{background:'none', border:'none', color:'var(--gold)', fontWeight:600, fontSize:13, fontFamily:'var(--font-body)', cursor:'pointer', padding:0}}>
+                {t.navNosotros}
+              </button>
               <span style={{fontSize:12, color:'var(--muted)'}}>{t.copyright}</span>
             </div>
           </div>
@@ -2450,6 +2486,9 @@ export default function App() {
               </button>
               <button className="more-menu-item" onClick={()=>{setShowMoreMenu(false); navigate(`${langPrefix}/preguntas-frecuentes`); trackEvent({ action: "click_nav_faq", category: "Navegacion", label: "faq_mas" });}}>
                 <HelpCircle size={20} />{t.faqLink}
+              </button>
+              <button className="more-menu-item" onClick={()=>{setShowMoreMenu(false); navigate("/nosotros"); trackEvent({ action: "click_nav_nosotros", category: "Navegacion", label: "nosotros_mas" });}}>
+                <Info size={20} />{t.navNosotros}
               </button>
             </div>
           </div>
@@ -2771,6 +2810,9 @@ export default function App() {
           (ver CLAUDE.md, sección SEO). Sin variantes /en//pt//fr/ por ahora, mismo
           criterio que /categoria/. */}
       <Route path="/proveedores" element={<ProveedoresPage />} />
+      {/* Página institucional — solo español, mismo criterio que /proveedores y
+          /para-organizadores (ver CLAUDE.md, sección SEO). */}
+      <Route path="/nosotros" element={<NosotrosPage />} />
       <Route path="/preguntas-frecuentes" element={<FaqPage />} />
       <Route path="/en/preguntas-frecuentes" element={<FaqPage />} />
       <Route path="/pt/preguntas-frecuentes" element={<FaqPage />} />

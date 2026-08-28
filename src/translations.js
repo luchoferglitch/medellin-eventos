@@ -126,6 +126,7 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     tabProfile: "Perfil",
     tabMore: "Más",
     navProveedores: "Proveedores",
+    navNosotros: "Quiénes somos",
     navParaOrganizadores: "Para organizadores",
 
     // Zone pages (i18n multilenguaje — Fase 1)
@@ -228,6 +229,9 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     organizerBannerTitle: "¿Organizas un evento en Medellín o la región?",
     organizerBannerText: "Publícalo gratis y llega a miles de personas buscando planes en Medellín, el Área Metropolitana y el Oriente Cercano.",
     organizerBannerBtn: "Publicar evento gratis",
+    vendorBannerTitle: "¿Ofreces servicios para eventos?",
+    vendorBannerText: "Publícate gratis en nuestro directorio de proveedores y llega a organizadores buscando sillas, sonido, carpas y más.",
+    vendorBannerBtn: "Ver directorio de proveedores",
     pushBellLabel: "Notificaciones",
     pushOptInTitle: "Recibe avisos de nuevos eventos",
     pushOptInText: "Elige qué tan seguido quieres que te avisemos.",
@@ -474,6 +478,7 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     tabProfile: "Profile",
     tabMore: "More",
     navProveedores: "Vendors",
+    navNosotros: "About us",
     navParaOrganizadores: "For organizers",
 
     // Zone pages (i18n multilenguaje — Fase 1)
@@ -575,6 +580,9 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     organizerBannerTitle: "Organizing an event in Medellín or the region?",
     organizerBannerText: "Publish it for free and reach thousands of people looking for plans in Medellín, the Metro Area and Oriente Cercano.",
     organizerBannerBtn: "Publish event for free",
+    vendorBannerTitle: "Do you offer services for events?",
+    vendorBannerText: "List your business for free in our vendor directory and reach organizers looking for chairs, sound, tents and more.",
+    vendorBannerBtn: "See vendor directory",
     pushBellLabel: "Notifications",
     pushOptInTitle: "Get notified about new events",
     pushOptInText: "Choose how often you want to hear from us.",
@@ -814,6 +822,7 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     tabProfile: "Perfil",
     tabMore: "Mais",
     navProveedores: "Fornecedores",
+    navNosotros: "Quem somos",
     navParaOrganizadores: "Para organizadores",
 
     // Zone pages (i18n multilenguaje — Fase 1)
@@ -915,6 +924,9 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     organizerBannerTitle: "Organizando um evento em Medellín ou na região?",
     organizerBannerText: "Publique-o gratuitamente e alcance milhares de pessoas em busca de programação em Medellín, na Área Metropolitana e no Oriente Cercano.",
     organizerBannerBtn: "Publicar evento grátis",
+    vendorBannerTitle: "Você oferece serviços para eventos?",
+    vendorBannerText: "Publique-se gratuitamente no nosso diretório de fornecedores e alcance organizadores em busca de cadeiras, som, tendas e mais.",
+    vendorBannerBtn: "Ver diretório de fornecedores",
     pushBellLabel: "Notificações",
     pushOptInTitle: "Receba avisos de novos eventos",
     pushOptInText: "Escolha com que frequência quer ser avisado.",
@@ -1154,6 +1166,7 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     tabProfile: "Profil",
     tabMore: "Plus",
     navProveedores: "Prestataires",
+    navNosotros: "À propos",
     navParaOrganizadores: "Pour les organisateurs",
 
     // Zone pages (i18n multilenguaje — Fase 1)
@@ -1255,6 +1268,9 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     organizerBannerTitle: "Vous organisez un événement à Medellín ou dans la région ?",
     organizerBannerText: "Publiez-le gratuitement et touchez des milliers de personnes en quête de sorties à Medellín, dans l'Aire Métropolitaine et l'Oriente Cercano.",
     organizerBannerBtn: "Publier gratuitement",
+    vendorBannerTitle: "Vous proposez des services pour événements ?",
+    vendorBannerText: "Inscrivez-vous gratuitement dans notre annuaire de prestataires et touchez des organisateurs à la recherche de chaises, son, tentes et plus.",
+    vendorBannerBtn: "Voir l'annuaire des prestataires",
     pushBellLabel: "Notifications",
     pushOptInTitle: "Recevez des alertes pour les nouveaux événements",
     pushOptInText: "Choisissez la fréquence des alertes.",

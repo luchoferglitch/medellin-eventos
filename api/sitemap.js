@@ -110,6 +110,14 @@ export default async function handler(_req) {
     <priority>0.5</priority>
     <lastmod>${today}</lastmod>
   </url>`,
+
+    // Página institucional — mismo criterio de prioridad baja que /proveedores.
+    `  <url>
+    <loc>${BASE_URL}/nosotros</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+    <lastmod>${today}</lastmod>
+  </url>`,
   ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
