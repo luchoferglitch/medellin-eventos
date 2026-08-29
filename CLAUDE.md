@@ -166,6 +166,10 @@ Activas:
 - `alerta-evento` — envía el correo de aviso a `hola@medellinvibra.co` cuando alguien publica un evento no-admin
 - `alerta-proveedor` — mismo patrón que `alerta-evento`, pero para la tabla `proveedores`; lee `RESEND_API_KEY` de los secrets de Supabase (no la tiene escrita en código, a diferencia de `alerta-evento`)
 - `upload-imagen` — subida de imágenes desde el formulario público (`verify_jwt: true`)
+- `enviar-push` — notificaciones push a `push_subscriptions`. Por cron corre en modo `frecuencia`
+  (`diaria`/`semanal`/`destacados`, un query fijo y un texto genérico por cada una). Además tiene
+  un modo `anuncio` para un push manual dedicado a un solo evento (festival, feria grande), fuera
+  del ciclo de cron — pensado para casos como la Fiesta del Libro o Altavoz.
 
 **La aprobación de eventos hoy es manual**: `alerta-evento` solo notifica por correo con un
 enlace al Table Editor de Supabase; el cambio de `estado` a `aprobado`/`rechazado` se hace ahí
@@ -179,6 +183,20 @@ construyó nada más sofisticado que lo que ya existe para eventos.
 `alerta-evento`, que no lo hace): si Resend rechaza el envío, la función responde 502 y
 loguea el error con `console.error` en vez de devolver 200 a ciegas. Probado en vivo con el
 secret `RESEND_API_KEY` ya configurado a nivel de proyecto — el correo sí sale.
+
+El modo `anuncio` de `enviar-push` se activa mandando `{ eventoId, titulo?, cuerpo?, segmentos? }`
+en el body con el header `x-anuncio-secret` igual al secret `ANUNCIO_PUSH_SECRET`; sin ese header
+responde 401. Si no se pasan `titulo`/`cuerpo` los arma desde el evento real (título, fecha,
+lugar) — nunca un texto genérico. `segmentos` por defecto son las tres frecuencias juntas
+(`diaria`, `semanal`, `destacados`), o sea le llega a toda la base activa; se puede acotar
+pasando un subconjunto. Reutiliza el mismo loop de envío y el mismo manejo de `fail_count`/
+desactivación por fallo permanente (404/410) que el modo cron — no hay lógica de envío
+duplicada entre los dos modos. Se dispara a mano con el script `enviar-anuncio.mjs`
+(mismo patrón que `upload-compressed.mjs`: vive fuera del repo, en
+`C:\Users\lucho\Documents\upload-temp\`, no en `supabase/functions/`). No hay panel admin para
+esto a propósito — es un caso de uso de pocas veces al año, dispararlo desde un script es
+suficiente. Probado en vivo contra un evento real (20ª Fiesta del Libro): confirmado en los
+logs de la función y en `push_subscriptions.last_sent_at` que el envío ocurrió.
 
 Preexistentes, activos, **no tocar**: `actualizar-tags-semanal`, `archivar-eventos-pasados`.
 
@@ -236,6 +254,7 @@ R2_SECRET_ACCESS_KEY
 R2_ENDPOINT
 R2_PUBLIC_URL
 APROBAR_EVENTO_SECRET
+ANUNCIO_PUSH_SECRET
 ```
 
 Confirma que `.env` está en `.gitignore` antes de cualquier commit que toque configuración.
