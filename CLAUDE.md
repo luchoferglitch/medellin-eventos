@@ -126,9 +126,12 @@ por proveedor (ver sección SEO). Convenciones:
   requiere cuenta (RLS solo permite INSERT a `authenticated`, `estado='pendiente'` salvo admin)
   y dispara la Edge Function `alerta-proveedor`, que solo envía el correo de aviso — la
   aprobación es manual en el Table Editor de Supabase, igual que events (ver Edge Functions).
-- A diferencia de events, la tabla tiene CHECK constraints en `tipo_servicio`, `zona` y
-  `estado` a nivel de base de datos (events no los tiene, es solo convención de app) — al ser
-  tabla nueva sin datos legacy, se optó por reforzarlo ahí también.
+- La tabla tiene CHECK constraints en `tipo_servicio`, `zona` y `estado` a nivel de base de
+  datos — al ser tabla nueva sin datos legacy, se optó por reforzarlo ahí desde el inicio.
+  `events.category` también tiene CHECK constraint (agregado después de un caso real: Chrome
+  Translate reescribió el texto de un `<option>` sin `value` explícito y mandó "Academics" en
+  vez de "Académicos"), pero `events.zona` y `events.tag` siguen siendo solo convención de
+  app, sin CHECK — no asumas que toda la tabla `events` está reforzada a nivel de base de datos.
 - Schema JSON-LD: `Service`/`Organization` envueltos en `ItemList`, no `Event` — un proveedor
   de renta no es un evento.
 

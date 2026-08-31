@@ -899,6 +899,10 @@ export default function App() {
             else if (activeDateFilter === "EsteMes") matchDate = proximaStr >= today && proximaStr <= monthEnd;
           }
         }
+      } else if (activeDateFilter === "Gratis") {
+        matchDate = e.price === "Gratis";
+      } else if (activeDateFilter === "ConCobro") {
+        matchDate = e.price !== "Gratis";
       } else if (e.fechaReal) {
         const { today, weekendStart, weekendEnd, weekEnd, monthEnd } = getDateRange();
         const fin = e.fechaFin || e.fechaReal;
@@ -906,8 +910,10 @@ export default function App() {
         else if (activeDateFilter === "FinDeSemana") matchDate = e.fechaReal <= weekendEnd && fin >= weekendStart;
         else if (activeDateFilter === "EstaSemana") matchDate = e.fechaReal <= weekEnd && fin >= today;
         else if (activeDateFilter === "EsteMes") matchDate = e.fechaReal <= monthEnd && fin >= today;
-        else if (activeDateFilter === "Gratis") matchDate = e.price === "Gratis";
-        else if (activeDateFilter === "ConCobro") matchDate = e.price !== "Gratis";
+      } else {
+        // Sin fechaReal no podemos saber si el evento cae en el rango pedido:
+        // se excluye (comportamiento seguro) en vez de pasar por defecto.
+        matchDate = false;
       }
     }
     const matchZona = activeZona === "Todas" || e.zona === activeZona;
@@ -1040,6 +1046,8 @@ export default function App() {
       title: sanitize(form.title).slice(0, 200),
       category: form.category,
       date: sanitize(form.date).slice(0, 100),
+      fecha_real: sanitize(form.date).slice(0, 100),
+      fecha_fin: sanitize(form.date).slice(0, 100),
       time: sanitize(form.time).slice(0, 50),
       place: sanitize(form.place).slice(0, 300),
       price: sanitize(form.price).slice(0, 50) || "Gratis",
@@ -2656,7 +2664,7 @@ export default function App() {
               <div className="form-group">
                 <label className="form-label">Categoría</label>
                 <select className="form-select" value={form.category} onChange={e=>handleFormChange("category",e.target.value)}>
-                  {CATS.filter(c=>c!=="Todos").map(c=><option key={c}>{c}</option>)}
+                  {CATS.filter(c=>c!=="Todos").map(c=><option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div className="form-row">
