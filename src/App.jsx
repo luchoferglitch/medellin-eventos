@@ -12,6 +12,7 @@ import OrganizadoresLanding from "./OrganizadoresLanding";
 import ProveedoresPage from "./ProveedoresPage";
 import NosotrosPage from "./NosotrosPage";
 import FaqPage from "./FaqPage";
+import AprobacionEventoPage from "./AprobacionEventoPage";
 import HoyPage from "./HoyPage";
 import EstaSemanaPage from "./EstaSemanaPage";
 import FindePage from "./FindePage";
@@ -478,7 +479,7 @@ const CATS = ["Todos","Música","Arte","Comedia","Tech","Gastronomía","Baile","
 // distinta del home/zona que maneja este componente. Sin este chequeo, el efecto de
 // App de más abajo corre en cada navegación —sin importar qué ruta esté activa— y
 // pisa el title/canonical que esas páginas ya fijaron, dejando siempre el del home.
-const STANDALONE_BASE_PATHS = ["/evento/", "/organizador/", "/categoria/", "/para-organizadores", "/proveedores", "/nosotros", "/preguntas-frecuentes", "/hoy", "/esta-semana", "/finde"];
+const STANDALONE_BASE_PATHS = ["/evento/", "/organizador/", "/categoria/", "/para-organizadores", "/proveedores", "/nosotros", "/preguntas-frecuentes", "/hoy", "/esta-semana", "/finde", "/admin/aprobacion-evento"];
 const isStandaloneBasePath = (basePath) =>
   STANDALONE_BASE_PATHS.some((p) => (p.endsWith("/") ? basePath.startsWith(p) : basePath === p));
 
@@ -2821,6 +2822,7 @@ export default function App() {
       {/* Página institucional — solo español, mismo criterio que /proveedores y
           /para-organizadores (ver CLAUDE.md, sección SEO). */}
       <Route path="/nosotros" element={<NosotrosPage />} />
+      <Route path="/admin/aprobacion-evento" element={<AprobacionEventoPage />} />
       <Route path="/preguntas-frecuentes" element={<FaqPage />} />
       <Route path="/en/preguntas-frecuentes" element={<FaqPage />} />
       <Route path="/pt/preguntas-frecuentes" element={<FaqPage />} />

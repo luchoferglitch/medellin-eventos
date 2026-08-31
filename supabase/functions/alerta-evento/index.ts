@@ -1,6 +1,8 @@
-const RESEND_API_KEY = "re_FpmMceDx_4D8QRf4HzMCdUu9BWN7UgFan";
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
 const FROM_EMAIL = "hola@medellinvibra.co";
 const ADMIN_EMAIL = "hola@medellinvibra.co";
+const SECRET = Deno.env.get("APROBAR_EVENTO_SECRET") ?? "";
+const FUNCTIONS_BASE = "https://jtbqaqugnqkympwnfsod.supabase.co/functions/v1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,12 +10,34 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+async function sign(id: string, action: string): Promise<string> {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey("raw", enc.encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(`${id}:${action}`));
+  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  const { title, organizer, contact, place, date } = await req.json();
+  const { id, title, organizer, contact, place, date } = await req.json();
+
+  let actionButtons = `<a href="https://supabase.com/dashboard/project/jtbqaqugnqkympwnfsod/editor" style="display: inline-block; background: #C8860A; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Ir a Supabase →</a>`;
+
+  if (id) {
+    const approveToken = await sign(String(id), "aprobado");
+    const rejectToken = await sign(String(id), "rechazado");
+    const approveLink = `${FUNCTIONS_BASE}/aprobar-evento?id=${id}&action=aprobado&token=${approveToken}`;
+    const rejectLink = `${FUNCTIONS_BASE}/aprobar-evento?id=${id}&action=rechazado&token=${rejectToken}`;
+    actionButtons = `
+      <div style="display:flex; gap:12px;">
+        <a href="${approveLink}" style="flex:1; text-align:center; background:#059669; color:white; padding:12px 20px; border-radius:8px; text-decoration:none; font-weight:bold;">✓ Aprobar</a>
+        <a href="${rejectLink}" style="flex:1; text-align:center; background:#C0392B; color:white; padding:12px 20px; border-radius:8px; text-decoration:none; font-weight:bold;">✕ Rechazar</a>
+      </div>
+    `;
+  }
 
   await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -40,15 +64,15 @@ Deno.serve(async (req) => {
               <p>👤 <strong>Organizador:</strong> ${organizer || "No especificado"}</p>
               <p>📞 <strong>Contacto:</strong> ${contact || "No especificado"}</p>
             </div>
-            <p style="color: #555;">Para aprobar o rechazar este evento, ingresa a Supabase → Table Editor → events y cambia el campo <strong>estado</strong> a <strong>aprobado</strong> o <strong>rechazado</strong>.</p>
-            <a href="https://supabase.com/dashboard/project/jtbqaqugnqkympwnfsod/editor" style="display: inline-block; background: #C8860A; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Ir a Supabase →</a>
+            ${actionButtons}
+            <p style="color: #999; font-size:12px; margin-top:20px;">Si los botones no funcionan, entra a Supabase → Table Editor → events y cambia el campo estado manualmente.</p>
           </div>
         </div>
       `,
     }),
   });
 
-  return new Response(JSON.stringify({ message: "Alerta enviada" }), { 
+  return new Response(JSON.stringify({ message: "Alerta enviada" }), {
     status: 200,
     headers: { ...corsHeaders, "Content-Type": "application/json" }
   });
