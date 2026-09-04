@@ -4,7 +4,7 @@ import { supabase } from "./supabase";
 import { registrarClic } from "./registrarClic";
 import { initGA, logPageView, trackEvent } from "./analytics";
 import { esGratis, formatPriceLabel } from "./priceLabel";
-import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette, Megaphone, MoreHorizontal, Store, HelpCircle, Info, SlidersHorizontal, ChevronDown } from "lucide-react";
+import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette, Megaphone, MoreHorizontal, Store, HelpCircle, Info, SlidersHorizontal, ChevronDown, Armchair, Speaker, Tent, MonitorPlay, UtensilsCrossed, Camera, Sofa, Truck, ShieldCheck, Wheat, Users } from "lucide-react";
 import { translations } from "./translations";
 import EventoPage from "./EventoPage";
 import OrganizadorPage from "./OrganizadorPage";
@@ -91,6 +91,22 @@ const INTENCIONES_CONFIG = [
 ];
 
 const ADMIN_TAGS = ["Destacado", "Últimas entradas", "Agotado"]; // asignables manualmente
+
+// Copia local de ProveedoresPage.jsx (TIPO_ICON/TIPO_COLORS) — no se exportan
+// desde ahí, mismo patrón de duplicación que ese archivo ya usa para sus copias
+// de utilidades de App.jsx. Solo para la tarjeta de proveedor destacado del home.
+const PROVIDER_TIPO_ICON = {
+  "Sillas y Mesas": Armchair, "Sonido e Iluminación": Speaker, "Carpas y Toldos": Tent,
+  "Pantallas y Video": MonitorPlay, "Catering": UtensilsCrossed, "Decoración": Palette,
+  "Fotografía y Video": Camera, "Mobiliario Lounge": Sofa, "Transporte": Truck, "Seguridad": ShieldCheck,
+  "Producción Local, Artesanal y de Origen": Wheat, "Personal: Hostess, Meseros, Bartenders y Recreacionistas": Users,
+};
+const PROVIDER_TIPO_COLORS = {
+  "Sillas y Mesas": "#B45309", "Sonido e Iluminación": "#7C3AED", "Carpas y Toldos": "#0369A1",
+  "Pantallas y Video": "#2563EB", "Catering": "#C2410C", "Decoración": "#DB2777",
+  "Fotografía y Video": "#059669", "Mobiliario Lounge": "#9333EA", "Transporte": "#16A34A", "Seguridad": "#DC2626",
+  "Producción Local, Artesanal y de Origen": "#65A30D", "Personal: Hostess, Meseros, Bartenders y Recreacionistas": "#0891B2",
+};
 
 const slugify = (str) =>
   str?.toLowerCase()
@@ -625,6 +641,7 @@ export default function App() {
   const [eventClickSearchResults, setEventClickSearchResults] = useState(null);
   const [eventClickSearchLoading, setEventClickSearchLoading] = useState(false);
   const eventClickSearchTimeout = useRef(null);
+  const [featuredProveedor, setFeaturedProveedor] = useState(null);
   const [orgClicksRange, setOrgClicksRange] = useState("30d");
   const [orgClicksData, setOrgClicksData] = useState(null);
   const [orgClicksLoading, setOrgClicksLoading] = useState(false);
@@ -759,6 +776,16 @@ export default function App() {
     setLoading(false);
   };
 
+  // Proveedor destacado del home: solo el marcado a mano en Table Editor
+  // (estado=aprobado AND destacado=true). Sin fallback aleatorio — si ninguno
+  // está marcado, la sección simplemente no se renderiza (ver plan acordado).
+  const fetchFeaturedProveedor = async () => {
+    const { data } = await supabase.from("proveedores")
+      .select("id, nombre, tipo_servicio, zona, descripcion, image_url")
+      .eq("estado", "aprobado").eq("destacado", true).limit(1);
+    setFeaturedProveedor(data && data[0] ? data[0] : null);
+  };
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -785,6 +812,7 @@ export default function App() {
     });
     fetchEvents();
     fetchStats();
+    fetchFeaturedProveedor();
     supabase.from("page_views").insert({}).then(() => {});
     return () => subscription.unsubscribe();
   }, []);
@@ -1816,6 +1844,55 @@ export default function App() {
                 {t.organizerBannerBtn}
               </button>
             </div>
+
+            {featuredProveedor && (() => {
+              const p = featuredProveedor;
+              const Icon = PROVIDER_TIPO_ICON[p.tipo_servicio] || Store;
+              const color = PROVIDER_TIPO_COLORS[p.tipo_servicio] || "var(--gold)";
+              return (
+                <div
+                  onClick={() => {
+                    trackEvent({ action: "click_proveedor_destacado", category: "Conversión", label: p.nombre });
+                    navigate("/proveedores");
+                  }}
+                  style={{
+                    background: "var(--surface)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 16,
+                    margin: "16px auto",
+                    maxWidth: 1080,
+                    overflow: "hidden",
+                    cursor: "pointer",
+                    display: "flex",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <div style={{
+                    width: 160, height: 160, flexShrink: 0, position: "relative",
+                    background: `linear-gradient(135deg, ${color}22, ${color}44)`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    {p.image_url
+                      ? <img src={p.image_url} alt={p.nombre} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                      : <Icon size={44} color={color} strokeWidth={1.5} />
+                    }
+                  </div>
+                  <div style={{ flex: "1 1 260px", minWidth: 0, padding: "16px 20px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 6 }}>
+                    <span style={{ display: "inline-flex", alignSelf: "flex-start", alignItems: "center", gap: 5, background: "rgba(200,134,10,0.12)", color: "var(--gold)", padding: "3px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700 }}>
+                      <Store size={11} />{t.featuredProviderBadge}
+                    </span>
+                    <div style={{ fontSize: 17, fontWeight: 700, color: "var(--text)" }}>{p.nombre}</div>
+                    <span style={{ display: "inline-block", alignSelf: "flex-start", background: `${color}1a`, color, padding: "2px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700 }}>{p.tipo_servicio}</span>
+                    {p.descripcion && (
+                      <div style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.5 }}>
+                        {p.descripcion.length > 120 ? p.descripcion.slice(0, 120).trimEnd() + "…" : p.descripcion}
+                      </div>
+                    )}
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--gold)", marginTop: 4 }}>{t.featuredProviderBtn}</div>
+                  </div>
+                </div>
+              );
+            })()}
 
             <div style={{
               background: "var(--surface2)",
