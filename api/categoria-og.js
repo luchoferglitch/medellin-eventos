@@ -70,6 +70,23 @@ const SLUG_TO_CATEGORY = Object.fromEntries(
   Object.keys(CATEGORY_CONTENT).map((cat) => [slugify(cat), cat])
 );
 
+// Mismas imágenes que usa el grid de categorías del home (src/App.jsx, imports
+// cat-musica.jpg etc. de src/assets/) — copiadas a public/ porque este archivo
+// corre en el runtime edge de Vercel y necesita una URL estable, no el nombre
+// hasheado que le da Vite en cada build a los assets importados desde src/.
+const CATEGORY_IMAGE = {
+  "Música": "cat-musica.jpg",
+  "Arte": "cat-arte.jpg",
+  "Comedia": "cat-comedia.jpg",
+  "Tech": "cat-tech.jpg",
+  "Gastronomía": "cat-gastronomia.jpg",
+  "Baile": "cat-baile.jpg",
+  "Deportes": "cat-deportes.jpg",
+  "Teatro": "cat-teatro.jpg",
+  "Bienestar": "cat-bienestar.jpg",
+  "Académicos": "cat-academicos.jpg",
+};
+
 // Tope de eventos listados en el body — categorías grandes (Música tiene más
 // de 100) no necesitan el listado completo para que un bot entienda de qué
 // trata la página; con "representativos" alcanza (pedido explícito).
@@ -127,6 +144,7 @@ export default async function handler(req) {
   const content = CATEGORY_CONTENT[catName];
   const title = esc(`${content.heading} — Medellín Vibra`);
   const description = esc(content.metaDescription);
+  const image = `${DOMINIO}/${CATEGORY_IMAGE[catName]}`;
 
   const bloque = `
   <title>${title}</title>
@@ -134,9 +152,16 @@ export default async function handler(req) {
   <link rel="canonical" href="${canonical}" />
   <meta property="og:title" content="${title}" />
   <meta property="og:description" content="${description}" />
+  <meta property="og:image" content="${image}" />
+  <meta property="og:image:secure_url" content="${image}" />
+  <meta property="og:image:type" content="image/jpeg" />
   <meta property="og:url" content="${canonical}" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Medellín Vibra" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${title}" />
+  <meta name="twitter:description" content="${description}" />
+  <meta name="twitter:image" content="${image}" />
 `;
 
   const listaEventos = events

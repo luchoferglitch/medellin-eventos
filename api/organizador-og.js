@@ -7,6 +7,7 @@
 const SUPABASE_URL = "https://jtbqaqugnqkympwnfsod.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0YnFhcXVnbnFreW1wd25mc29kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODUzMzQsImV4cCI6MjA5MzA2MTMzNH0.3tHT9CVRhboFrC3pTNMMQ-i2GeEPv_nUkG4d-hPuSdc";
 const DOMINIO = "https://www.medellinvibra.co";
+const IMAGEN_DEFAULT = "https://pub-c5ba255ea192436da56e91e3ef3ecfa5.r2.dev/default-fallback-medellin";
 
 export const config = { runtime: "edge" };
 
@@ -52,7 +53,7 @@ export default async function handler(req) {
   let organizerName = "";
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/events?estado=in.(aprobado,archivado)&organizer_name=not.is.null&select=id,title,date,fecha_real,fecha_fin,organizer_name&order=fecha_real.asc`,
+      `${SUPABASE_URL}/rest/v1/events?estado=in.(aprobado,archivado)&organizer_name=not.is.null&select=id,title,date,fecha_real,fecha_fin,organizer_name,image_url&order=fecha_real.asc`,
       { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
     );
     const data = await res.json();
@@ -80,15 +81,37 @@ export default async function handler(req) {
       : `Eventos de ${organizerName} en Medellín — agenda cultural de Medellín Vibra. ${events.length} eventos publicados.`
   );
 
+  // Imagen OG: la del evento más próximo (o, si ya no hay ninguno por venir, la
+  // del más reciente que ya pasó) que sí tenga imagen — mismo criterio
+  // upcoming/past que ya usa src/OrganizadorPage.jsx. Solo si NINGÚN evento del
+  // organizador tiene imagen se cae al fallback genérico del sitio.
+  const ahora = new Date();
+  const proximos = events
+    .filter((e) => e.fecha_real && new Date(e.fecha_real) >= ahora)
+    .sort((a, b) => new Date(a.fecha_real) - new Date(b.fecha_real));
+  const pasados = events
+    .filter((e) => e.fecha_real && new Date(e.fecha_real) < ahora)
+    .sort((a, b) => new Date(b.fecha_real) - new Date(a.fecha_real));
+  const sinFecha = events.filter((e) => !e.fecha_real);
+  const eventoConImagen = [...proximos, ...pasados, ...sinFecha].find((e) => e.image_url);
+  const image = eventoConImagen ? eventoConImagen.image_url : IMAGEN_DEFAULT;
+
   const bloque = `
   <title>${title}</title>
   <meta name="description" content="${description}" />
   <link rel="canonical" href="${canonical}" />
   <meta property="og:title" content="${title}" />
   <meta property="og:description" content="${description}" />
+  <meta property="og:image" content="${esc(image)}" />
+  <meta property="og:image:secure_url" content="${esc(image)}" />
+  <meta property="og:image:type" content="image/jpeg" />
   <meta property="og:url" content="${canonical}" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Medellín Vibra" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${title}" />
+  <meta name="twitter:description" content="${description}" />
+  <meta name="twitter:image" content="${esc(image)}" />
 `;
 
   // Lista de eventos del organizador — solo título + fecha, suficiente para
