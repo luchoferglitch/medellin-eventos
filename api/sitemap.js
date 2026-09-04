@@ -102,6 +102,15 @@ export default async function handler(_req) {
     <lastmod>${today}</lastmod>
   </url>`),
 
+    // Landing para organizadores — página estática de captación, mismo criterio
+    // de prioridad que /proveedores: contenido de soporte, no compite con /hoy.
+    `  <url>
+    <loc>${BASE_URL}/para-organizadores</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <lastmod>${today}</lastmod>
+  </url>`,
+
     // Directorio de proveedores — contenido de soporte, no el producto principal
     // (ver CLAUDE.md, sección SEO): prioridad baja a propósito, no compite con /hoy.
     `  <url>
