@@ -625,6 +625,9 @@ export default function App() {
   const [eventClickSearchResults, setEventClickSearchResults] = useState(null);
   const [eventClickSearchLoading, setEventClickSearchLoading] = useState(false);
   const eventClickSearchTimeout = useRef(null);
+  const [orgClicksRange, setOrgClicksRange] = useState("30d");
+  const [orgClicksData, setOrgClicksData] = useState(null);
+  const [orgClicksLoading, setOrgClicksLoading] = useState(false);
   const [subEmail, setSubEmail] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [showStickyFooter, setShowStickyFooter] = useState(false);
@@ -1206,6 +1209,48 @@ export default function App() {
     setAdminStats({ byEstado, byCat, byZona, byMes, topOrgs, totalSubs: totalSubs || 0, total: allEvents.length, totalClicks, clicksByPage, clicksByBoleteria, topClickedEvents, allClickedEventIds });
   };
 
+  // Reporte de desempeño por organizador (clics agrupados por events.organizer_name, mismo join
+  // que ya usa topOrgs). Rango de fecha filtra clicked_at; "all" trae el histórico completo.
+  const fetchOrgClicks = async (range) => {
+    setOrgClicksLoading(true);
+    let query = supabase.from("clicks").select("event_id, clicked_at");
+    if (range !== "all") {
+      const days = range === "7d" ? 7 : 30;
+      const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+      query = query.gte("clicked_at", since);
+    }
+    const [{ data: clicksData }, { data: eventsData }] = await Promise.all([
+      query,
+      supabase.from("events").select("id, organizer_name"),
+    ]);
+    const orgById = {};
+    (eventsData || []).forEach(e => { orgById[e.id] = e.organizer_name || null; });
+    const byOrg = {};
+    let sinOrganizerClicks = 0;
+    const sinOrganizerEventIds = new Set();
+    (clicksData || []).forEach(c => {
+      const org = c.event_id ? orgById[c.event_id] : null;
+      if (!org) {
+        sinOrganizerClicks++;
+        if (c.event_id) sinOrganizerEventIds.add(c.event_id);
+        return;
+      }
+      if (!byOrg[org]) byOrg[org] = { clicks: 0, eventIds: new Set() };
+      byOrg[org].clicks++;
+      byOrg[org].eventIds.add(c.event_id);
+    });
+    const rows = Object.entries(byOrg)
+      .map(([organizer, v]) => ({ organizer, clicks: v.clicks, eventCount: v.eventIds.size }))
+      .sort((a, b) => b.clicks - a.clicks);
+    setOrgClicksData({ rows, sinOrganizerClicks, sinOrganizerEventCount: sinOrganizerEventIds.size });
+    setOrgClicksLoading(false);
+  };
+
+  const handleOrgClicksRangeChange = (range) => {
+    setOrgClicksRange(range);
+    fetchOrgClicks(range);
+  };
+
   const handleLoadMoreTopEvents = async () => {
     if (!adminStats) return;
     const nextIds = adminStats.allClickedEventIds.slice(topEventsShown, topEventsShown + 20);
@@ -1407,7 +1452,7 @@ export default function App() {
   }, [activeTab, filtered]);
 
   useEffect(() => {
-    if (activeTab === "admin" && isAdmin) { fetchPendingEvents(); fetchAdminStats(); }
+    if (activeTab === "admin" && isAdmin) { fetchPendingEvents(); fetchAdminStats(); fetchOrgClicks(orgClicksRange); }
   }, [activeTab]);
 
   useEffect(() => {
@@ -2213,7 +2258,7 @@ export default function App() {
 
             <div style={{display:'flex', gap:8, background:'var(--surface2)', borderRadius:12, padding:4}}>
               {[["pending","⏳ Pendientes", pendingEvents.length],["approved","✅ Aprobados", events.length],["stats","📊 Stats", null]].map(([key,label,count])=>(
-                <button key={key} onClick={()=>{ setAdminSection(key); if(key==='stats') fetchAdminStats(); }}
+                <button key={key} onClick={()=>{ setAdminSection(key); if(key==='stats') { fetchAdminStats(); fetchOrgClicks(orgClicksRange); } }}
                   style={{flex:1, padding:'8px', borderRadius:9, border:'none', fontFamily:'var(--font-body)', fontWeight:700, fontSize:13, cursor:'pointer',
                     background: adminSection===key ? 'white' : 'transparent',
                     color: adminSection===key ? 'var(--text)' : 'var(--muted)',
@@ -2471,6 +2516,46 @@ export default function App() {
                             </div>
                           )}
                         </>
+                      )}
+                    </div>
+
+                    <div style={{background:"white", border:"1px solid var(--border)", borderRadius:14, padding:"16px"}}>
+                      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12, flexWrap:"wrap", gap:8}}>
+                        <div style={{fontWeight:700, fontSize:13, color:"var(--text)"}}>📊 Clics por organizador</div>
+                        <div style={{display:"flex", gap:6}}>
+                          {[["7d","7 días"],["30d","30 días"],["all","Todo"]].map(([val,label]) => (
+                            <button
+                              key={val}
+                              onClick={() => handleOrgClicksRangeChange(val)}
+                              style={{padding:"4px 12px", borderRadius:100, border:"1px solid var(--border)", background: orgClicksRange===val ? "var(--gold)" : "var(--surface2)", color: orgClicksRange===val ? "white" : "var(--text)", fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"var(--font-body)"}}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      {orgClicksLoading || !orgClicksData ? (
+                        <div style={{textAlign:"center", color:"var(--muted)", fontSize:13, padding:"16px 0"}}>Cargando...</div>
+                      ) : orgClicksData.rows.length === 0 ? (
+                        <div style={{textAlign:"center", color:"var(--muted)", fontSize:13, padding:"16px 0"}}>Sin clics en este rango.</div>
+                      ) : (
+                        <>
+                          {orgClicksData.rows.map((r, i) => (
+                            <div key={r.organizer} style={{display:"flex", alignItems:"center", gap:10, padding:"8px 0", borderBottom: i < orgClicksData.rows.length-1 ? "1px solid var(--border)" : "none"}}>
+                              <div style={{width:24, height:24, borderRadius:"50%", background:"var(--surface2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:700, color:"var(--muted)", flexShrink:0}}>{i+1}</div>
+                              <div style={{flex:1, fontSize:13, fontWeight:600, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{r.organizer}</div>
+                              <div style={{fontSize:11, color:"var(--muted)", flexShrink:0}}>{r.eventCount} {r.eventCount === 1 ? "evento" : "eventos"}</div>
+                              <div style={{background:"#059669", color:"white", borderRadius:100, padding:"2px 10px", fontSize:11, fontWeight:700, flexShrink:0}}>{clicksLabel(r.clicks)}</div>
+                            </div>
+                          ))}
+                        </>
+                      )}
+                      {!orgClicksLoading && orgClicksData && orgClicksData.sinOrganizerClicks > 0 && (
+                        <div style={{marginTop:12, paddingTop:12, borderTop:"1px dashed var(--border)", fontSize:11, color:"var(--muted)"}}>
+                          ⚠️ {orgClicksData.sinOrganizerClicks} {orgClicksData.sinOrganizerClicks===1?"clic":"clics"} sin organizador asignado
+                          {orgClicksData.sinOrganizerEventCount > 0 && ` (${orgClicksData.sinOrganizerEventCount} ${orgClicksData.sinOrganizerEventCount===1?"evento":"eventos"} sin organizer_name)`}
+                          {" "}— no incluidos en el ranking de arriba.
+                        </div>
                       )}
                     </div>
 
