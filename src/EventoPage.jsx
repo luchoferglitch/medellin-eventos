@@ -103,7 +103,7 @@ export default function EventoPage() {
 
   const mapEvent = (e) => ({
     id: e.id, emoji: e.emoji, title: e.title, cat: e.category,
-    date: e.date, time: e.time, place: e.place, price: e.price,
+    date: e.date, time: e.time, place: e.place, comoLlegar: e.como_llegar, price: e.price,
     tag: e.tag, desc: e.description, ticketPlatform: e.ticket_platform,
     link: e.ticket_link, organizerName: e.organizer_name,
     organizerContact: e.organizer_contact, imageUrl: e.image_url,
@@ -349,6 +349,13 @@ export default function EventoPage() {
             <MapPin size={15} style={{flexShrink:0}} />{t.viewOnMaps.replace("{place}", event.place)}
           </a>
         </div>
+
+        {event.comoLlegar && (
+          <div style={{background:'white', border:'1px solid #e5e1d8', borderRadius:14, padding:'16px 20px', marginBottom:16}}>
+            <div style={{fontSize:11, color:'#888', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:8}}>📍 Cómo llegar</div>
+            <p style={{fontSize:14, lineHeight:1.6, color:'#444', margin:0}}>{event.comoLlegar}</p>
+          </div>
+        )}
 
         {event.organizerName && (
           <div style={{background:'white', border:'1px solid #e5e1d8', borderRadius:14, padding:'16px 20px', marginBottom:16, display:'flex', gap:14, alignItems:'center'}}>

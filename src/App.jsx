@@ -1038,7 +1038,7 @@ export default function App() {
     showToast("✓ ¡Reserva confirmada! Revisa tu correo");
   };
 
-  const [form, setForm] = useState({ title:"", category:"Música", date:"", time:"", place:"", price:"", capacity:"", description:"", emoji:"🎵", tag:"", ticket_platform:"", ticket_link:"", organizer_name:"", organizer_contact:"", image_url:"", recurrencia:"", dia_semana:"", dia_mes:"" });
+  const [form, setForm] = useState({ title:"", category:"Música", date:"", time:"", place:"", como_llegar:"", price:"", capacity:"", description:"", emoji:"🎵", tag:"", ticket_platform:"", ticket_link:"", organizer_name:"", organizer_contact:"", image_url:"", recurrencia:"", dia_semana:"", dia_mes:"" });
   const [formLoading, setFormLoading] = useState(false);
 
   const handleFormChange = (field, value) => setForm(f => ({...f, [field]: value}));
@@ -1118,6 +1118,7 @@ export default function App() {
       fecha_fin: sanitize(form.date).slice(0, 100),
       time: sanitize(form.time).slice(0, 50),
       place: sanitize(form.place).slice(0, 300),
+      como_llegar: sanitize(form.como_llegar).slice(0, 300) || null,
       price: sanitize(form.price).slice(0, 50) || "Gratis",
       capacity: parseInt(form.capacity) || 0, attendees: 0,
       description: sanitize(form.description).slice(0, 2000),
@@ -1140,7 +1141,7 @@ export default function App() {
     
     trackEvent({ action: "publicar_evento", category: "Organizador", label: form.category });
     setShowCreate(false);
-    setForm({ title:"", category:"Música", date:"", time:"", place:"", price:"", capacity:"", description:"", emoji:"🎵", tag:"", ticket_platform:"", ticket_link:"", organizer_name:"", organizer_contact:"", image_url:"" });
+    setForm({ title:"", category:"Música", date:"", time:"", place:"", como_llegar:"", price:"", capacity:"", description:"", emoji:"🎵", tag:"", ticket_platform:"", ticket_link:"", organizer_name:"", organizer_contact:"", image_url:"" });
     if (esAdmin) {
       showToast("✓ ¡Evento publicado exitosamente!");
       fetchEvents();
@@ -2944,6 +2945,10 @@ export default function App() {
               <div className="form-group">
                 <label className="form-label">Lugar / Dirección *</label>
                 <input className="form-input" placeholder="ej. Parque Arví, Medellín" value={form.place} onChange={e=>handleFormChange("place",e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Cómo llegar (opcional)</label>
+                <input className="form-input" placeholder="ej. Cerca al Éxito de Envigado, entrada por la calle de atrás" maxLength={300} value={form.como_llegar} onChange={e=>handleFormChange("como_llegar",e.target.value)} />
               </div>
               <div className="form-row">
                 <div className="form-group">
