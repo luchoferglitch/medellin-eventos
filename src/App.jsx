@@ -3,11 +3,13 @@ import { Routes, Route, Link, useNavigate, useLocation } from "react-router-dom"
 import { supabase } from "./supabase";
 import { registrarClic } from "./registrarClic";
 import { initGA, logPageView, trackEvent } from "./analytics";
+import { esGratis, formatPriceLabel } from "./priceLabel";
 import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette, Megaphone, MoreHorizontal, Store, HelpCircle, Info } from "lucide-react";
 import { translations } from "./translations";
 import EventoPage from "./EventoPage";
 import OrganizadorPage from "./OrganizadorPage";
 import CategoriaPage from "./CategoriaPage";
+import GratisPage from "./GratisPage";
 import OrganizadoresLanding from "./OrganizadoresLanding";
 import ProveedoresPage from "./ProveedoresPage";
 import NosotrosPage from "./NosotrosPage";
@@ -345,6 +347,8 @@ const style = `
   .event-card-title { font-weight: 600; font-size: 15px; margin-bottom: 8px; line-height: 1.3; color: var(--text); }
   .event-card-info { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
   .event-card-info-row { display: flex; align-items: flex-start; gap: 6px; font-size: 13px; color: var(--muted); text-align: left; }
+  .event-card-organizer { display: block; font-size: 12px; color: var(--muted); text-decoration: none; margin-bottom: 10px; }
+  .event-card-organizer:hover { color: var(--gold); text-decoration: underline; }
   .event-card-footer { display: flex; justify-content: space-between; align-items: center; }
   .event-card-price { font-weight: 700; font-size: 15px; color: var(--gold); }
   .event-card-price.free { color: var(--green); }
@@ -479,7 +483,7 @@ const CATS = ["Todos","Música","Arte","Comedia","Tech","Gastronomía","Baile","
 // distinta del home/zona que maneja este componente. Sin este chequeo, el efecto de
 // App de más abajo corre en cada navegación —sin importar qué ruta esté activa— y
 // pisa el title/canonical que esas páginas ya fijaron, dejando siempre el del home.
-const STANDALONE_BASE_PATHS = ["/evento/", "/organizador/", "/categoria/", "/para-organizadores", "/proveedores", "/nosotros", "/preguntas-frecuentes", "/hoy", "/esta-semana", "/finde", "/admin/aprobacion-evento"];
+const STANDALONE_BASE_PATHS = ["/evento/", "/organizador/", "/categoria/", "/gratis", "/para-organizadores", "/proveedores", "/nosotros", "/preguntas-frecuentes", "/hoy", "/esta-semana", "/finde", "/admin/aprobacion-evento"];
 const isStandaloneBasePath = (basePath) =>
   STANDALONE_BASE_PATHS.some((p) => (p.endsWith("/") ? basePath.startsWith(p) : basePath === p));
 
@@ -880,15 +884,15 @@ export default function App() {
       e.date?.toLowerCase().includes(s) ||
       effectiveTagForSearch?.toLowerCase().includes(s) ||
       (synCat && e.cat === synCat) ||
-      (isSearchingFree && e.price === "Gratis") ||
+      (isSearchingFree && esGratis(e.price)) ||
       matchMes;
 
     let matchDate = true;
     if (activeDateFilter !== "Todos") {
       if (e.recurrencia) {
         matchDate = activeDateFilter !== "Gratis" && activeDateFilter !== "ConCobro";
-        if (activeDateFilter === "Gratis") matchDate = e.price === "Gratis";
-        else if (activeDateFilter === "ConCobro") matchDate = e.price !== "Gratis";
+        if (activeDateFilter === "Gratis") matchDate = esGratis(e.price);
+        else if (activeDateFilter === "ConCobro") matchDate = !esGratis(e.price);
         else {
           const proxima = getProximaFecha(e);
           if (proxima) {
@@ -901,9 +905,9 @@ export default function App() {
           }
         }
       } else if (activeDateFilter === "Gratis") {
-        matchDate = e.price === "Gratis";
+        matchDate = esGratis(e.price);
       } else if (activeDateFilter === "ConCobro") {
-        matchDate = e.price !== "Gratis";
+        matchDate = !esGratis(e.price);
       } else if (e.fechaReal) {
         const { today, weekendStart, weekendEnd, weekEnd, monthEnd } = getDateRange();
         const fin = e.fechaFin || e.fechaReal;
@@ -1525,6 +1529,7 @@ export default function App() {
             {[[t.tabExplore,"explore"],[t.navMap,"map"],[t.tabSaved,"saved"]].map(([label,tab]) => (
               <button key={tab} className={`nav-link ${activeTab===tab?"active":""}`} onClick={()=>{setActiveTab(tab); trackEvent({ action: "cambiar_tab", category: "Navegacion", label: tab });}}>{label}</button>
             ))}
+            <button className="nav-link" onClick={() => { navigate("/gratis"); trackEvent({ action: "click_nav_gratis", category: "Navegacion", label: "gratis" }); }}>{t.navGratis}</button>
             <button className="nav-link" onClick={() => { navigate("/proveedores"); trackEvent({ action: "click_nav_proveedores", category: "Navegacion", label: "proveedores" }); }}>{t.navProveedores}</button>
           </div>
           <div className="nav-actions">
@@ -1798,7 +1803,7 @@ export default function App() {
                             {ev.imageUrl && <img src={ev.imageUrl} alt={ev.title} style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover'}} />}
                             <div style={{position:'absolute', inset:0, background:'linear-gradient(to top, rgba(0,0,0,0.85) 40%, transparent 70%)'}} />
                             <div style={{position:'absolute', top:10, left:10, background:cfg.color, color:'white', padding:'3px 10px', borderRadius:100, fontSize:10, fontWeight:700}}>{t[CAT_LABEL_KEY[ev.cat]] || ev.cat}</div>
-                            {ev.price === "Gratis" && <div style={{position:'absolute', top:10, right:10, background:'#059669', color:'white', padding:'3px 10px', borderRadius:100, fontSize:10, fontWeight:700}}>Gratis</div>}
+                            {esGratis(ev.price) && <div style={{position:'absolute', top:10, right:10, background:'#059669', color:'white', padding:'3px 10px', borderRadius:100, fontSize:10, fontWeight:700}}>Gratis</div>}
                             <div style={{position:'absolute', bottom:0, left:0, right:0, padding:'14px 12px'}}>
                               <div style={{fontWeight:700, fontSize:13, color:'white', lineHeight:1.3, marginBottom:4, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden'}}>{ev.title}</div>
                               <div style={{fontSize:11, color:'rgba(255,255,255,0.7)'}}>{ev.date}</div>
@@ -1837,7 +1842,7 @@ export default function App() {
                           <div style={{overflow:'hidden'}}>
                             <div style={{fontWeight:600, fontSize:13, lineHeight:1.3, marginBottom:2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{ev.title}</div>
                             <div style={{fontSize:12, color:'var(--muted)'}}>{ev.date}</div>
-                            <div style={{fontSize:12, color:'var(--gold)', fontWeight:700}}>{ev.price}</div>
+                            <div style={{fontSize:12, color:'var(--gold)', fontWeight:700}}>{formatPriceLabel(ev.price)}</div>
                           </div>
                         </div>
                       ))}
@@ -1922,8 +1927,14 @@ export default function App() {
                             <div className="event-card-info-row" style={{color:'var(--gold)', fontWeight:700}}>📍 {distanciaKm(miUbicacion.lat, miUbicacion.lng, ev.lat, ev.lng).toFixed(1)} km de ti</div>
                           )}
                         </div>
+                        {ev.organizerName && (
+                          <Link to={`${langPrefix}/organizador/${slugify(ev.organizerName)}`} className="event-card-organizer"
+                            onClick={e => { e.stopPropagation(); trackEvent({ action: "click_organizador", category: "Navegacion", label: ev.organizerName }); }}>
+                            Por {ev.organizerName}
+                          </Link>
+                        )}
                         <div className="event-card-footer">
-                          <div className={`event-card-price ${ev.price==="Gratis"?"free":""}`}>{ev.price}</div>
+                          <div className={`event-card-price ${esGratis(ev.price)?"free":""}`}>{formatPriceLabel(ev.price)}</div>
                           <div style={{display:'flex',gap:6,position:'relative'}}>
                             {isAdmin && (
                               <>
@@ -1967,7 +1978,7 @@ export default function App() {
                       <div style={{flex:1, overflow:'hidden'}}>
                         <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8}}>
                           <div style={{fontWeight:700, fontSize:15, lineHeight:1.3}}>{ev.title}</div>
-                          <div className={`event-card-price ${ev.price==="Gratis"?"free":""}`} style={{flexShrink:0, fontSize:13}}>{ev.price}</div>
+                          <div className={`event-card-price ${esGratis(ev.price)?"free":""}`} style={{flexShrink:0, fontSize:13}}>{formatPriceLabel(ev.price)}</div>
                         </div>
                         <div style={{fontSize:12, color:'var(--muted)', marginTop:4, display:'flex', gap:12, flexWrap:'wrap'}}>
                           <span><Calendar size={11} style={{display:'inline',marginRight:3}} />{getDisplayDate(ev)}{ev.recurrencia && <span style={{marginLeft:4, fontSize:10, color:'var(--gold)', fontWeight:700}}>🔄</span>}</span>
@@ -1981,6 +1992,12 @@ export default function App() {
                             const cfg = TAGS_CONFIG[effTag];
                             return <span style={{background:cfg?.color||'var(--red)', padding:'2px 8px', borderRadius:100, fontSize:11, color:'white', fontWeight:700}}>{t[TAG_LABEL_KEY[effTag]] || effTag}</span>;
                           })()}
+                          {ev.organizerName && (
+                            <Link to={`${langPrefix}/organizador/${slugify(ev.organizerName)}`} style={{fontSize:11, color:'var(--muted)', textDecoration:'none'}}
+                              onClick={e => { e.stopPropagation(); trackEvent({ action: "click_organizador", category: "Navegacion", label: ev.organizerName }); }}>
+                              Por {ev.organizerName}
+                            </Link>
+                          )}
                         </div>
                       </div>
                       <button className="btn-reserve" style={{flexShrink:0, display:'inline-flex', alignItems:'center'}} onClick={e=>{e.stopPropagation();toggleSave(ev.id);}}><Heart size={15} fill={saved.includes(ev.id) ? "#E8353A" : "none"} color={saved.includes(ev.id) ? "#E8353A" : "currentColor"} /></button>
@@ -2059,8 +2076,14 @@ export default function App() {
                         <div className="event-card-info-row"><Calendar size={13} color="var(--muted)" /> {getDisplayDate(ev)}</div>
                         <div className="event-card-info-row"><MapPin size={13} color="var(--muted)" /> {ev.place}</div>
                       </div>
+                      {ev.organizerName && (
+                        <Link to={`${langPrefix}/organizador/${slugify(ev.organizerName)}`} className="event-card-organizer"
+                          onClick={e => { e.stopPropagation(); trackEvent({ action: "click_organizador", category: "Navegacion", label: ev.organizerName }); }}>
+                          Por {ev.organizerName}
+                        </Link>
+                      )}
                       <div className="event-card-footer">
-                        <div className={`event-card-price ${ev.price==="Gratis"?"free":""}`}>{ev.price}</div>
+                        <div className={`event-card-price ${esGratis(ev.price)?"free":""}`}>{formatPriceLabel(ev.price)}</div>
                         <button className="btn-reserve" onClick={e=>{e.stopPropagation();setSelectedEvent(ev);}}>{t.viewDetail}</button>
                       </div>
                     </div>
@@ -2487,6 +2510,9 @@ export default function App() {
           <div className="more-menu-overlay" onClick={()=>setShowMoreMenu(false)}>
             <div className="more-menu-panel" onClick={e=>e.stopPropagation()}>
               <div className="more-menu-handle" />
+              <button className="more-menu-item" onClick={()=>{setShowMoreMenu(false); navigate("/gratis"); trackEvent({ action: "click_nav_gratis", category: "Navegacion", label: "gratis_mas" });}}>
+                <Ticket size={20} />{t.navGratis}
+              </button>
               <button className="more-menu-item" onClick={()=>{setShowMoreMenu(false); navigate("/proveedores"); trackEvent({ action: "click_nav_proveedores", category: "Navegacion", label: "proveedores_mas" });}}>
                 <Store size={20} />{t.navProveedores}
               </button>
@@ -2814,6 +2840,7 @@ export default function App() {
           idioma visita /en/categoria/musica cae en homeAndZonaElement (home normal), no
           en 404, hasta que se traduzca. */}
       <Route path="/categoria/:slug" element={<CategoriaPage />} />
+      <Route path="/gratis" element={<GratisPage />} />
       <Route path="/para-organizadores" element={<OrganizadoresLanding />} />
       {/* Directorio de proveedores — página única con filtros, sin páginas individuales
           (ver CLAUDE.md, sección SEO). Sin variantes /en//pt//fr/ por ahora, mismo

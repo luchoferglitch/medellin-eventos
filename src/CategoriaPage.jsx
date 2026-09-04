@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "./supabase";
+import { trackEvent } from "./analytics";
+import { esGratis, formatPriceLabel } from "./priceLabel";
 
 const slugify = (str) =>
   str?.toLowerCase()
@@ -175,7 +177,13 @@ export default function CategoriaPage() {
           {ev.description && (
             <div style={{fontSize:12, color:'#666', lineHeight:1.5, marginBottom:8}}>{truncateDesc(ev.description)}</div>
           )}
-          <div style={{fontWeight:700, fontSize:13, color: ev.price === 'Gratis' ? '#059669' : '#C8860A'}}>{ev.price}</div>
+          {ev.organizer_name && (
+            <Link to={`/organizador/${slugify(ev.organizer_name)}`} style={{display:'block', fontSize:12, color:'#888', textDecoration:'none', marginBottom:8}}
+              onClick={e => { e.stopPropagation(); trackEvent({ action: "click_organizador", category: "Navegacion", label: ev.organizer_name }); }}>
+              Por {ev.organizer_name}
+            </Link>
+          )}
+          <div style={{fontWeight:700, fontSize:13, color: esGratis(ev.price) ? '#059669' : '#C8860A'}}>{formatPriceLabel(ev.price)}</div>
         </div>
       </div>
     );

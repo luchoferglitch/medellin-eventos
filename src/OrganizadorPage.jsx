@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "./supabase";
+import { esGratis, formatPriceLabel } from "./priceLabel";
 import { getLangFromPath, getLangPrefix } from "./lang";
 import { translations } from "./translations";
 import { CAT_LABEL_KEY } from "./categoryLabels";
@@ -139,7 +140,7 @@ export default function OrganizadorPage() {
           {ev.description && (
             <div style={{fontSize:12, color:'#666', lineHeight:1.5, marginBottom:8}}>{truncateDesc(ev.description)}</div>
           )}
-          <div style={{fontWeight:700, fontSize:13, color: ev.price === 'Gratis' ? '#059669' : '#C8860A'}}>{ev.price}</div>
+          <div style={{fontWeight:700, fontSize:13, color: esGratis(ev.price) ? '#059669' : '#C8860A'}}>{formatPriceLabel(ev.price)}</div>
         </div>
       </div>
     );

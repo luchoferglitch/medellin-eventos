@@ -128,6 +128,7 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     navProveedores: "Proveedores",
     navNosotros: "Quiénes somos",
     navParaOrganizadores: "Para organizadores",
+    navGratis: "Gratis",
 
     // Zone pages (i18n multilenguaje — Fase 1)
     zonaMedellinTitle: "Eventos en Medellín hoy y esta semana — Medellín Vibra",
@@ -480,6 +481,7 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     navProveedores: "Vendors",
     navNosotros: "About us",
     navParaOrganizadores: "For organizers",
+    navGratis: "Free",
 
     // Zone pages (i18n multilenguaje — Fase 1)
     zonaMedellinTitle: "Events in Medellín Today and This Week — Medellín Vibra",
@@ -824,6 +826,7 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     navProveedores: "Fornecedores",
     navNosotros: "Quem somos",
     navParaOrganizadores: "Para organizadores",
+    navGratis: "Grátis",
 
     // Zone pages (i18n multilenguaje — Fase 1)
     zonaMedellinTitle: "Eventos em Medellín Hoje e Esta Semana — Medellín Vibra",
@@ -1168,6 +1171,7 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     navProveedores: "Prestataires",
     navNosotros: "À propos",
     navParaOrganizadores: "Pour les organisateurs",
+    navGratis: "Gratuit",
 
     // Zone pages (i18n multilenguaje — Fase 1)
     zonaMedellinTitle: "Événements à Medellín Aujourd'hui et Cette Semaine — Medellín Vibra",

@@ -1,7 +1,9 @@
 ﻿import { useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "./supabase";
 import { registrarClic } from "./registrarClic";
+import { trackEvent } from "./analytics";
+import { esGratis, formatPriceLabel } from "./priceLabel";
 import { MapPin, Clock, ArrowLeft, Navigation, Share2 } from "lucide-react";
 import { translations } from "./translations";
 import { getLangFromPath, getLangPrefix, getLocale } from "./lang";
@@ -298,8 +300,8 @@ export default function HoyPage() {
                       {ev.distancia != null && <span style={{color:"#C8860A", fontWeight:600, marginLeft:6}}>· {ev.distancia.toFixed(1)} km</span>}
                     </div>
                     {ev.price && (
-                      <div className={`hoy-card-price ${ev.price === "Gratis" ? "gratis" : "pago"}`}>
-                        {ev.price}
+                      <div className={`hoy-card-price ${esGratis(ev.price) ? "gratis" : "pago"}`}>
+                        {formatPriceLabel(ev.price)}
                       </div>
                     )}
                     <div className="hoy-card-actions">
@@ -318,12 +320,13 @@ export default function HoyPage() {
                         </button>
                       )}
                       {ev.organizer_name && (
-                        <button
+                        <Link
                           className="hoy-btn hoy-btn-organizer"
-                          onClick={() => navigate(`${langPrefix}/organizador/${slugify(ev.organizer_name)}`)}
+                          to={`${langPrefix}/organizador/${slugify(ev.organizer_name)}`}
+                          onClick={() => trackEvent({ action: "click_organizador", category: "Navegacion", label: ev.organizer_name })}
                         >
                           {ev.organizer_name}
-                        </button>
+                        </Link>
                       )}
                     </div>
                   </div>

@@ -54,10 +54,21 @@ ${alternates}
 // import de src/, así que el número se duplica a propósito en vez de compartirlo.
 const MIN_EVENTS_FOR_CATEGORY_PAGE = 15;
 
+// Debe quedar igual a MIN_EVENTS_FOR_GRATIS_PAGE en src/GratisPage.jsx — mismo
+// criterio de duplicación que MIN_EVENTS_FOR_CATEGORY_PAGE de arriba.
+const MIN_EVENTS_FOR_GRATIS_PAGE = 10;
+
+// Misma regla esGratis que src/priceLabel.js — duplicada aquí porque este
+// archivo corre en el runtime edge de Vercel, sin import de src/.
+const esGratis = (price) => {
+  const l = (price || "").toLowerCase();
+  return l.startsWith("gratis") || l.startsWith("entrada libre");
+};
+
 export default async function handler(_req) {
   // Traer eventos aprobados
   const eventsRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/events?estado=eq.aprobado&select=id,title,organizer_name,fecha_real,category&order=fecha_real.asc`,
+    `${SUPABASE_URL}/rest/v1/events?estado=eq.aprobado&select=id,title,organizer_name,fecha_real,category,price&order=fecha_real.asc`,
     { headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` } }
   );
   const events = await eventsRes.json();
@@ -71,6 +82,10 @@ export default async function handler(_req) {
   const categoryCounts = {};
   events.forEach(e => { if (e.category) categoryCounts[e.category] = (categoryCounts[e.category] || 0) + 1; });
   const qualifyingCategories = Object.keys(categoryCounts).filter(cat => categoryCounts[cat] >= MIN_EVENTS_FOR_CATEGORY_PAGE);
+
+  // /gratis — mismo criterio de umbral que las categorías, calculado en vivo.
+  const gratisCount = events.filter(e => esGratis(e.price)).length;
+  const gratisQualifica = gratisCount >= MIN_EVENTS_FOR_GRATIS_PAGE;
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -101,6 +116,16 @@ export default async function handler(_req) {
     <priority>0.75</priority>
     <lastmod>${today}</lastmod>
   </url>`),
+
+    // /gratis — mismo patrón de umbral dinámico que las categorías, pero con
+    // nav-link propio (ver App.jsx): prioridad más alta que una categoría
+    // cualquiera, cercana a /hoy, por su volumen de contenido (~49% del catálogo).
+    ...(gratisQualifica ? [`  <url>
+    <loc>${BASE_URL}/gratis</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <lastmod>${today}</lastmod>
+  </url>`] : []),
 
     // Landing para organizadores — página estática de captación, mismo criterio
     // de prioridad que /proveedores: contenido de soporte, no compite con /hoy.
