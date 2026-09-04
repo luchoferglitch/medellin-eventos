@@ -17,7 +17,7 @@ const MAX_FALLOS = 3;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-anuncio-secret",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-anuncio-secret, x-cron-push-secret",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -258,6 +258,20 @@ Deno.serve(async (req) => {
 
   if (body.eventoId !== undefined) {
     return manejarAnuncio(req, body);
+  }
+
+  // Modo cron (frecuencia): antes solo confiaba en que nadie más conociera la
+  // URL — la anon key que llevaba el header Authorization es pública (está en
+  // el bundle del frontend), así que cualquiera podía disparar un envío real
+  // a los suscriptores. Mismo criterio que ANUNCIO_PUSH_SECRET en manejarAnuncio:
+  // un secret propio en un header, no la anon key.
+  const cronSecretEsperado = Deno.env.get("CRON_PUSH_SECRET");
+  const cronSecretRecibido = req.headers.get("x-cron-push-secret");
+  if (!cronSecretEsperado || cronSecretRecibido !== cronSecretEsperado) {
+    return new Response(JSON.stringify({ error: "No autorizado" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   const frecuencia = body.frecuencia;
