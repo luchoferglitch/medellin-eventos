@@ -88,6 +88,7 @@ const INTENCIONES_CONFIG = [
   { value: "al_aire_libre", labelKey: "intentionAlAireLibre" },
   { value: "con_ninos", labelKey: "intentionConNinos" },
   { value: "para_cita", labelKey: "intentionParaCita" },
+  { value: "despues_oficina", labelKey: "intentionDespuesOficina" },
 ];
 
 const ADMIN_TAGS = ["Destacado", "Últimas entradas", "Agotado"]; // asignables manualmente
