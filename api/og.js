@@ -1,6 +1,9 @@
-﻿// api/og.js — Meta tags dinámicos por evento (WhatsApp, Facebook, Twitter, Google)
-// Los bots (filtrados por user-agent en vercel.json) reciben el index.html real
-// del sitio con los meta tags del evento inyectados. Los humanos nunca pasan por aquí.
+﻿// api/og.js — Meta tags y contenido real por evento, para bots (WhatsApp,
+// Facebook, Twitter, Google, GPTBot, ClaudeBot, PerplexityBot, CCBot, etc.)
+// Los bots (filtrados por user-agent en vercel.json) reciben el index.html
+// real del sitio con los meta tags y un <body> con el contenido del evento
+// (título, fecha, lugar, precio, descripción, organizador, boletería)
+// inyectados. Los humanos nunca pasan por aquí.
 
 const SUPABASE_URL = "https://jtbqaqugnqkympwnfsod.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0YnFhcXVnbnFreW1wd25mc29kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODUzMzQsImV4cCI6MjA5MzA2MTMzNH0.3tHT9CVRhboFrC3pTNMMQ-i2GeEPv_nUkG4d-hPuSdc";
@@ -18,6 +21,16 @@ const esc = (s = "") =>
     .replace(/"/g, "&quot;")
     .replace(/\r?\n/g, " ")
     .trim();
+
+// Igual que esc(), pero para texto de body: conserva saltos de línea (como <br/>)
+// en vez de aplanarlos — la descripción completa del evento sí los necesita.
+const escBody = (s = "") =>
+  String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .trim()
+    .replace(/\r?\n/g, "<br/>");
 
 function slugToId(slug) {
   const parts = slug.split("-");
@@ -43,7 +56,7 @@ export default async function handler(req) {
   if (id) {
     try {
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/events?id=eq.${id}&estado=eq.aprobado&select=title,description,image_url,place,date,time,price,category,fecha_real,fecha_fin,organizer_name&limit=1`,
+        `${SUPABASE_URL}/rest/v1/events?id=eq.${id}&estado=eq.aprobado&select=title,description,image_url,place,date,time,price,category,fecha_real,fecha_fin,organizer_name,organizer_contact,ticket_link,ticket_platform&limit=1`,
         { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
       );
       const data = await res.json();
@@ -115,14 +128,51 @@ export default async function handler(req) {
   ${jsonLd}
 `;
 
-  // 6. Quitar los meta tags genéricos del shell e inyectar los del evento
+  // 6bis. Bloque de contenido real para el <body> — a diferencia de los meta
+  // tags de arriba (pensados para previews de link), esto es lo que un bot
+  // que solo lee HTML (GPTBot, ClaudeBot, PerplexityBot, CCBot, etc.) puede
+  // extraer como texto de la página. Nunca se le muestra a un humano: esta
+  // función solo se sirve tras el filtro de user-agent en vercel.json.
+  const fecha = [event.date, event.time].filter(Boolean).join(" · ");
+  const ticketHref = event.ticket_link ? esc(event.ticket_link) : null;
+  const ticketLabel = event.ticket_platform
+    ? `Comprar boletas en ${esc(event.ticket_platform)}`
+    : "Comprar boletas";
+
+  const organizerLine = event.organizer_name
+    ? `<p><strong>Organiza:</strong> ${esc(event.organizer_name)}${
+        event.organizer_contact
+          ? (String(event.organizer_contact).startsWith("http")
+              ? ` — <a href="${esc(event.organizer_contact)}">${esc(event.organizer_contact)}</a>`
+              : ` — ${esc(event.organizer_contact)}`)
+          : ""
+      }</p>`
+    : "";
+
+  const cuerpo = `
+  <div id="root"></div>
+  <main>
+    <h1>${esc(event.title)}</h1>
+    <p><strong>Fecha:</strong> ${esc(fecha || event.date || "Por confirmar")}</p>
+    <p><strong>Lugar:</strong> ${esc(event.place || "Por confirmar")}</p>
+    <p><strong>Precio:</strong> ${esc(event.price || "Consultar boletería")}</p>
+    ${event.description ? `<p>${escBody(event.description)}</p>` : ""}
+    ${organizerLine}
+    ${ticketHref ? `<p><a href="${ticketHref}">${ticketLabel}</a></p>` : ""}
+  </main>
+`;
+
+  // 7. Quitar los meta tags genéricos del shell e inyectar los del evento;
+  // el <div id="root"></div> del shell se reemplaza por sí mismo + el
+  // contenido real, para no interferir si algún bot sí ejecuta JS después.
   const html = shell
     .replace(/<title>[\s\S]*?<\/title>/i, "")
     .replace(/<meta\s+name="description"[^>]*>/gi, "")
     .replace(/<meta\s+property="og:[^"]*"[^>]*>/gi, "")
     .replace(/<meta\s+name="twitter:[^"]*"[^>]*>/gi, "")
     .replace(/<link\s+rel="canonical"[^>]*>/gi, "")
-    .replace(/<head>/i, `<head>${bloque}`);
+    .replace(/<head>/i, `<head>${bloque}`)
+    .replace(/<div id="root"><\/div>/i, cuerpo);
 
   return new Response(html, {
     headers: {
