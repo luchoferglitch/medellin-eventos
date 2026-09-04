@@ -58,6 +58,11 @@ const MIN_EVENTS_FOR_CATEGORY_PAGE = 15;
 // criterio de duplicación que MIN_EVENTS_FOR_CATEGORY_PAGE de arriba.
 const MIN_EVENTS_FOR_GRATIS_PAGE = 10;
 
+// Debe quedar igual a MIN_EVENTS_FOR_BARRIO_PAGE en src/BarrioPage.jsx — mismo
+// criterio de duplicación. Solo El Poblado califica hoy (19 eventos); Laureles/
+// Centro/Envigado aparecerán solos cuando crucen el umbral.
+const MIN_EVENTS_FOR_BARRIO_PAGE = 15;
+
 // Misma regla esGratis que src/priceLabel.js — duplicada aquí porque este
 // archivo corre en el runtime edge de Vercel, sin import de src/.
 const esGratis = (price) => {
@@ -68,7 +73,7 @@ const esGratis = (price) => {
 export default async function handler(_req) {
   // Traer eventos aprobados
   const eventsRes = await fetch(
-    `${SUPABASE_URL}/rest/v1/events?estado=eq.aprobado&select=id,title,organizer_name,fecha_real,category,price&order=fecha_real.asc`,
+    `${SUPABASE_URL}/rest/v1/events?estado=eq.aprobado&select=id,title,organizer_name,fecha_real,category,price,barrio&order=fecha_real.asc`,
     { headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` } }
   );
   const events = await eventsRes.json();
@@ -86,6 +91,11 @@ export default async function handler(_req) {
   // /gratis — mismo criterio de umbral que las categorías, calculado en vivo.
   const gratisCount = events.filter(e => esGratis(e.price)).length;
   const gratisQualifica = gratisCount >= MIN_EVENTS_FOR_GRATIS_PAGE;
+
+  // Barrios con eventos suficientes — mismo cálculo en vivo que las categorías.
+  const barrioCounts = {};
+  events.forEach(e => { if (e.barrio) barrioCounts[e.barrio] = (barrioCounts[e.barrio] || 0) + 1; });
+  const qualifyingBarrios = Object.keys(barrioCounts).filter(b => barrioCounts[b] >= MIN_EVENTS_FOR_BARRIO_PAGE);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -112,6 +122,14 @@ export default async function handler(_req) {
     // Páginas de categoría — solo español por ahora (ver CLAUDE.md, sección SEO)
     ...qualifyingCategories.map(cat => `  <url>
     <loc>${BASE_URL}/categoria/${slugify(cat)}</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.75</priority>
+    <lastmod>${today}</lastmod>
+  </url>`),
+
+    // Páginas de barrio — mismo patrón de umbral dinámico que las categorías.
+    ...qualifyingBarrios.map(b => `  <url>
+    <loc>${BASE_URL}/barrio/${slugify(b)}</loc>
     <changefreq>daily</changefreq>
     <priority>0.75</priority>
     <lastmod>${today}</lastmod>

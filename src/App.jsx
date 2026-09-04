@@ -9,6 +9,7 @@ import { translations } from "./translations";
 import EventoPage from "./EventoPage";
 import OrganizadorPage from "./OrganizadorPage";
 import CategoriaPage from "./CategoriaPage";
+import BarrioPage from "./BarrioPage";
 import GratisPage from "./GratisPage";
 import OrganizadoresLanding from "./OrganizadoresLanding";
 import ProveedoresPage from "./ProveedoresPage";
@@ -507,7 +508,7 @@ const CATS = ["Todos","Música","Arte","Comedia","Tech","Gastronomía","Baile","
 // distinta del home/zona que maneja este componente. Sin este chequeo, el efecto de
 // App de más abajo corre en cada navegación —sin importar qué ruta esté activa— y
 // pisa el title/canonical que esas páginas ya fijaron, dejando siempre el del home.
-const STANDALONE_BASE_PATHS = ["/evento/", "/organizador/", "/categoria/", "/gratis", "/para-organizadores", "/proveedores", "/nosotros", "/preguntas-frecuentes", "/hoy", "/esta-semana", "/finde", "/admin/aprobacion-evento"];
+const STANDALONE_BASE_PATHS = ["/evento/", "/organizador/", "/categoria/", "/barrio/", "/gratis", "/para-organizadores", "/proveedores", "/nosotros", "/preguntas-frecuentes", "/hoy", "/esta-semana", "/finde", "/admin/aprobacion-evento"];
 const isStandaloneBasePath = (basePath) =>
   STANDALONE_BASE_PATHS.some((p) => (p.endsWith("/") ? basePath.startsWith(p) : basePath === p));
 
@@ -3082,6 +3083,7 @@ export default function App() {
           idioma visita /en/categoria/musica cae en homeAndZonaElement (home normal), no
           en 404, hasta que se traduzca. */}
       <Route path="/categoria/:slug" element={<CategoriaPage />} />
+      <Route path="/barrio/:slug" element={<BarrioPage />} />
       <Route path="/gratis" element={<GratisPage />} />
       <Route path="/para-organizadores" element={<OrganizadoresLanding />} />
       {/* Directorio de proveedores — página única con filtros, sin páginas individuales
