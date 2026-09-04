@@ -137,6 +137,28 @@ por proveedor (ver sección SEO). Convenciones:
 
 ---
 
+## RLS: quién puede leer qué
+
+Las políticas SELECT de `events` y `proveedores` son:
+
+```
+estado = 'aprobado' OR auth.email() = 'luchofer2001@gmail.com'
+```
+
+Antes eran `true` (sin filtro) — cualquiera con la anon key podía leer filas
+`pendiente`/`rechazado` directo por la REST API de Supabase, sin pasar por el
+sitio, exponiendo WhatsApp/correo de proveedores no aprobados. Se corrigió
+sin tocar INSERT/UPDATE/DELETE (que ya tenían este mismo patrón de admin).
+
+El panel admin lee pendientes (`fetchPendingEvents` en `App.jsx`) con la
+sesión normal del navegador del admin (anon key + su JWT), nunca con
+service_role — `service_role` no toca `src/` en ningún punto, solo vive
+dentro de las Edge Functions vía `Deno.env.get(...)`. Por eso la excepción
+del admin en SELECT usa `auth.email()`, el mismo mecanismo ya probado en
+UPDATE/DELETE, en vez de forzar una Edge Function nueva con service_role.
+
+---
+
 ## Imágenes
 
 **Toda imagen se sube a R2 antes del INSERT.** El campo `image_url` nunca apunta a Supabase
