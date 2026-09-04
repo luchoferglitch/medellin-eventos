@@ -949,7 +949,7 @@ export default function App() {
     if (isFirstFilterRender.current) { isFirstFilterRender.current = false; return; }
     if (activeTab !== "home") return;
     resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [activeFilter, activeDateFilter, activeZona, fechaElegida, cercaDeMi]);
+  }, [activeFilter, activeDateFilter, activeZona, fechaElegida, cercaDeMi, activeIntenciones]);
 
   useEffect(() => {
     if (isFirstSearchRender.current) { isFirstSearchRender.current = false; return; }
