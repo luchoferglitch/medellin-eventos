@@ -642,6 +642,7 @@ export default function App() {
   const [eventClickSearchLoading, setEventClickSearchLoading] = useState(false);
   const eventClickSearchTimeout = useRef(null);
   const [featuredProveedor, setFeaturedProveedor] = useState(null);
+  const [favoritesCounts, setFavoritesCounts] = useState({});
   const [orgClicksRange, setOrgClicksRange] = useState("30d");
   const [orgClicksData, setOrgClicksData] = useState(null);
   const [orgClicksLoading, setOrgClicksLoading] = useState(false);
@@ -776,6 +777,19 @@ export default function App() {
     setLoading(false);
   };
 
+  // "Me interesa" — conteo público, una sola consulta agregada (RPC
+  // get_favorites_counts, ver migración add_favorites_public_counts) fusionada en
+  // memoria contra los eventos. Mismo patrón que clicksByEvent en fetchAdminStats:
+  // cero N+1, nunca una consulta por tarjeta renderizada.
+  const fetchFavoritesCounts = async () => {
+    const { data, error } = await supabase.rpc("get_favorites_counts");
+    if (!error && data) {
+      const map = {};
+      data.forEach(r => { map[r.event_id] = r.count; });
+      setFavoritesCounts(map);
+    }
+  };
+
   // Proveedor destacado del home: solo el marcado a mano en Table Editor
   // (estado=aprobado AND destacado=true). Sin fallback aleatorio — si ninguno
   // está marcado, la sección simplemente no se renderiza (ver plan acordado).
@@ -813,6 +827,7 @@ export default function App() {
     fetchEvents();
     fetchStats();
     fetchFeaturedProveedor();
+    fetchFavoritesCounts();
     supabase.from("page_views").insert({}).then(() => {});
     return () => subscription.unsubscribe();
   }, []);
@@ -998,13 +1013,18 @@ export default function App() {
     const numId = Number(id);
     if (saved.includes(numId)) {
       const { error } = await supabase.from("favorites").delete().eq("event_id", numId);
-      if (!error) { setSaved(s => s.filter(x => x !== numId)); showToast("Eliminado de guardados"); }
+      if (!error) {
+        setSaved(s => s.filter(x => x !== numId));
+        setFavoritesCounts(c => ({ ...c, [numId]: Math.max(0, (c[numId] || 1) - 1) }));
+        showToast("Eliminado de guardados");
+      }
       else showToast("⚠️ Error: " + error.message);
     } else {
       const { data, error } = await supabase.from("favorites").insert({ event_id: numId }).select();
       if (!error) {
         setSaved(s => [...s, numId]);
-        showToast("✓ Guardado en tu lista");
+        setFavoritesCounts(c => ({ ...c, [numId]: (c[numId] || 0) + 1 }));
+        showToast("✓ Marcado — le avisamos al organizador que te interesa");
         trackEvent({ action: "guardar_evento", category: "Interaccion", label: String(numId) });
       }
       else showToast("⚠️ Error: " + error.message);
@@ -2040,7 +2060,7 @@ export default function App() {
                       </div>
                       <div className="featured-actions">
                         <button className="featured-price" onClick={e=>{e.stopPropagation();setSelectedEvent(featuredEvent);}}>{featuredEvent.price === "Gratis" ? "Ver evento · Gratis" : featuredEvent.price === "Con cobro" ? "Reservar entradas" : `Reservar · ${featuredEvent.price}`}</button>
-                        <button className="featured-save" onClick={e=>{e.stopPropagation();toggleSave(featuredEvent.id);}}><Heart size={14} fill={saved.includes(featuredEvent.id) ? "#E8353A" : "none"} style={{marginRight:6, verticalAlign:'-2px'}} />{(saved.includes(featuredEvent.id) ? t.saved : t.save).replace("❤️ ","").replace("🤍 ","")}</button>
+                        <button className="featured-save" onClick={e=>{e.stopPropagation();toggleSave(featuredEvent.id);}}><Heart size={14} fill={saved.includes(featuredEvent.id) ? "#E8353A" : "none"} style={{marginRight:6, verticalAlign:'-2px'}} />{(saved.includes(featuredEvent.id) ? t.saved : t.save).replace("❤️ ","").replace("🤍 ","")}<span style={{opacity:0.75, marginLeft:5}}>· {favoritesCounts[featuredEvent.id] || 0}</span></button>
                       </div>
                     </div>
                   </div>
@@ -2129,7 +2149,7 @@ export default function App() {
                                 <button className="btn-reserve" style={{color:'var(--red)',borderColor:'rgba(232,53,58,0.3)'}} onClick={e=>handleDeleteEvent(ev.id,e)}><Trash2 size={14} /></button>
                               </>
                             )}
-                            <button className="btn-reserve" style={{display:'inline-flex', alignItems:'center', gap:5}} onClick={e=>{e.stopPropagation();toggleSave(ev.id);}}><Heart size={13} fill={saved.includes(ev.id) ? "#E8353A" : "none"} color={saved.includes(ev.id) ? "#E8353A" : "currentColor"} />{t.save.replace("🤍 ","")}</button>
+                            <button className="btn-reserve" style={{display:'inline-flex', alignItems:'center', gap:5}} onClick={e=>{e.stopPropagation();toggleSave(ev.id);}}><Heart size={13} fill={saved.includes(ev.id) ? "#E8353A" : "none"} color={saved.includes(ev.id) ? "#E8353A" : "currentColor"} />{(saved.includes(ev.id) ? t.saved : t.save).replace("❤️ ","").replace("🤍 ","")} <span style={{opacity:0.7}}>· {favoritesCounts[ev.id] || 0}</span></button>
                           </div>
                         </div>
                       </div>
@@ -2171,7 +2191,7 @@ export default function App() {
                           )}
                         </div>
                       </div>
-                      <button className="btn-reserve" style={{flexShrink:0, display:'inline-flex', alignItems:'center'}} onClick={e=>{e.stopPropagation();toggleSave(ev.id);}}><Heart size={15} fill={saved.includes(ev.id) ? "#E8353A" : "none"} color={saved.includes(ev.id) ? "#E8353A" : "currentColor"} /></button>
+                      <button className="btn-reserve" style={{flexShrink:0, display:'inline-flex', alignItems:'center', gap:4}} onClick={e=>{e.stopPropagation();toggleSave(ev.id);}}><Heart size={15} fill={saved.includes(ev.id) ? "#E8353A" : "none"} color={saved.includes(ev.id) ? "#E8353A" : "currentColor"} /><span style={{fontSize:12, opacity:0.7}}>{favoritesCounts[ev.id] || 0}</span></button>
                     </div>
                   ))}
                 </div>
@@ -2861,7 +2881,7 @@ export default function App() {
                     const texto = `🎉 *${selectedEvent.title}*\n📅 ${selectedEvent.date} · ${selectedEvent.time}\n📍 ${selectedEvent.place}\n💰 ${selectedEvent.price}\n\n👉 Más info en medellinvibra.co`;
                     window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
                   }}><MessageCircle size={20} /></button>
-                  <button className="btn-share" style={{display:'inline-flex', alignItems:'center', justifyContent:'center'}} onClick={()=>toggleSave(selectedEvent.id)}><Heart size={20} fill={saved.includes(selectedEvent.id) ? "#E8353A" : "none"} color={saved.includes(selectedEvent.id) ? "#E8353A" : "currentColor"} /></button>
+                  <button className="btn-share" style={{display:'inline-flex', alignItems:'center', justifyContent:'center', gap:5}} title={saved.includes(selectedEvent.id) ? t.saved : t.save} onClick={()=>toggleSave(selectedEvent.id)}><Heart size={20} fill={saved.includes(selectedEvent.id) ? "#E8353A" : "none"} color={saved.includes(selectedEvent.id) ? "#E8353A" : "currentColor"} /><span style={{fontSize:13, fontWeight:700}}>{favoritesCounts[selectedEvent.id] || 0}</span></button>
                   {isAdmin && (
                     <button className="btn-share" style={{color:'var(--red)',borderColor:'rgba(232,53,58,0.3)'}} onClick={e=>{handleDeleteEvent(selectedEvent.id,e);setSelectedEvent(null);}}><Trash2 size={18} /></button>
                   )}

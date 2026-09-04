@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "./supabase";
 import { registrarClic } from "./registrarClic";
 import SEO from "./components/SEO"; // 👈 IMPORTACIÓN DEL COMPONENTE SEO
-import { Calendar, Clock, MapPin, Banknote, User, Share2, CalendarPlus, Search, Star, PartyPopper, Drama } from "lucide-react";
+import { Calendar, Clock, MapPin, Banknote, User, Share2, CalendarPlus, Search, Star, PartyPopper, Drama, Heart } from "lucide-react";
 import { translations } from "./translations";
 import { getLangFromPath, getLangPrefix, getLocale } from "./lang";
 import { CAT_LABEL_KEY } from "./categoryLabels";
@@ -76,6 +76,10 @@ export default function EventoPage() {
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewDone, setReviewDone] = useState(false);
   const [hotelRecomendado, setHotelRecomendado] = useState(null);
+  const [interested, setInterested] = useState(false);
+  const [interestedCount, setInterestedCount] = useState(0);
+  const [toast, setToast] = useState(null);
+  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user || null));
@@ -179,6 +183,46 @@ export default function EventoPage() {
     await supabase.from("reviews").delete().eq("id", myReview.id);
     setMyReview(null); setRating(0); setComment(""); setReviewDone(false);
     fetchReviews(event.id);
+  };
+
+  // "Me interesa": conteo público vía la misma RPC agregada que usa el home
+  // (get_favorites_counts — solo event_id/count, nunca user_id). Como esta
+  // página solo muestra un evento, no hace falta filtrar el resultado server-side:
+  // es una sola consulta igual, no un query pesado.
+  useEffect(() => {
+    if (!event) return;
+    supabase.rpc("get_favorites_counts").then(({ data, error }) => {
+      if (!error && data) {
+        const row = data.find(r => r.event_id === event.id);
+        setInterestedCount(row ? row.count : 0);
+      }
+    });
+  }, [event]);
+
+  useEffect(() => {
+    if (!event || !user) { setInterested(false); return; }
+    supabase.from("favorites").select("id").eq("event_id", event.id).then(({ data }) => {
+      setInterested(!!(data && data.length > 0));
+    });
+  }, [event, user]);
+
+  const toggleInterested = async () => {
+    if (!user) { navigate("/"); return; }
+    if (interested) {
+      const { error } = await supabase.from("favorites").delete().eq("event_id", event.id);
+      if (!error) {
+        setInterested(false);
+        setInterestedCount(n => Math.max(0, n - 1));
+        showToast("Eliminado de guardados");
+      }
+    } else {
+      const { error } = await supabase.from("favorites").insert({ event_id: event.id });
+      if (!error) {
+        setInterested(true);
+        setInterestedCount(n => n + 1);
+        showToast("✓ Marcado — le avisamos al organizador que te interesa");
+      }
+    }
   };
 
   const avgRating = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : null;
@@ -335,6 +379,13 @@ export default function EventoPage() {
           {event.price === "Gratis" ? t.registerFree : event.link ? `${t.buy} · ${event.price} →` : t.seeMoreEventsBtn}
         </button>
 
+        <button onClick={toggleInterested}
+          style={{width:'100%', padding:'13px', background: interested ? '#fef2f2' : 'white', color: interested ? '#E8353A' : '#1a1a1a', border: `1px solid ${interested ? 'rgba(232,53,58,0.3)' : '#e5e1d8'}`, borderRadius:14, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit', marginBottom:12, display:'flex', alignItems:'center', justifyContent:'center', gap:8}}>
+          <Heart size={15} fill={interested ? '#E8353A' : 'none'} />
+          {(interested ? t.saved : t.save).replace('❤️ ','').replace('🤍 ','')}
+          <span style={{opacity:0.65}}>· {interestedCount}</span>
+        </button>
+
         <button onClick={() => { if (navigator.share) navigator.share({ title: event.title, url: canonicalUrl }); else navigator.clipboard.writeText(canonicalUrl); }}
           style={{width:'100%', padding:'13px', background:'white', color:'#1a1a1a', border:'1px solid #e5e1d8', borderRadius:14, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit', marginBottom:12}}>
           <Share2 size={15} style={{display:'inline', verticalAlign:'-2px', marginRight:6}} />{t.shareEventBtn}
@@ -444,6 +495,12 @@ export default function EventoPage() {
         <a href="/" style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:20, color:'#C8860A', textDecoration:'none', letterSpacing:1}}>MEDELLÍN VIBRA</a>
         <div style={{color:'#666', fontSize:12, marginTop:6}}>© {new Date().getFullYear()} medellinvibra.co</div>
       </div>
+
+      {toast && (
+        <div style={{position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)', background:'#059669', color:'white', padding:'12px 24px', borderRadius:100, fontWeight:700, fontSize:14, zIndex:300, boxShadow:'0 4px 20px rgba(0,0,0,0.15)', whiteSpace:'nowrap'}}>
+          {toast}
+        </div>
+      )}
     </div>
   );
 }
