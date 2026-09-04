@@ -1587,6 +1587,12 @@ export default function App() {
             ))}
             <button className="nav-link" onClick={() => { navigate("/gratis"); trackEvent({ action: "click_nav_gratis", category: "Navegacion", label: "gratis" }); }}>{t.navGratis}</button>
             <button className="nav-link" onClick={() => { navigate("/proveedores"); trackEvent({ action: "click_nav_proveedores", category: "Navegacion", label: "proveedores" }); }}>{t.navProveedores}</button>
+            {isAdmin && (
+              <button className={`nav-link ${activeTab==="admin"?"active":""}`} onClick={()=>{setActiveTab("admin"); trackEvent({ action: "cambiar_tab", category: "Navegacion", label: "admin" });}} style={{display:'inline-flex', alignItems:'center', gap:5}}>
+                <Settings size={13} />Admin
+                {pendingEvents.length > 0 && <span className="admin-badge" style={{position:'static', marginLeft:2}}>{pendingEvents.length}</span>}
+              </button>
+            )}
           </div>
           <div className="nav-actions">
             <div className="lang-switcher" role="group" aria-label="Idioma">
