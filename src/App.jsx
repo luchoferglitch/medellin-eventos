@@ -4,7 +4,7 @@ import { supabase } from "./supabase";
 import { registrarClic } from "./registrarClic";
 import { initGA, logPageView, trackEvent } from "./analytics";
 import { esGratis, formatPriceLabel } from "./priceLabel";
-import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette, Megaphone, MoreHorizontal, Store, HelpCircle, Info } from "lucide-react";
+import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette, Megaphone, MoreHorizontal, Store, HelpCircle, Info, SlidersHorizontal, ChevronDown } from "lucide-react";
 import { translations } from "./translations";
 import EventoPage from "./EventoPage";
 import OrganizadorPage from "./OrganizadorPage";
@@ -82,6 +82,13 @@ const TAG_LABEL_KEY = {
   "ESTA SEMANA": "tagLabelEstaSemanaCron",
   "PRÓXIMO": "tagLabelProximoCron",
 };
+
+// El valor filtra contra events.intenciones (array) en Supabase y nunca se traduce.
+const INTENCIONES_CONFIG = [
+  { value: "al_aire_libre", labelKey: "intentionAlAireLibre" },
+  { value: "con_ninos", labelKey: "intentionConNinos" },
+  { value: "para_cita", labelKey: "intentionParaCita" },
+];
 
 const ADMIN_TAGS = ["Destacado", "Últimas entradas", "Agotado"]; // asignables manualmente
 
@@ -605,6 +612,8 @@ export default function App() {
   const [activeDateFilter, setActiveDateFilter] = useState("Todos");
   const [fechaElegida, setFechaElegida] = useState(null);
   const [activeTagFilter, setActiveTagFilter] = useState(null);
+  const [activeIntenciones, setActiveIntenciones] = useState([]);
+  const [showMasFiltros, setShowMasFiltros] = useState(false);
   const [adminTagPicker, setAdminTagPicker] = useState(null);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("mv-dark") === "1");
   const [pendingEvents, setPendingEvents] = useState([]);
@@ -741,6 +750,7 @@ export default function App() {
         imageUrl: e.image_url, fechaReal: e.fecha_real, fechaFin: e.fecha_fin, zona: e.zona,
         createdAt: e.created_at, lat: e.lat, lng: e.lng,
         recurrencia: e.recurrencia, diaSemana: e.dia_semana, diaMes: e.dia_mes,
+        intenciones: e.intenciones || [],
       })));
     }
     setLoading(false);
@@ -926,7 +936,8 @@ export default function App() {
     const matchTag = !activeTagFilter || effectiveTag === activeTagFilter;
     const matchDistancia = !cercaDeMi || !miUbicacion || (e.lat != null && e.lng != null && distanciaKm(miUbicacion.lat, miUbicacion.lng, e.lat, e.lng) <= radioKm);
     const matchFechaElegida = !fechaElegida || eventoOcurreEnFecha(paraCalendario(e), fechaElegida);
-    return matchCat && matchSearch && matchDate && matchZona && matchTag && matchDistancia && matchFechaElegida;
+    const matchIntenciones = activeIntenciones.length === 0 || activeIntenciones.some(i => e.intenciones?.includes(i));
+    return matchCat && matchSearch && matchDate && matchZona && matchTag && matchDistancia && matchFechaElegida && matchIntenciones;
   }).sort((a, b) => {
     if (!cercaDeMi || !miUbicacion) return 0;
     const da = (a.lat != null && a.lng != null) ? distanciaKm(miUbicacion.lat, miUbicacion.lng, a.lat, a.lng) : Infinity;
@@ -1604,7 +1615,39 @@ export default function App() {
                   {label}
                 </button>
               ))}
+              <button
+                className={`filter-chip ${showMasFiltros||activeIntenciones.length>0?"active":""}`}
+                onClick={() => { setShowMasFiltros(v => !v); trackEvent({ action: "toggle_mas_filtros", category: "Filtros", label: String(!showMasFiltros) }); }}
+                aria-expanded={showMasFiltros}
+                style={{display:"inline-flex", alignItems:"center", gap:6}}
+              >
+                <SlidersHorizontal size={14} aria-hidden="true" />
+                {t.moreFiltersBtn}
+                {activeIntenciones.length > 0 && <span style={{fontSize:10,opacity:0.8}}>({activeIntenciones.length})</span>}
+                <ChevronDown size={14} aria-hidden="true" style={{transform: showMasFiltros ? "rotate(180deg)" : "none", transition:"transform 0.15s"}} />
+              </button>
             </div>
+
+            {showMasFiltros && (
+              <div className="filters-bar" style={{borderBottom:'none',paddingTop:0,paddingBottom:8}}>
+                {INTENCIONES_CONFIG.map(({value,labelKey}) => {
+                  const isActive = activeIntenciones.includes(value);
+                  return (
+                    <button
+                      key={value}
+                      className={`filter-chip ${isActive?"active":""}`}
+                      aria-pressed={isActive}
+                      onClick={() => {
+                        setActiveIntenciones(prev => isActive ? prev.filter(i => i !== value) : [...prev, value]);
+                        trackEvent({ action: "filtro_intencion", category: "Filtros", label: value });
+                      }}
+                    >
+                      {t[labelKey] || value}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             <div style={{padding:"0 24px 8px"}}>
               <button

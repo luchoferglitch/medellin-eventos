@@ -168,6 +168,10 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     // Lote 3a: nav, filtros, categorías, tags, secciones del home
     navMap: "Mapa",
     filterPaid: "De pago",
+    moreFiltersBtn: "Más filtros",
+    intentionAlAireLibre: "Al aire libre",
+    intentionConNinos: "Con niños",
+    intentionParaCita: "Para una cita",
     cercaDeMiDefault: "📍 Cerca de mí",
     cercaDeMiActive: "✕ Cerca de mí",
     cercaDeMiLoading: "Buscando ubicación...",
@@ -521,6 +525,10 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     // Lote 3a: nav, filtros, categorías, tags, secciones del home
     navMap: "Map",
     filterPaid: "Paid",
+    moreFiltersBtn: "More filters",
+    intentionAlAireLibre: "Outdoors",
+    intentionConNinos: "Kid-friendly",
+    intentionParaCita: "Date night",
     cercaDeMiDefault: "📍 Near me",
     cercaDeMiActive: "✕ Near me",
     cercaDeMiLoading: "Finding your location...",
@@ -866,6 +874,10 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     // Lote 3a: nav, filtros, categorías, tags, secciones del home
     navMap: "Mapa",
     filterPaid: "Pago",
+    moreFiltersBtn: "Mais filtros",
+    intentionAlAireLibre: "Ao ar livre",
+    intentionConNinos: "Com crianças",
+    intentionParaCita: "Para um encontro",
     cercaDeMiDefault: "📍 Perto de mim",
     cercaDeMiActive: "✕ Perto de mim",
     cercaDeMiLoading: "Buscando localização...",
@@ -1211,6 +1223,10 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     // Lote 3a: nav, filtros, categorías, tags, secciones del home
     navMap: "Carte",
     filterPaid: "Payant",
+    moreFiltersBtn: "Plus de filtres",
+    intentionAlAireLibre: "En plein air",
+    intentionConNinos: "En famille",
+    intentionParaCita: "En amoureux",
     cercaDeMiDefault: "📍 Près de moi",
     cercaDeMiActive: "✕ Près de moi",
     cercaDeMiLoading: "Recherche de votre position...",
