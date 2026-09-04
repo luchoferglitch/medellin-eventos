@@ -4,7 +4,7 @@ import { supabase } from "./supabase";
 import { registrarClic } from "./registrarClic";
 import { initGA, logPageView, trackEvent } from "./analytics";
 import { esGratis, formatPriceLabel } from "./priceLabel";
-import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette, Megaphone, MoreHorizontal, Store, HelpCircle, Info, SlidersHorizontal, ChevronDown, Armchair, Speaker, Tent, MonitorPlay, UtensilsCrossed, Camera, Sofa, Truck, ShieldCheck, Wheat, Users } from "lucide-react";
+import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette, Megaphone, MoreHorizontal, Store, HelpCircle, Info, SlidersHorizontal, ChevronDown, Armchair, Speaker, Tent, MonitorPlay, UtensilsCrossed, Camera, Sofa, Truck, ShieldCheck, Wheat, Users, BadgeCheck } from "lucide-react";
 import { translations } from "./translations";
 import EventoPage from "./EventoPage";
 import OrganizadorPage from "./OrganizadorPage";
@@ -795,7 +795,7 @@ export default function App() {
   // está marcado, la sección simplemente no se renderiza (ver plan acordado).
   const fetchFeaturedProveedor = async () => {
     const { data } = await supabase.from("proveedores")
-      .select("id, nombre, tipo_servicio, zona, descripcion, image_url")
+      .select("id, nombre, tipo_servicio, zona, descripcion, image_url, verificado")
       .eq("estado", "aprobado").eq("destacado", true).limit(1);
     setFeaturedProveedor(data && data[0] ? data[0] : null);
   };
@@ -1896,6 +1896,11 @@ export default function App() {
                       ? <img src={p.image_url} alt={p.nombre} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
                       : <Icon size={44} color={color} strokeWidth={1.5} />
                     }
+                    {p.verificado && (
+                      <div style={{ position: "absolute", top: 10, right: 10, background: "var(--gold)", color: "white", padding: "3px 9px", borderRadius: 100, fontSize: 10, fontWeight: 700, zIndex: 1, display: "flex", alignItems: "center", gap: 3 }}>
+                        <BadgeCheck size={11} />Verificado
+                      </div>
+                    )}
                   </div>
                   <div style={{ flex: "1 1 260px", minWidth: 0, padding: "16px 20px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 6 }}>
                     <span style={{ display: "inline-flex", alignSelf: "flex-start", alignItems: "center", gap: 5, background: "rgba(200,134,10,0.12)", color: "var(--gold)", padding: "3px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700 }}>

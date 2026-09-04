@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "./supabase";
 import {
   Armchair, Speaker, Tent, MonitorPlay, UtensilsCrossed, Palette, Camera, Sofa, Truck, ShieldCheck,
-  Store, Mail, MessageCircle, Globe, X, ImagePlus, Loader2, Wheat, Users,
+  Store, Mail, MessageCircle, Globe, X, ImagePlus, Loader2, Wheat, Users, BadgeCheck,
 } from "lucide-react";
 
 // Lista cerrada — igual patrón que `category` en events (ver CLAUDE.md). Cambiarla
@@ -283,6 +283,11 @@ export default function ProveedoresPage() {
             ? <img src={p.image_url} alt={p.nombre} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
             : <Icon size={40} color={color} strokeWidth={1.5} />
           }
+          {p.verificado && (
+            <div style={{ position: "absolute", top: 10, right: 10, background: gold, color: "white", padding: "3px 9px", borderRadius: 100, fontSize: 10, fontWeight: 700, zIndex: 1, display: "flex", alignItems: "center", gap: 3 }}>
+              <BadgeCheck size={11} />Verificado
+            </div>
+          )}
         </div>
         <div style={{ padding: "14px 16px" }}>
           <span style={{ display: "inline-block", background: `${color}1a`, color, padding: "2px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>{p.tipo_servicio}</span>
