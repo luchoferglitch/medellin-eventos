@@ -138,7 +138,12 @@ export default function ProveedoresPage() {
 
   const fetchProveedores = async () => {
     setLoading(true);
-    const { data } = await supabase.from("proveedores").select("*").eq("estado", "aprobado").order("created_at", { ascending: false });
+    // Columnas explícitas, no "*": este directorio se lee con la anon key sin login,
+    // así que cualquier columna interna (ej. referido_por_id) que se agregue a la
+    // tabla más adelante no debe filtrarse aquí solo por estar en select("*").
+    const { data } = await supabase.from("proveedores")
+      .select("id, nombre, tipo_servicio, zona, descripcion, contacto_whatsapp, contacto_email, sitio_web, image_url, verificado")
+      .eq("estado", "aprobado").order("created_at", { ascending: false });
     setProveedores(data || []);
     setLoading(false);
   };
