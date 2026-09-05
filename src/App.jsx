@@ -1043,7 +1043,7 @@ export default function App() {
     showToast("✓ ¡Reserva confirmada! Revisa tu correo");
   };
 
-  const [form, setForm] = useState({ title:"", category:"Música", date:"", time:"", place:"", como_llegar:"", price:"", capacity:"", description:"", emoji:"🎵", tag:"", ticket_platform:"", ticket_link:"", organizer_name:"", organizer_contact:"", image_url:"", recurrencia:"", dia_semana:"", dia_mes:"" });
+  const [form, setForm] = useState({ title:"", category:"Música", date:"", time:"", place:"", como_llegar:"", price:"", capacity:"", description:"", emoji:"🎵", tag:"", ticket_platform:"", ticket_link:"", organizer_name:"", organizer_contact:"", performer:"", image_url:"", recurrencia:"", dia_semana:"", dia_mes:"" });
   const [formLoading, setFormLoading] = useState(false);
 
   const handleFormChange = (field, value) => setForm(f => ({...f, [field]: value}));
@@ -1134,6 +1134,7 @@ export default function App() {
       color: "linear-gradient(135deg,#1a0a00,#2a1500)",
       organizer_name: sanitize(form.organizer_name).slice(0, 150),
       organizer_contact: sanitize(form.organizer_contact).slice(0, 150),
+      performer: sanitize(form.performer).slice(0, 150) || null,
       recurrencia: form.recurrencia || null,
       dia_semana: form.dia_semana !== "" ? parseInt(form.dia_semana) : null,
       dia_mes: form.dia_mes !== "" ? parseInt(form.dia_mes) : null,
@@ -1146,7 +1147,7 @@ export default function App() {
     
     trackEvent({ action: "publicar_evento", category: "Organizador", label: form.category });
     setShowCreate(false);
-    setForm({ title:"", category:"Música", date:"", time:"", place:"", como_llegar:"", price:"", capacity:"", description:"", emoji:"🎵", tag:"", ticket_platform:"", ticket_link:"", organizer_name:"", organizer_contact:"", image_url:"" });
+    setForm({ title:"", category:"Música", date:"", time:"", place:"", como_llegar:"", price:"", capacity:"", description:"", emoji:"🎵", tag:"", ticket_platform:"", ticket_link:"", organizer_name:"", organizer_contact:"", performer:"", image_url:"" });
     if (esAdmin) {
       showToast("✓ ¡Evento publicado exitosamente!");
       fetchEvents();
@@ -3010,6 +3011,11 @@ export default function App() {
                 <div className="form-group">
                   <label className="form-label">Contacto (WhatsApp, Instagram, correo)</label>
                   <input className="form-input" placeholder="ej. @productoraxyz o +57 300 123 4567" value={form.organizer_contact} onChange={e=>handleFormChange("organizer_contact",e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Artista o quién se presenta (opcional)</label>
+                  <input className="form-input" placeholder="ej. Nombre del artista, banda o comediante" value={form.performer} onChange={e=>handleFormChange("performer",e.target.value)} />
+                  <div style={{fontSize:11, color:'var(--muted)', marginTop:4}}>Distinto del organizador: quién se presenta en el escenario, no quién produce el evento.</div>
                 </div>
               </div>
 

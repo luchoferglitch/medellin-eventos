@@ -108,6 +108,7 @@ export default function EventoPage() {
     link: e.ticket_link, organizerName: e.organizer_name,
     organizerContact: e.organizer_contact, imageUrl: e.image_url,
     fechaReal: e.fecha_real, fechaFin: e.fecha_fin, createdAt: e.created_at, zona: e.zona,
+    performer: e.performer,
   });
 
   useEffect(() => {
@@ -259,11 +260,10 @@ export default function EventoPage() {
     location: { "@type": "Place", name: event.place, address: { "@type": "PostalAddress", addressLocality: "Medellín", addressRegion: "Antioquia", addressCountry: "CO" } },
     image: [eventImg],
     ...(event.desc ? { description: event.desc.slice(0, 300) } : {}),
-    // Sin "performer": no hay campo de artista/acto en la tabla, distinto de
-    // organizer_name (que suele ser el promotor o el venue, no quien se
-    // presenta) — reutilizarlo ahí sería un dato semánticamente incorrecto,
-    // no solo un campo recomendado vacío. Se omite hasta que exista un dato
-    // real que lo respalde.
+    // performer viene de events.performer (texto libre, quien se presenta) —
+    // distinto de organizer_name (promotor o venue). Se omite si no está
+    // lleno, en vez de inventar o reutilizar organizer_name en su lugar.
+    ...(event.performer ? { performer: { "@type": "Person", name: event.performer } } : {}),
     organizer: { "@type": "Organization", name: event.organizerName || "Medellín Vibra", url: event.organizerName ? `https://www.medellinvibra.co/organizador/${slugify(event.organizerName)}` : "https://www.medellinvibra.co" },
     offers: {
       "@type": "Offer",
