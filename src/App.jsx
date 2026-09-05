@@ -1265,7 +1265,19 @@ export default function App() {
   const fetchOrgClicks = async (range) => {
     setOrgClicksLoading(true);
     let query = supabase.from("clicks").select("event_id, clicked_at");
-    if (range !== "all") {
+    if (range === "mes-anterior") {
+      // Colombia no tiene horario de verano: el offset UTC-5 es fijo todo el año,
+      // así que basta un ajuste constante (no hace falta Intl/timeZone) para hallar
+      // los límites del mes calendario anterior en hora Colombia, sin depender de
+      // la zona horaria del navegador de quien mire el panel admin.
+      const BOGOTA_OFFSET_MS = 5 * 60 * 60 * 1000;
+      const nowBogota = new Date(Date.now() - BOGOTA_OFFSET_MS);
+      const y = nowBogota.getUTCFullYear();
+      const m = nowBogota.getUTCMonth();
+      const since = new Date(Date.UTC(y, m - 1, 1) + BOGOTA_OFFSET_MS).toISOString();
+      const until = new Date(Date.UTC(y, m, 1) + BOGOTA_OFFSET_MS).toISOString();
+      query = query.gte("clicked_at", since).lt("clicked_at", until);
+    } else if (range !== "all") {
       const days = range === "7d" ? 7 : 30;
       const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
       query = query.gte("clicked_at", since);
@@ -2634,7 +2646,7 @@ export default function App() {
                       <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12, flexWrap:"wrap", gap:8}}>
                         <div style={{fontWeight:700, fontSize:13, color:"var(--text)"}}>📊 Clics por organizador</div>
                         <div style={{display:"flex", gap:6}}>
-                          {[["7d","7 días"],["30d","30 días"],["all","Todo"]].map(([val,label]) => (
+                          {[["7d","7 días"],["30d","30 días"],["mes-anterior","Mes anterior"],["all","Todo"]].map(([val,label]) => (
                             <button
                               key={val}
                               onClick={() => handleOrgClicksRangeChange(val)}
