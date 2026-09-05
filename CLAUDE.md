@@ -192,9 +192,20 @@ Activas:
 - `alerta-proveedor` — mismo patrón que `alerta-evento`, pero para la tabla `proveedores`; lee `RESEND_API_KEY` de los secrets de Supabase (no la tiene escrita en código, a diferencia de `alerta-evento`)
 - `upload-imagen` — subida de imágenes desde el formulario público (`verify_jwt: true`)
 - `enviar-push` — notificaciones push a `push_subscriptions`. Por cron corre en modo `frecuencia`
-  (`diaria`/`semanal`/`destacados`, un query fijo y un texto genérico por cada una). Además tiene
+  (`diaria`/`semanal`/`destacados`, un query fijo y un texto genérico por cada una); el cron diario
+  (`push-diario`) corre a las 9:00 a.m. hora Colombia, igual que `recordatorio-diario`. Además tiene
   un modo `anuncio` para un push manual dedicado a un solo evento (festival, feria grande), fuera
   del ciclo de cron — pensado para casos como la Fiesta del Libro o Altavoz.
+
+**`cron.timezone` de este proyecto está en UTC**, no en hora Colombia — un schedule de pg_cron tipo
+`0 9 * * *` corre a las 9:00 UTC, no a las 9:00 a.m. Colombia. Para agendar algo a una hora Colombia
+dada hay que sumarle 5 horas antes de escribir el schedule (Colombia es UTC-5 fijo todo el año, sin
+horario de verano — verificado con `Intl`/IANA tz, no solo aritmética a mano). Este descuido hizo que
+`recordatorio-diario` y `push-diario` corrieran en la práctica a las 4:00 a.m. Colombia en vez de las
+9:00 a.m. documentadas, hasta que se corrigió el 2026-09-05 (schedule `0 14 * * *` en ambos, verificado
+después con `select schedule from cron.job`). `newsletter-semanal-viernes` (`0 13 * * 5` = 8:00 a.m.
+Colombia) siempre estuvo bien calculado y sirvió de referencia para el fix — si agregas o tocas un
+cron nuevo, parte de ahí.
 
 **La aprobación de eventos hoy es manual**: `alerta-evento` solo notifica por correo con un
 enlace al Table Editor de Supabase; el cambio de `estado` a `aprobado`/`rechazado` se hace ahí
