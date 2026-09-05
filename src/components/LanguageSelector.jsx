@@ -1,10 +1,17 @@
 import { LANG_PREFIXES } from "../lang";
+import { trackEvent } from "../analytics";
 
 const LANGS = ["es", ...LANG_PREFIXES];
 
+// Único punto de tracking para las 5 páginas standalone que usan estos dos
+// componentes (Evento, Organizador, Hoy, EstaSemana/Finde, Faq) — el selector
+// inline del home tiene su propio changeLang en App.jsx y dispara el mismo
+// evento por separado ahí.
+const trackCambioIdioma = (l) => trackEvent({ action: "cambiar_idioma", category: "Navegacion", label: l });
+
 const CHIP_THEMES = {
-  light: { bg: "#f5f3ef", border: "#e5e1d8", text: "#777", active: "#C8860A", activeText: "white" },
-  dark: { bg: "rgba(255,255,255,0.08)", border: "rgba(255,255,255,0.18)", text: "rgba(255,255,255,0.55)", active: "#C8860A", activeText: "white" },
+  light: { bg: "#f5f3ef", border: "#e5e1d8", text: "#444", active: "#C8860A", activeText: "white" },
+  dark: { bg: "rgba(255,255,255,0.08)", border: "rgba(255,255,255,0.18)", text: "rgba(255,255,255,0.75)", active: "#C8860A", activeText: "white" },
 };
 
 // Fila de 4 chips ES/EN/PT/FR — para headers con espacio de sobra
@@ -20,7 +27,7 @@ export function LanguageSelectorChips({ lang, onChange, theme = "light" }) {
         <button
           key={l}
           type="button"
-          onClick={() => onChange(l)}
+          onClick={() => { trackCambioIdioma(l); onChange(l); }}
           aria-pressed={lang === l}
           style={{
             padding: "6px 9px",
@@ -46,17 +53,21 @@ export function LanguageSelectorChips({ lang, onChange, theme = "light" }) {
 // (EventoPage, OrganizadorPage), donde reemplaza el spacer vacío que
 // balanceaba el wordmark centrado. Mismo patrón que los <select> de
 // radio (hoy-radio-select / rp-radio-select) ya usados en el sitio.
+// Borde y fondo con tinte dorado (antes: borde y fondo iguales al header
+// blanco de estas páginas, prácticamente invisible como control aparte —
+// EventoPage y OrganizadorPage son las de mayor tráfico real de las 6
+// páginas con selector, así que valía la pena reforzar el contraste aquí).
 export function LanguageSelectorCompact({ lang, onChange }) {
   return (
     <select
       aria-label="Idioma"
       value={lang}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(e) => { trackCambioIdioma(e.target.value); onChange(e.target.value); }}
       style={{
-        padding: "6px 6px",
+        padding: "6px 8px",
         borderRadius: 8,
-        border: "1px solid #e5e1d8",
-        background: "white",
+        border: "1.5px solid #C8860A",
+        background: "#FBF1DC",
         color: "#C8860A",
         fontWeight: 700,
         fontSize: 12,

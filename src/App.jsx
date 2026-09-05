@@ -192,8 +192,8 @@ const style = `
   .nav-logo { font-family: var(--font-display); font-size: 26px; letter-spacing: 1px; color: var(--gold); }
   .nav-logo span { color: var(--red); }
   .nav-actions { display: flex; gap: 10px; align-items: center; }
-  .lang-switcher { display: flex; gap: 2px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 3px; }
-  .lang-btn { padding: 6px 10px; border-radius: 6px; border: none; background: transparent; color: var(--muted); font-size: 14px; font-weight: 700; letter-spacing: 0.3px; cursor: pointer; font-family: var(--font-body); transition: all 0.15s ease; }
+  .lang-switcher { display: flex; gap: 2px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 3px; margin-right: 12px; }
+  .lang-btn { padding: 6px 10px; border-radius: 6px; border: none; background: transparent; color: var(--text); font-size: 14px; font-weight: 700; letter-spacing: 0.3px; cursor: pointer; font-family: var(--font-body); transition: all 0.15s ease; }
   .lang-btn:hover:not(.active) { color: var(--gold); }
   .lang-btn.active { background: var(--gold); color: white; }
   .nav-links { display: none; }
@@ -680,6 +680,7 @@ export default function App() {
   // El selector de idioma navega a la URL con prefijo correspondiente (Fase 1: home + 3 zonas).
   // Fuera de esas rutas (páginas todavía sin versión por idioma) cae al home del idioma elegido.
   const changeLang = (newLang) => {
+    trackEvent({ action: "cambiar_idioma", category: "Navegacion", label: newLang });
     const knownPaths = ["/", "/medellin", "/area-metropolitana", "/oriente-cercano"];
     const targetBase = knownPaths.includes(basePath) ? basePath : "/";
     const newPrefix = newLang === "es" ? "" : `/${newLang}`;
