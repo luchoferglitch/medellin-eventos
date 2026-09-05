@@ -15,6 +15,21 @@ webpush.setVapidDetails(
 const FRECUENCIAS_VALIDAS = ["diaria", "semanal", "destacados"];
 const MAX_FALLOS = 3;
 
+// Comparación constant-time: recorre siempre la longitud máxima de ambos strings
+// para que el tiempo de respuesta no filtre en qué byte difiere el secret recibido
+// del esperado (ataque de timing carácter por carácter).
+function timingSafeEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const aBytes = enc.encode(a);
+  const bBytes = enc.encode(b);
+  const len = Math.max(aBytes.length, bBytes.length);
+  let diff = aBytes.length ^ bBytes.length;
+  for (let i = 0; i < len; i++) {
+    diff |= (aBytes[i] ?? 0) ^ (bBytes[i] ?? 0);
+  }
+  return diff === 0;
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-anuncio-secret, x-cron-push-secret",
@@ -167,7 +182,7 @@ async function enviarATodos(subs: Sub[], payload: Record<string, unknown>, conte
 async function manejarAnuncio(req: Request, body: any) {
   const secretEsperado = Deno.env.get("ANUNCIO_PUSH_SECRET");
   const secretRecibido = req.headers.get("x-anuncio-secret");
-  if (!secretEsperado || secretRecibido !== secretEsperado) {
+  if (!secretEsperado || !timingSafeEqual(secretRecibido ?? "", secretEsperado)) {
     return new Response(JSON.stringify({ error: "No autorizado" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -267,7 +282,7 @@ Deno.serve(async (req) => {
   // un secret propio en un header, no la anon key.
   const cronSecretEsperado = Deno.env.get("CRON_PUSH_SECRET");
   const cronSecretRecibido = req.headers.get("x-cron-push-secret");
-  if (!cronSecretEsperado || cronSecretRecibido !== cronSecretEsperado) {
+  if (!cronSecretEsperado || !timingSafeEqual(cronSecretRecibido ?? "", cronSecretEsperado)) {
     return new Response(JSON.stringify({ error: "No autorizado" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

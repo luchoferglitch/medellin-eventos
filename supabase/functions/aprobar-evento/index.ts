@@ -10,6 +10,21 @@ async function sign(id: string, action: string): Promise<string> {
   return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+// Comparación constant-time: recorre siempre la longitud máxima de ambos strings
+// para que el tiempo de respuesta no filtre en qué byte difiere el token del
+// esperado (ataque de timing carácter por carácter).
+function timingSafeEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const aBytes = enc.encode(a);
+  const bBytes = enc.encode(b);
+  const len = Math.max(aBytes.length, bBytes.length);
+  let diff = aBytes.length ^ bBytes.length;
+  for (let i = 0; i < len; i++) {
+    diff |= (aBytes[i] ?? 0) ^ (bBytes[i] ?? 0);
+  }
+  return diff === 0;
+}
+
 // La página de confirmación vive en el sitio (Vercel), no acá: las respuestas GET de
 // Supabase Edge Functions llegan al navegador forzadas a Content-Type: text/plain a nivel
 // de gateway (Cloudflare) sin importar qué header ponga esta función — eso rompía el
@@ -32,7 +47,7 @@ Deno.serve(async (req: Request) => {
   }
 
   const expected = await sign(id, action);
-  if (expected !== token) {
+  if (!timingSafeEqual(expected, token)) {
     return redirect({ error: "invalido" });
   }
 
