@@ -792,14 +792,18 @@ export default function App() {
     }
   };
 
-  // Proveedor destacado del home: solo el marcado a mano en Table Editor
-  // (estado=aprobado AND destacado=true). Sin fallback aleatorio — si ninguno
-  // está marcado, la sección simplemente no se renderiza (ver plan acordado).
+  // Proveedor destacado del home: entre los marcados a mano en Table Editor con
+  // destacado=true Y vigentes (destacado_hasta >= hoy — puede haber varios a la
+  // vez, uno por categoría), se elige cualquiera al azar en el cliente. Si no hay
+  // ninguno vigente, la sección simplemente no se renderiza (ver plan acordado).
   const fetchFeaturedProveedor = async () => {
+    const BOGOTA_OFFSET_MS = 5 * 60 * 60 * 1000;
+    const hoyBogota = new Date(Date.now() - BOGOTA_OFFSET_MS).toISOString().slice(0, 10);
     const { data } = await supabase.from("proveedores")
-      .select("id, nombre, tipo_servicio, zona, descripcion, image_url, verificado")
-      .eq("estado", "aprobado").eq("destacado", true).limit(1);
-    setFeaturedProveedor(data && data[0] ? data[0] : null);
+      .select("id, nombre, tipo_servicio, zona, descripcion, image_url, verificado, destacado_hasta")
+      .eq("estado", "aprobado").eq("destacado", true).gte("destacado_hasta", hoyBogota);
+    const vigentes = data || [];
+    setFeaturedProveedor(vigentes.length ? vigentes[Math.floor(Math.random() * vigentes.length)] : null);
   };
 
   useEffect(() => {

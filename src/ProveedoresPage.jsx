@@ -51,6 +51,13 @@ const checkRateLimit = (key, maxAttempts = 3, windowMs = 60000) => {
   return true;
 };
 
+// Mismo offset fijo que ya usa App.jsx (fetchOrgClicks, rango "mes anterior"):
+// Colombia no tiene horario de verano, así que un ajuste constante de -5h basta
+// para saber la fecha calendario Bogotá de "hoy" sin importar la zona horaria
+// del navegador de quien mire el directorio.
+const hoyBogota = () => new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+const esDestacadoVigente = (p) => !!p.destacado && !!p.destacado_hasta && p.destacado_hasta >= hoyBogota();
+
 const waLink = (raw) => {
   const digits = (raw || "").replace(/[^\d]/g, "");
   if (!digits) return null;
@@ -142,16 +149,21 @@ export default function ProveedoresPage() {
     // así que cualquier columna interna (ej. referido_por_id) que se agregue a la
     // tabla más adelante no debe filtrarse aquí solo por estar en select("*").
     const { data } = await supabase.from("proveedores")
-      .select("id, nombre, tipo_servicio, zona, descripcion, contacto_whatsapp, contacto_email, sitio_web, image_url, verificado")
+      .select("id, nombre, tipo_servicio, zona, descripcion, contacto_whatsapp, contacto_email, sitio_web, image_url, verificado, destacado, destacado_hasta")
       .eq("estado", "aprobado").order("created_at", { ascending: false });
     setProveedores(data || []);
     setLoading(false);
   };
 
-  const filtered = proveedores.filter((p) =>
-    (filtroTipo === "Todos" || p.tipo_servicio === filtroTipo) &&
-    (filtroZona === "Todas" || p.zona === filtroZona)
-  );
+  const filtered = proveedores
+    .filter((p) =>
+      (filtroTipo === "Todos" || p.tipo_servicio === filtroTipo) &&
+      (filtroZona === "Todas" || p.zona === filtroZona)
+    )
+    // Destacados vigentes primero (dentro de su categoría, al filtrar por ella;
+    // en "Todos" simplemente suben al tope). El resto conserva el orden por
+    // fecha que ya trae la query (created_at desc).
+    .sort((a, b) => Number(esDestacadoVigente(b)) - Number(esDestacadoVigente(a)));
 
   const handleLogin = async () => {
     if (!checkRateLimit("proveedorLogin", 5, 300000)) { setAuthError("Demasiados intentos. Espera 5 minutos."); return; }
@@ -295,6 +307,11 @@ export default function ProveedoresPage() {
           )}
         </div>
         <div style={{ padding: "14px 16px" }}>
+          {esDestacadoVigente(p) && (
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(200,134,10,0.12)", color: gold, padding: "2px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700, marginBottom: 6 }}>
+              ⭐ Destacado
+            </div>
+          )}
           <span style={{ display: "inline-block", background: `${color}1a`, color, padding: "2px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700, marginBottom: 8 }}>{p.tipo_servicio}</span>
           <div style={{ fontWeight: 700, fontSize: 15, color: c.text, marginBottom: 4 }}>{p.nombre}</div>
           <div style={{ fontSize: 12, color: c.muted, marginBottom: 8 }}>📍 {p.zona}</div>
