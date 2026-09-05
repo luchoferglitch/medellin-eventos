@@ -132,6 +132,23 @@ Deno.serve(async (req) => {
     const subscribers = await subsRes.json();
     destinatarios = subscribers.length;
 
+    // Patrocinador vigente del envío (a lo sumo uno — no_solape_patrocinadores lo
+    // garantiza a nivel de base de datos). "hoy" se resuelve contra fecha_inicio/
+    // fecha_fin (date, sin hora) tal como los escribió el admin en Table Editor;
+    // este cron corre una vez a la semana a una hora fija (13:00 UTC = 8am
+    // Colombia, ver newsletter-semanal-viernes), lejos de cualquier medianoche,
+    // así que no hace falta el ajuste de offset Bogotá que sí es necesario en
+    // consultas que corren en cualquier momento del día (ver fetchOrgClicks en
+    // App.jsx). Sin patrocinador activo, patrocinador queda null y el bloque
+    // simplemente no se arma — el correo queda idéntico al de antes de esto.
+    const hoyStr = new Date().toISOString().split("T")[0];
+    const patrocinadorRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/newsletter_patrocinador?fecha_inicio=lte.${hoyStr}&fecha_fin=gte.${hoyStr}&limit=1`,
+      { headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` } }
+    );
+    const patrocinadorRows = await patrocinadorRes.json();
+    const patrocinador = patrocinadorRows?.[0] ?? null;
+
     if (!subscribers.length) {
       await logNewsletter("ok", 0, 0, 0, null, null);
       return new Response(JSON.stringify({ message: "Sin suscriptores" }), {
@@ -218,6 +235,30 @@ Deno.serve(async (req) => {
       return asuntoByLang.get(lang)!;
     }
 
+    // Bloque de patrocinador: la etiqueta ("Este boletín es presentado por") se
+    // traduce por idioma, pero nombre/mensaje/link del patrocinador NUNCA se
+    // traducen — igual que el contenido de cada evento, vienen tal cual los
+    // escribió una vez el patrocinador, siempre en español. Sin patrocinador
+    // vigente devuelve "" y no deja ningún rastro en el HTML (mismo patrón que
+    // ticketBtn/destacadoBadge en buildEventCards).
+    function buildPatrocinadorBlock(lang: Lang): string {
+      if (!patrocinador) return "";
+      const t = NEWSLETTER_I18N[lang];
+      const logo = patrocinador.logo_url
+        ? `<img src="${patrocinador.logo_url}" alt="${patrocinador.nombre}" style="height:28px;max-width:120px;object-fit:contain;vertical-align:middle;margin-right:8px;" />`
+        : "";
+      const nombreHtml = patrocinador.link
+        ? `<a href="${patrocinador.link}" style="color:#C8860A;text-decoration:none;font-weight:800;">${patrocinador.nombre}</a>`
+        : `<span style="color:#C8860A;font-weight:800;">${patrocinador.nombre}</span>`;
+      return `
+        <div style="background:#fff;border-bottom:1px solid #ece8dd;padding:10px 24px;text-align:center;">
+          <span style="font-size:12px;color:#888;">${t.patrocinadoPor}</span>
+          <div style="margin-top:4px;">${logo}<span style="font-size:14px;">${nombreHtml}</span></div>
+          <div style="font-size:12px;color:#666;margin-top:2px;">${patrocinador.mensaje}</div>
+        </div>
+      `;
+    }
+
     const buildHtml = (nombre: string, email: string, lang: Lang) => {
       const t = NEWSLETTER_I18N[lang];
       const unsubscribeToken = btoa(email);
@@ -229,6 +270,8 @@ Deno.serve(async (req) => {
           <h1 style="color:white;margin:0;font-size:30px;letter-spacing:3px;font-weight:900;">MEDELLÍN VIBRA</h1>
           <p style="color:rgba(255,255,255,0.9);margin:8px 0 0;font-size:14px;letter-spacing:0.5px;">${t.subtitleAgenda} — ${getSemanaLabel(lang)}</p>
         </div>
+        <!-- Patrocinador (vacío si no hay ninguno vigente) -->
+        ${buildPatrocinadorBlock(lang)}
         <!-- Saludo -->
         <div style="padding:28px 24px 0;">
           <p style="color:#333;font-size:16px;margin:0 0 6px;">${t.hi}${nombre ? " <strong>" + nombre + "</strong>" : ""}! 👋</p>

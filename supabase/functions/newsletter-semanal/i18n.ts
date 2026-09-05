@@ -51,6 +51,10 @@ interface NewsletterCopy {
   footerReceived: string;
   unsubscribe: string;
   asuntos: (n: number, semanaLabel: string) => [string, string, string, string];
+  // Única etiqueta fija del bloque de patrocinador — el mensaje del patrocinador
+  // en sí (nombre, mensaje, link) nunca se traduce, viene tal cual lo escribió,
+  // siempre en español. Ver comentario en buildPatrocinadorBlock en index.ts.
+  patrocinadoPor: string;
 }
 
 export const NEWSLETTER_I18N: Record<Lang, NewsletterCopy> = {
@@ -65,6 +69,7 @@ export const NEWSLETTER_I18N: Record<Lang, NewsletterCopy> = {
     ctaSub: "Hay más de 180 eventos en la plataforma",
     footerReceived: "Recibiste este correo porque te suscribiste a Medellín Vibra.",
     unsubscribe: "Cancelar suscripción",
+    patrocinadoPor: "Este boletín es presentado por",
     asuntos: (n, semanaLabel) => [
       `🎶 ${n} planes para esta semana en Medellín`,
       `🎭 Lo mejor de Medellín esta semana — ${semanaLabel}`,
@@ -83,6 +88,7 @@ export const NEWSLETTER_I18N: Record<Lang, NewsletterCopy> = {
     ctaSub: "There are more than 180 events on the platform",
     footerReceived: "You received this email because you subscribed to Medellín Vibra.",
     unsubscribe: "Unsubscribe",
+    patrocinadoPor: "This newsletter is brought to you by",
     asuntos: (n, semanaLabel) => [
       `🎶 ${n} plans for this week in Medellín`,
       `🎭 The best of Medellín this week — ${semanaLabel}`,
@@ -101,6 +107,7 @@ export const NEWSLETTER_I18N: Record<Lang, NewsletterCopy> = {
     ctaSub: "Há mais de 180 eventos na plataforma",
     footerReceived: "Você recebeu este e-mail porque se inscreveu no Medellín Vibra.",
     unsubscribe: "Cancelar inscrição",
+    patrocinadoPor: "Este boletim é apresentado por",
     asuntos: (n, semanaLabel) => [
       `🎶 ${n} programas para esta semana em Medellín`,
       `🎭 O melhor de Medellín esta semana — ${semanaLabel}`,
@@ -119,6 +126,7 @@ export const NEWSLETTER_I18N: Record<Lang, NewsletterCopy> = {
     ctaSub: "Il y a plus de 180 événements sur la plateforme",
     footerReceived: "Vous recevez cet e-mail car vous êtes abonné à Medellín Vibra.",
     unsubscribe: "Se désabonner",
+    patrocinadoPor: "Cette newsletter est présentée par",
     asuntos: (n, semanaLabel) => [
       `🎶 ${n} sorties à ne pas manquer cette semaine à Medellín`,
       `🎭 Le meilleur de Medellín cette semaine — ${semanaLabel}`,

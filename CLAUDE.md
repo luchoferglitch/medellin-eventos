@@ -236,9 +236,16 @@ logs de la función y en `push_subscriptions.last_sent_at` que el envío ocurri�
 
 Preexistentes, activos, **no tocar**: `actualizar-tags-semanal`, `archivar-eventos-pasados`.
 
-**Deuda técnica conocida:** `newsletter-semanal` y `recordatorio-eventos-v2` tienen claves
-escritas directamente en el código en lugar de leerlas de los secrets de Supabase. Si tocas
-alguna de estas dos funciones, migra sus claves a variables de entorno de paso.
+`newsletter-semanal` soporta un patrocinador pagado opcional ($100.000 COP/mes, un espacio fijo
+tipo "Este boletín es presentado por [marca]"), guardado en la tabla `newsletter_patrocinador`
+(nombre, mensaje, link, logo_url, fecha_inicio, fecha_fin). Se asigna a mano en Table Editor —
+sin autopublicación ni pasarela de cobro, mismo patrón que `destacado_hasta` en proveedores. La
+vigencia se resuelve en cada envío (`fecha_inicio <= hoy <= fecha_fin`), sin cron propio. Una
+constraint de exclusión (`no_solape_patrocinadores`, requiere `btree_gist`) impide en la base de
+datos tener dos patrocinios con fechas superpuestas. El mensaje del patrocinador nunca se
+traduce — como el contenido de cada evento, va tal cual lo escribió, siempre en español; solo la
+etiqueta ("Este boletín es presentado por") se traduce a los 4 idiomas vía `NEWSLETTER_I18N`. Sin
+patrocinador vigente (el caso normal hoy) el bloque no deja ningún rastro en el HTML.
 
 ---
 
