@@ -53,6 +53,17 @@
       ],
       "destination": "/api/categoria-og?slug=:slug"
     },
+    {
+      "source": "/barrio/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|facebookcatalog|twitterbot|whatsapp|linkedinbot|telegrambot|slackbot|googlebot|bingbot|applebot|discordbot|pinterest|gptbot|chatgpt-user|google-extended|claudebot|anthropic-ai|perplexitybot|ccbot).*"
+        }
+      ],
+      "destination": "/api/barrio-og?slug=:slug"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
