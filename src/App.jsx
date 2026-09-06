@@ -4,7 +4,7 @@ import { supabase } from "./supabase";
 import { registrarClic } from "./registrarClic";
 import { initGA, logPageView, trackEvent } from "./analytics";
 import { esGratis, formatPriceLabel } from "./priceLabel";
-import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette, Megaphone, MoreHorizontal, Store, HelpCircle, Info, SlidersHorizontal, ChevronDown, Armchair, Speaker, Tent, MonitorPlay, UtensilsCrossed, Camera, Sofa, Truck, ShieldCheck, Wheat, Users, BadgeCheck } from "lucide-react";
+import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette, Megaphone, MoreHorizontal, Store, HelpCircle, Info, Armchair, Speaker, Tent, MonitorPlay, UtensilsCrossed, Camera, Sofa, Truck, ShieldCheck, Wheat, Users, BadgeCheck } from "lucide-react";
 import { translations } from "./translations";
 import EventoPage from "./EventoPage";
 import OrganizadorPage from "./OrganizadorPage";
@@ -85,11 +85,13 @@ const TAG_LABEL_KEY = {
 };
 
 // El valor filtra contra events.intenciones (array) en Supabase y nunca se traduce.
+// Un color por chip para distinguirlos entre sí — ninguno cerca del dorado de
+// marca (--gold, #C8860A) para que no se confundan con el filtro de categoría.
 const INTENCIONES_CONFIG = [
-  { value: "al_aire_libre", labelKey: "intentionAlAireLibre" },
-  { value: "con_ninos", labelKey: "intentionConNinos" },
-  { value: "para_cita", labelKey: "intentionParaCita" },
-  { value: "despues_oficina", labelKey: "intentionDespuesOficina" },
+  { value: "al_aire_libre", labelKey: "intentionAlAireLibre", color: "#4B8B5A" },
+  { value: "con_ninos", labelKey: "intentionConNinos", color: "#3D7EA6" },
+  { value: "para_cita", labelKey: "intentionParaCita", color: "#B45C7A" },
+  { value: "despues_oficina", labelKey: "intentionDespuesOficina", color: "#7B6BA8" },
 ];
 
 const ADMIN_TAGS = ["Destacado", "Últimas entradas", "Agotado"]; // asignables manualmente
@@ -340,6 +342,13 @@ const style = `
   .filter-chip-finde { background: #059669; color: white !important; border-color: #059669 !important; font-weight: 700; padding: 10px 22px; font-size: 14px; box-shadow: 0 2px 8px rgba(5,150,105,0.3); }
   .filter-chip-finde::before { content: "✦"; display: inline-block; margin-right: 6px; color: white; }
   .filter-chip-finde:hover:not(.active) { background: #047857; color: white !important; }
+  /* Chips de intención: deliberadamente más chicos y menos saturados que
+     .filter-chip (categoría) — fondo con tinte de color en vez de relleno
+     sólido, para que se lean como un filtro secundario, no del mismo peso. */
+  .intention-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; padding: 0 24px 12px; background: white; }
+  .dark-mode .intention-grid { background: #1e1e1e; }
+  .intention-chip { border-style: solid; border-width: 1px; padding: 5px 10px; border-radius: 100px; font-size: 11px; font-weight: 500; cursor: pointer; transition: filter 0.15s; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-body); }
+  .intention-chip:hover { filter: brightness(0.93); }
   .zona-group-wrap { padding: 12px 24px 0; background: white; }
   .zona-group-title { margin-bottom: 8px; }
   .zona-filter-group { display: flex; gap: 8px; flex-shrink: 0; padding: 6px; border: 1px solid var(--gold); border-radius: 100px; background: rgba(200,134,10,0.1); }
@@ -631,7 +640,6 @@ export default function App() {
   const [fechaElegida, setFechaElegida] = useState(null);
   const [activeTagFilter, setActiveTagFilter] = useState(null);
   const [activeIntenciones, setActiveIntenciones] = useState([]);
-  const [showMasFiltros, setShowMasFiltros] = useState(false);
   const [adminTagPicker, setAdminTagPicker] = useState(null);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("mv-dark") === "1");
   const [pendingEvents, setPendingEvents] = useState([]);
@@ -1735,39 +1743,34 @@ export default function App() {
                   {label}
                 </button>
               ))}
-              <button
-                className={`filter-chip ${showMasFiltros||activeIntenciones.length>0?"active":""}`}
-                onClick={() => { setShowMasFiltros(v => !v); trackEvent({ action: "toggle_mas_filtros", category: "Filtros", label: String(!showMasFiltros) }); }}
-                aria-expanded={showMasFiltros}
-                style={{display:"inline-flex", alignItems:"center", gap:6}}
-              >
-                <SlidersHorizontal size={14} aria-hidden="true" />
-                {t.moreFiltersBtn}
-                {activeIntenciones.length > 0 && <span style={{fontSize:10,opacity:0.8}}>({activeIntenciones.length})</span>}
-                <ChevronDown size={14} aria-hidden="true" style={{transform: showMasFiltros ? "rotate(180deg)" : "none", transition:"transform 0.15s"}} />
-              </button>
             </div>
 
-            {showMasFiltros && (
-              <div className="filters-bar" style={{borderBottom:'none',paddingTop:0,paddingBottom:8}}>
-                {INTENCIONES_CONFIG.map(({value,labelKey}) => {
-                  const isActive = activeIntenciones.includes(value);
-                  return (
-                    <button
-                      key={value}
-                      className={`filter-chip ${isActive?"active":""}`}
-                      aria-pressed={isActive}
-                      onClick={() => {
-                        setActiveIntenciones(prev => isActive ? prev.filter(i => i !== value) : [...prev, value]);
-                        trackEvent({ action: "filtro_intencion", category: "Filtros", label: value });
-                      }}
-                    >
-                      {t[labelKey] || value}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+            {/* Chips de intención: siempre visibles (antes detrás de "Más filtros"),
+                más chicos y con menos peso visual que categoría a propósito — son
+                un filtro secundario, no deben competir con categoría por atención. */}
+            <div className="intention-grid">
+              {INTENCIONES_CONFIG.map(({value,labelKey,color}) => {
+                const isActive = activeIntenciones.includes(value);
+                return (
+                  <button
+                    key={value}
+                    className="intention-chip"
+                    aria-pressed={isActive}
+                    style={{
+                      color: isActive ? "white" : color,
+                      background: isActive ? color : `${color}1f`,
+                      borderColor: isActive ? color : `${color}40`,
+                    }}
+                    onClick={() => {
+                      setActiveIntenciones(prev => isActive ? prev.filter(i => i !== value) : [...prev, value]);
+                      trackEvent({ action: "filtro_intencion", category: "Filtros", label: value });
+                    }}
+                  >
+                    {t[labelKey] || value}
+                  </button>
+                );
+              })}
+            </div>
 
             <div style={{padding:"0 24px 8px"}}>
               <button
