@@ -328,8 +328,8 @@ const style = `
 
   .filters-bar { padding: 20px 24px; display: flex; gap: 8px; overflow-x: auto; border-bottom: 1px solid var(--border); background: white; }
   .filters-bar::-webkit-scrollbar { display: none; }
-  .filter-chip { flex-shrink: 0; padding: 8px 16px; border-radius: 100px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); font-size: 13px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
-  .filter-chip.active { background: var(--gold); color: white; border-color: var(--gold); font-weight: 600; }
+  .filter-chip { flex-shrink: 0; padding: 8px 16px; border-radius: 100px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .filter-chip.active { background: var(--gold); color: white; border-color: var(--gold); font-weight: 700; }
   .filter-chip:hover:not(.active) { border-color: var(--gold); color: var(--gold); }
   .filter-chip-hoy { background: var(--gold); color: white !important; border-color: var(--gold) !important; font-weight: 700; padding: 10px 22px; font-size: 14px; box-shadow: 0 2px 8px rgba(200, 134, 10, 0.3); position: relative; }
   .filter-chip-hoy::before { content: "●"; display: inline-block; margin-right: 6px; color: white; animation: pulse-hoy 2s ease-in-out infinite; }
@@ -347,7 +347,7 @@ const style = `
      sólido, para que se lean como un filtro secundario, no del mismo peso. */
   .intention-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; padding: 0 24px 12px; background: white; }
   .dark-mode .intention-grid { background: #1e1e1e; }
-  .intention-chip { border-style: solid; border-width: 1px; padding: 5px 10px; border-radius: 100px; font-size: 11px; font-weight: 500; cursor: pointer; transition: filter 0.15s; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-body); }
+  .intention-chip { border-style: solid; border-width: 1px; padding: 5px 10px; border-radius: 100px; font-size: 11px; font-weight: 700; cursor: pointer; transition: filter 0.15s; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-body); }
   .intention-chip:hover { filter: brightness(0.93); }
   .zona-group-wrap { padding: 12px 24px 0; background: white; }
   .zona-group-title { margin-bottom: 8px; }
@@ -1758,11 +1758,15 @@ export default function App() {
                     aria-pressed={isActive}
                     style={{
                       color: isActive ? "white" : color,
-                      background: isActive ? color : `${color}1f`,
-                      borderColor: isActive ? color : `${color}40`,
+                      background: isActive ? color : `${color}40`,
+                      borderColor: isActive ? color : `${color}66`,
                     }}
                     onClick={() => {
-                      setActiveIntenciones(prev => isActive ? prev.filter(i => i !== value) : [...prev, value]);
+                      // Excluyentes entre sí (como radio, no checkbox) — clic en uno
+                      // desactiva cualquier otro. Clic en el ya activo lo apaga. Sigue
+                      // siendo array por compatibilidad con el matching existente
+                      // (activeIntenciones.some(...)), pero nunca más de un elemento.
+                      setActiveIntenciones(isActive ? [] : [value]);
                       trackEvent({ action: "filtro_intencion", category: "Filtros", label: value });
                     }}
                   >
