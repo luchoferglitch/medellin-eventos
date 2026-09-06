@@ -712,6 +712,10 @@ export default function App() {
   const [resetLoading, setResetLoading] = useState(false);
   const [viewMode, setViewMode] = useState("grid");
   const resultsRef = useRef(null);
+  // Punto de referencia real para BackToTop: primer clic desde más abajo de acá
+  // vuelve aquí, no hasta arriba del todo. Solo existe en home/zona (activeTab
+  // "home"); en otras pestañas/páginas queda null y BackToTop cae al tope absoluto.
+  const filtersRef = useRef(null);
   const isFirstFilterRender = useRef(true);
   const isFirstSearchRender = useRef(true);
 
@@ -1705,7 +1709,7 @@ export default function App() {
             <HeroBanner search={search} setSearch={(val) => { setSearch(val); if(val.length > 2) trackEvent({ action: "busqueda", category: "Interaccion", label: val }); }} stats={stats} t={t} lang={lang} heroTitle={zonaPageConfig?.heroTitle} heroSubtitle={zonaPageConfig?.heroSubtitle} />
 
             <NewsletterCTAs t={t} alreadySubscribed={alreadySubscribed} showPopup={showPopup} showStickyFooter={showStickyFooter} subEmail={subEmail} setSubEmail={setSubEmail} handleSubscribe={handleSubscribe} dismissPopup={dismissPopup} dismissSticky={dismissSticky} />
-            <div className="zona-group-wrap">
+            <div className="zona-group-wrap" ref={filtersRef}>
               <div className="section-title zona-group-title">{t.zonaFilterSectionTitle}</div>
               <div className="filters-bar" style={{borderBottom:'none',paddingBottom:4,paddingTop:0}}>
                 <div className="zona-filter-group">
@@ -3145,7 +3149,7 @@ export default function App() {
       <Route path="/fr/*" element={homeAndZonaElement} />
       <Route path="*" element={homeAndZonaElement} />
     </Routes>
-    <BackToTop hideForOverlay={(showPopup || showStickyFooter) && !alreadySubscribed} />
+    <BackToTop filtersRef={filtersRef} hideForOverlay={(showPopup || showStickyFooter) && !alreadySubscribed} />
     </>
   );
 }
