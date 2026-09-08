@@ -163,7 +163,7 @@ export default function CategoriaPage() {
         onMouseOver={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 8px 24px rgba(0,0,0,0.1)'; }}
         onMouseOut={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='none'; }}
       >
-        <div style={{height:140, background:`linear-gradient(135deg, ${color}22, ${color}44)`, position:'relative', overflow:'hidden', display:'flex', alignItems:'center', justifyContent:'center'}}>
+        <div style={{aspectRatio:'16/9', width:'100%', background:`linear-gradient(135deg, ${color}22, ${color}44)`, position:'relative', overflow:'hidden', display:'flex', alignItems:'center', justifyContent:'center'}}>
           {ev.image_url
             ? <img src={ev.image_url} alt={ev.title} style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover'}} />
             : <span style={{fontSize:56}}>{ev.emoji || '📅'}</span>

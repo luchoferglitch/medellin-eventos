@@ -295,7 +295,7 @@ export default function ProveedoresPage() {
     const wa = waLink(p.contacto_whatsapp);
     return (
       <div style={{ background: c.surface, border: `1px solid ${c.border}`, borderRadius: 16, overflow: "hidden" }}>
-        <div style={{ height: 120, background: `linear-gradient(135deg, ${color}22, ${color}44)`, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ aspectRatio: "1/1", width: "100%", background: `linear-gradient(135deg, ${color}22, ${color}44)`, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
           {p.image_url
             ? <img src={p.image_url} alt={p.nombre} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
             : <Icon size={40} color={color} strokeWidth={1.5} />

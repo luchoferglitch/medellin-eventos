@@ -378,7 +378,7 @@ const style = `
   .events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-bottom: 48px; }
   .event-card { background: white; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; cursor: pointer; transition: all 0.25s; position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
   .event-card:hover { transform: translateY(-4px); border-color: rgba(200,134,10,0.3); box-shadow: 0 12px 40px rgba(0,0,0,0.12); }
-  .event-card-img { height: 160px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 72px; }
+  .event-card-img { aspect-ratio: 16/9; width: 100%; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 72px; }
   .event-card-cat { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); padding: 4px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: white; }
   .event-card-body { padding: 16px; }
   .event-card-title { font-weight: 600; font-size: 15px; margin-bottom: 8px; line-height: 1.3; color: var(--text); }
