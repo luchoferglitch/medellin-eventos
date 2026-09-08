@@ -162,7 +162,7 @@ const style = `
   @import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
-    --gold: #C8860A; --red: #C0392B; --green: #27AE60;
+    --gold: #C8860A; --gold-text: #8F5F05; --red: #C0392B; --green: #27AE60;
     --dark: #1a1a1a; --surface: #FFFFFF; --surface2: #F5F3EF;
     --border: rgba(0,0,0,0.08); --text: #1a1a1a; --muted: #888;
     --font-display: 'Bebas Neue', sans-serif; --font-body: 'DM Sans', sans-serif;
@@ -170,6 +170,9 @@ const style = `
   .dark-mode {
     --surface: #1e1e1e; --surface2: #2a2a2a; --dark: #0a0a0a;
     --border: rgba(255,255,255,0.08); --text: #f0f0f0; --muted: #888;
+    /* En modo oscuro las superficies que siguen el tema ya son oscuras: el dorado normal
+       (#C8860A) da ~5.5:1 de contraste ahí, no hace falta oscurecerlo como en modo claro. */
+    --gold-text: var(--gold);
   }
   .dark-mode body, body.dark-mode { background: #141414; color: var(--text); }
   .dark-mode .app { background: #141414; }
@@ -191,20 +194,20 @@ const style = `
     display: flex; align-items: center; justify-content: space-between; height: 60px;
     box-shadow: 0 1px 12px rgba(0,0,0,0.06);
   }
-  .nav-logo { font-family: var(--font-display); font-size: 26px; letter-spacing: 1px; color: var(--gold); }
+  .nav-logo { font-family: var(--font-display); font-size: 26px; letter-spacing: 1px; color: var(--gold-text); }
   .nav-logo span { color: var(--red); }
   .nav-actions { display: flex; gap: 10px; align-items: center; }
   .lang-switcher { display: flex; gap: 2px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 3px; margin-right: 12px; }
   .lang-btn { padding: 6px 10px; border-radius: 6px; border: none; background: transparent; color: var(--text); font-size: 14px; font-weight: 700; letter-spacing: 0.3px; cursor: pointer; font-family: var(--font-body); transition: all 0.15s ease; }
-  .lang-btn:hover:not(.active) { color: var(--gold); }
+  .lang-btn:hover:not(.active) { color: var(--gold-text); }
   .lang-btn.active { background: var(--gold); color: white; }
   .nav-links { display: none; }
   @media (max-width: 767px) { .desktop-only { display: none !important; } }
   @media (min-width: 768px) {
     .nav-links { display: flex; gap: 4px; margin-left: 18px; flex: 1; }
     .nav-link { background: none; border: none; cursor: pointer; font-family: var(--font-body); font-size: 13px; font-weight: 600; color: var(--muted); padding: 8px 12px; border-radius: 8px; transition: all 0.2s; }
-    .nav-link:hover { color: var(--gold); background: var(--surface2); }
-    .nav-link.active { color: var(--gold); }
+    .nav-link:hover { color: var(--gold-text); background: var(--surface2); }
+    .nav-link.active { color: var(--gold-text); }
     .bottom-nav { display: none; }
   }
   @media (max-width: 640px) {
@@ -220,7 +223,7 @@ const style = `
     padding: 8px 16px; border-radius: 8px; cursor: pointer;
     font-family: var(--font-body); font-size: 13px; transition: all 0.2s;
   }
-  .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold-text); }
   .btn-primary {
     background: var(--gold); color: white; border: none;
     padding: 8px 18px; border-radius: 8px; cursor: pointer;
@@ -238,7 +241,7 @@ const style = `
     animation: scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
     box-shadow: 0 20px 60px rgba(0,0,0,0.15);
   }
-  .auth-logo { font-family: var(--font-display); font-size: 22px; color: var(--gold); margin-bottom: 8px; }
+  .auth-logo { font-family: var(--font-display); font-size: 22px; color: #8F5F05; margin-bottom: 8px; }
   .auth-logo span { color: var(--red); }
   .auth-title { font-family: var(--font-display); font-size: 32px; margin-bottom: 4px; color: var(--text); }
   .auth-sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
@@ -319,7 +322,7 @@ const style = `
   }
   .about-inner { max-width: 800px; margin: 0 auto; text-align: center; }
   .about-tag {
-    display: inline-block; background: rgba(200,134,10,0.1); color: var(--gold);
+    display: inline-block; background: rgba(200,134,10,0.1); color: #8F5F05;
     border: 1px solid rgba(200,134,10,0.2); padding: 4px 14px; border-radius: 100px;
     font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px;
   }
@@ -330,7 +333,7 @@ const style = `
   .filters-bar::-webkit-scrollbar { display: none; }
   .filter-chip { flex-shrink: 0; padding: 8px 16px; border-radius: 100px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
   .filter-chip.active { background: var(--gold); color: white; border-color: var(--gold); font-weight: 700; }
-  .filter-chip:hover:not(.active) { border-color: var(--gold); color: var(--gold); }
+  .filter-chip:hover:not(.active) { border-color: var(--gold); color: var(--gold-text); }
   .filter-chip-hoy { background: var(--gold); color: white !important; border-color: var(--gold) !important; font-weight: 700; padding: 10px 22px; font-size: 14px; box-shadow: 0 2px 8px rgba(200, 134, 10, 0.3); position: relative; }
   .filter-chip-hoy::before { content: "●"; display: inline-block; margin-right: 6px; color: white; animation: pulse-hoy 2s ease-in-out infinite; }
   .filter-chip-hoy.active { background: #a06f08; box-shadow: 0 4px 12px rgba(200, 134, 10, 0.5); }
@@ -357,8 +360,8 @@ const style = `
   .main { flex: 1; padding: 32px 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
   .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; scroll-margin-top: 76px; }
   .section-title { font-family: var(--font-display); font-size: 28px; letter-spacing: 0.5px; color: var(--text); }
-  .section-title span { color: var(--gold); }
-  .section-link { color: var(--gold); font-size: 13px; cursor: pointer; text-decoration: underline; }
+  .section-title span { color: var(--gold-text); }
+  .section-link { color: var(--gold-text); font-size: 13px; cursor: pointer; text-decoration: underline; }
   .featured-card { position: relative; border-radius: 20px; overflow: hidden; height: 340px; cursor: pointer; margin-bottom: 40px; transition: transform 0.3s; box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
   .featured-card:hover { transform: scale(1.005); }
   .featured-bg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 160px; opacity: 0.2; }
@@ -382,9 +385,9 @@ const style = `
   .event-card-info { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
   .event-card-info-row { display: flex; align-items: flex-start; gap: 6px; font-size: 13px; color: var(--muted); text-align: left; }
   .event-card-organizer { display: block; font-size: 12px; color: var(--muted); text-decoration: none; margin-bottom: 10px; }
-  .event-card-organizer:hover { color: var(--gold); text-decoration: underline; }
+  .event-card-organizer:hover { color: var(--gold-text); text-decoration: underline; }
   .event-card-footer { display: flex; justify-content: space-between; align-items: center; }
-  .event-card-price { font-weight: 700; font-size: 15px; color: var(--gold); }
+  .event-card-price { font-weight: 700; font-size: 15px; color: var(--gold-text); }
   .event-card-price.free { color: var(--green); }
   .btn-reserve { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font-body); transition: all 0.2s; }
   .btn-reserve:hover { background: var(--gold); color: white; border-color: var(--gold); }
@@ -404,7 +407,7 @@ const style = `
   .detail-info-value { font-weight: 600; font-size: 14px; color: var(--text); }
   .detail-desc { color: #555; font-size: 15px; line-height: 1.7; margin-bottom: 28px; text-align: left; }
   .detail-map { height: 140px; border-radius: 14px; overflow: hidden; margin-bottom: 16px; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; gap: 8px; transition: all 0.2s; }
-  .detail-map:hover { border-color: var(--gold); color: var(--gold); background: rgba(200,134,10,0.05); }
+  .detail-map:hover { border-color: var(--gold); color: var(--gold-text); background: rgba(200,134,10,0.05); }
   .detail-actions { display: flex; gap: 12px; }
   .btn-buy { flex: 1; background: var(--gold); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; font-family: var(--font-body); transition: all 0.2s; }
   .btn-buy:hover { background: #a06d08; transform: translateY(-1px); }
@@ -414,7 +417,7 @@ const style = `
   .create-panel { background: white; border-radius: 20px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; padding: 32px; animation: scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1); box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
   @keyframes scaleIn { from{transform:scale(0.9);opacity:0} to{transform:scale(1);opacity:1} }
   .create-title { font-family: var(--font-display); font-size: 30px; margin-bottom: 24px; color: var(--text); }
-  .create-title span { color: var(--gold); }
+  .create-title span { color: #8F5F05; }
   .form-group { margin-bottom: 18px; }
   .form-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
   .form-input, .form-select, .form-textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 12px 14px; border-radius: 10px; font-family: var(--font-body); font-size: 14px; outline: none; transition: border-color 0.2s; }
@@ -430,26 +433,26 @@ const style = `
   .btn-submit:hover { background: #a06d08; }
   .bottom-nav { position: sticky; bottom: 0; z-index: 200; background: rgba(255,255,255,0.97); backdrop-filter: blur(16px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 0 16px; box-shadow: 0 -4px 20px rgba(0,0,0,0.06); overflow-x: auto; }
   .bottom-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted); font-size: 11px; cursor: pointer; padding: 4px 10px; transition: color 0.2s; background: none; border: none; font-family: var(--font-body); flex-shrink: 0; white-space: nowrap; }
-  .bottom-nav-item.active { color: var(--gold); }
+  .bottom-nav-item.active { color: var(--gold-text); }
   .bottom-nav-item span:first-child { font-size: 20px; display: flex; align-items: center; justify-content: center; position: relative; }
   .more-menu-overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); display: flex; align-items: flex-end; justify-content: center; animation: fadeIn 0.2s; }
   .more-menu-panel { background: var(--surface); border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px)); animation: slideUp 0.25s cubic-bezier(0.34,1.56,0.64,1); box-shadow: 0 -8px 40px rgba(0,0,0,0.2); }
   .more-menu-handle { width: 36px; height: 4px; border-radius: 100px; background: var(--border); margin: 0 auto 16px; }
   .more-menu-item { display: flex; align-items: center; gap: 14px; width: 100%; background: none; border: none; padding: 14px 10px; border-radius: 12px; cursor: pointer; font-family: var(--font-body); font-size: 15px; font-weight: 600; color: var(--text); transition: background 0.15s; text-align: left; }
   .more-menu-item:hover { background: var(--surface2); }
-  .more-menu-item svg { color: var(--gold); flex-shrink: 0; }
+  .more-menu-item svg { color: var(--gold-text); flex-shrink: 0; }
   @media (min-width: 768px) { .bottom-nav { display: none; } }
   .map-container { position: relative; flex: 1; min-height: 0; }
   .map-wrap { height: 100%; width: 100%; }
   .map-popup { font-family: var(--font-body); min-width: 200px; }
   .map-popup-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; color: var(--text); }
   .map-popup-meta { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
-  .map-popup-price { font-weight: 700; font-size: 13px; color: var(--gold); margin-bottom: 8px; }
+  .map-popup-price { font-weight: 700; font-size: 13px; color: #8F5F05; margin-bottom: 8px; }
   .map-popup-btn { background: var(--gold); color: white; border: none; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: var(--font-body); width: 100%; }
   .map-loading { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: white; border: 1px solid var(--border); border-radius: 100px; padding: 6px 16px; font-size: 12px; font-weight: 600; color: var(--muted); z-index: 1000; box-shadow: 0 2px 12px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 6px; }
   .map-filters { position: absolute; top: 12px; right: 12px; z-index: 1000; display: flex; flex-direction: column; gap: 6px; }
   .map-filter-btn { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font-body); box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.2s; color: var(--text); }
-  .map-filter-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .map-filter-btn:hover { border-color: var(--gold); color: #8F5F05; }
   .leaflet-popup-content-wrapper { border-radius: 14px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important; border: 1px solid var(--border) !important; }
   .leaflet-popup-tip { display: none !important; }
   .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--green); color: white; padding: 12px 24px; border-radius: 100px; font-weight: 700; font-size: 14px; z-index: 300; animation: toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1); box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
@@ -936,94 +939,180 @@ export default function App() {
     }
   };
 
-  const filtered = events.filter(e => {
-    const matchCat = activeFilter === "Todos" || e.cat === activeFilter;
-    const s = search.toLowerCase().trim();
-    const synCat = getCatFromSynonym(s);
-    const effectiveTagForSearch = e.tag || (isNewEvent(e) ? "Nuevo" : null);
+  // Cada filtro vive aquí como una dimensión independiente (matcher + detector de "está
+  // activo" + descripción legible) para poder aflojar la más restrictiva de forma genérica
+  // cuando el cruce de filtros da 0 resultados, sin hardcodear casos puntuales (ver más abajo).
+  const FILTER_DIMENSIONS = ["cat", "search", "date", "zona", "tag", "distancia", "fechaElegida", "intenciones"];
 
-    const isSearchingFree = PRICE_SYNONYMS.some(p => p.includes(s) || s.includes(p));
-    const mesIdx = MESES.findIndex(m => s.includes(m));
-    const matchMes = mesIdx >= 0 && e.fechaReal
-      ? e.fechaReal.startsWith(`2026-${String(mesIdx + 1).padStart(2, '0')}`) ||
-        (e.fechaFin && e.fechaFin.startsWith(`2026-${String(mesIdx + 1).padStart(2, '0')}`))
-      : false;
-
-    const matchSearch = !s ||
-      e.title?.toLowerCase().includes(s) ||
-      e.place?.toLowerCase().includes(s) ||
-      e.desc?.toLowerCase().includes(s) ||
-      e.organizerName?.toLowerCase().includes(s) ||
-      e.zona?.toLowerCase().includes(s) ||
-      e.ticketPlatform?.toLowerCase().includes(s) ||
-      e.date?.toLowerCase().includes(s) ||
-      effectiveTagForSearch?.toLowerCase().includes(s) ||
-      (synCat && e.cat === synCat) ||
-      (isSearchingFree && esGratis(e.price)) ||
-      matchMes;
-
-    let matchDate = true;
-    if (activeDateFilter !== "Todos") {
-      if (e.recurrencia) {
-        matchDate = activeDateFilter !== "Gratis" && activeDateFilter !== "ConCobro";
-        if (activeDateFilter === "Gratis") matchDate = esGratis(e.price);
-        else if (activeDateFilter === "ConCobro") matchDate = !esGratis(e.price);
-        else {
+  const matchDimension = (e, dim) => {
+    switch (dim) {
+      case "cat":
+        return activeFilter === "Todos" || e.cat === activeFilter;
+      case "search": {
+        const s = search.toLowerCase().trim();
+        if (!s) return true;
+        const synCat = getCatFromSynonym(s);
+        const effectiveTagForSearch = e.tag || (isNewEvent(e) ? "Nuevo" : null);
+        const isSearchingFree = PRICE_SYNONYMS.some(p => p.includes(s) || s.includes(p));
+        const mesIdx = MESES.findIndex(m => s.includes(m));
+        const matchMes = mesIdx >= 0 && e.fechaReal
+          ? e.fechaReal.startsWith(`2026-${String(mesIdx + 1).padStart(2, '0')}`) ||
+            (e.fechaFin && e.fechaFin.startsWith(`2026-${String(mesIdx + 1).padStart(2, '0')}`))
+          : false;
+        return e.title?.toLowerCase().includes(s) ||
+          e.place?.toLowerCase().includes(s) ||
+          e.desc?.toLowerCase().includes(s) ||
+          e.organizerName?.toLowerCase().includes(s) ||
+          e.zona?.toLowerCase().includes(s) ||
+          e.ticketPlatform?.toLowerCase().includes(s) ||
+          e.date?.toLowerCase().includes(s) ||
+          effectiveTagForSearch?.toLowerCase().includes(s) ||
+          (synCat && e.cat === synCat) ||
+          (isSearchingFree && esGratis(e.price)) ||
+          matchMes;
+      }
+      case "date": {
+        if (activeDateFilter === "Todos") return true;
+        if (e.recurrencia) {
+          if (activeDateFilter === "Gratis") return esGratis(e.price);
+          if (activeDateFilter === "ConCobro") return !esGratis(e.price);
           const proxima = getProximaFecha(e);
-          if (proxima) {
-            const { today, weekendStart, weekendEnd, weekEnd, monthEnd } = getDateRange();
-            const proximaStr = proxima.toISOString().split('T')[0];
-            if (activeDateFilter === "Hoy") matchDate = proximaStr === today;
-            else if (activeDateFilter === "FinDeSemana") matchDate = proximaStr >= weekendStart && proximaStr <= weekendEnd;
-            else if (activeDateFilter === "EstaSemana") matchDate = proximaStr >= today && proximaStr <= weekEnd;
-            else if (activeDateFilter === "EsteMes") matchDate = proximaStr >= today && proximaStr <= monthEnd;
-          }
+          if (!proxima) return false;
+          const { today, weekendStart, weekendEnd, weekEnd, monthEnd } = getDateRange();
+          const proximaStr = proxima.toISOString().split('T')[0];
+          if (activeDateFilter === "Hoy") return proximaStr === today;
+          if (activeDateFilter === "FinDeSemana") return proximaStr >= weekendStart && proximaStr <= weekendEnd;
+          if (activeDateFilter === "EstaSemana") return proximaStr >= today && proximaStr <= weekEnd;
+          if (activeDateFilter === "EsteMes") return proximaStr >= today && proximaStr <= monthEnd;
+          return false;
         }
-      } else if (activeDateFilter === "Gratis") {
-        matchDate = esGratis(e.price);
-      } else if (activeDateFilter === "ConCobro") {
-        matchDate = !esGratis(e.price);
-      } else if (e.fechaReal) {
+        if (activeDateFilter === "Gratis") return esGratis(e.price);
+        if (activeDateFilter === "ConCobro") return !esGratis(e.price);
+        if (!e.fechaReal) {
+          // Sin fechaReal no podemos saber si el evento cae en el rango pedido:
+          // se excluye (comportamiento seguro) en vez de pasar por defecto.
+          return false;
+        }
         const { today, weekendStart, weekendEnd, weekEnd, monthEnd } = getDateRange();
         const fin = e.fechaFin || e.fechaReal;
-        if (activeDateFilter === "Hoy") matchDate = e.fechaReal <= today && fin >= today;
-        else if (activeDateFilter === "FinDeSemana") matchDate = e.fechaReal <= weekendEnd && fin >= weekendStart;
-        else if (activeDateFilter === "EstaSemana") matchDate = e.fechaReal <= weekEnd && fin >= today;
-        else if (activeDateFilter === "EsteMes") matchDate = e.fechaReal <= monthEnd && fin >= today;
-      } else {
-        // Sin fechaReal no podemos saber si el evento cae en el rango pedido:
-        // se excluye (comportamiento seguro) en vez de pasar por defecto.
-        matchDate = false;
+        if (activeDateFilter === "Hoy") return e.fechaReal <= today && fin >= today;
+        if (activeDateFilter === "FinDeSemana") return e.fechaReal <= weekendEnd && fin >= weekendStart;
+        if (activeDateFilter === "EstaSemana") return e.fechaReal <= weekEnd && fin >= today;
+        if (activeDateFilter === "EsteMes") return e.fechaReal <= monthEnd && fin >= today;
+        return true;
       }
+      case "zona":
+        return activeZona === "Todas" || e.zona === activeZona;
+      case "tag": {
+        if (!activeTagFilter) return true;
+        const effectiveTag = e.tag || (isNewEvent(e) ? "Nuevo" : null);
+        return effectiveTag === activeTagFilter;
+      }
+      case "distancia":
+        return !cercaDeMi || !miUbicacion || (e.lat != null && e.lng != null && distanciaKm(miUbicacion.lat, miUbicacion.lng, e.lat, e.lng) <= radioKm);
+      case "fechaElegida":
+        return !fechaElegida || eventoOcurreEnFecha(paraCalendario(e), fechaElegida);
+      case "intenciones":
+        return activeIntenciones.length === 0 || activeIntenciones.some(i => e.intenciones?.includes(i));
+      default:
+        return true;
     }
-    const matchZona = activeZona === "Todas" || e.zona === activeZona;
-    const effectiveTag = e.tag || (isNewEvent(e) ? "Nuevo" : null);
-    const matchTag = !activeTagFilter || effectiveTag === activeTagFilter;
-    const matchDistancia = !cercaDeMi || !miUbicacion || (e.lat != null && e.lng != null && distanciaKm(miUbicacion.lat, miUbicacion.lng, e.lat, e.lng) <= radioKm);
-    const matchFechaElegida = !fechaElegida || eventoOcurreEnFecha(paraCalendario(e), fechaElegida);
-    const matchIntenciones = activeIntenciones.length === 0 || activeIntenciones.some(i => e.intenciones?.includes(i));
-    return matchCat && matchSearch && matchDate && matchZona && matchTag && matchDistancia && matchFechaElegida && matchIntenciones;
-  }).sort((a, b) => {
+  };
+
+  const isDimensionActive = (dim) => {
+    switch (dim) {
+      case "cat": return activeFilter !== "Todos";
+      case "search": return !!search.trim();
+      case "date": return activeDateFilter !== "Todos";
+      case "zona": return activeZona !== "Todas";
+      case "tag": return !!activeTagFilter;
+      case "distancia": return cercaDeMi && !!miUbicacion;
+      case "fechaElegida": return !!fechaElegida;
+      case "intenciones": return activeIntenciones.length > 0;
+      default: return false;
+    }
+  };
+
+  const DATE_FILTER_PHRASES = {
+    Hoy: "hoy", FinDeSemana: "este fin de semana", EstaSemana: "esta semana",
+    EsteMes: "este mes", Gratis: "gratis", ConCobro: "de pago",
+  };
+  const describeDimension = (dim) => {
+    switch (dim) {
+      case "cat": return `de ${activeFilter}`;
+      case "search": return `para "${search.trim()}"`;
+      case "date": return DATE_FILTER_PHRASES[activeDateFilter] || "";
+      case "zona": return `en ${activeZona}`;
+      case "tag": return `con la etiqueta "${activeTagFilter}"`;
+      case "distancia": return "cerca de ti";
+      case "fechaElegida": {
+        const [y, m, d] = fechaElegida.split("-").map(Number);
+        return `el ${new Date(y, m - 1, d).toLocaleDateString("es-CO", { day: "numeric", month: "long" })}`;
+      }
+      case "intenciones": return activeIntenciones.join(" + ");
+      default: return "";
+    }
+  };
+
+  const matchesEvent = (e, skipDims = []) =>
+    FILTER_DIMENSIONS.every(dim => skipDims.includes(dim) || matchDimension(e, dim));
+
+  const filtered = events.filter(e => matchesEvent(e)).sort((a, b) => {
     if (!cercaDeMi || !miUbicacion) return 0;
     const da = (a.lat != null && a.lng != null) ? distanciaKm(miUbicacion.lat, miUbicacion.lng, a.lat, a.lng) : Infinity;
     const db = (b.lat != null && b.lng != null) ? distanciaKm(miUbicacion.lat, miUbicacion.lng, b.lat, b.lng) : Infinity;
     return da - db;
   });
 
+  // Cuando el cruce de filtros da 0 resultados: probamos aflojar, de a una, cada dimensión
+  // activa (leave-one-out) y nos quedamos con la que más eventos recupera; si aun así sigue
+  // en 0, repetimos con las dimensiones que quedan hasta encontrar algo o quedarnos sin más
+  // que aflojar. Así no hay que adivinar a mano cuál filtro es "el más restrictivo".
+  const relajado = (() => {
+    if (filtered.length > 0) return null;
+    const activeDims = FILTER_DIMENSIONS.filter(isDimensionActive);
+    if (activeDims.length === 0) return null;
+    const dropped = [];
+    let remaining = [...activeDims];
+    let bestEvents = [];
+    while (remaining.length > 0) {
+      let bestDim = null, bestCount = -1, bestList = [];
+      for (const dim of remaining) {
+        const list = events.filter(e => matchesEvent(e, [...dropped, dim]));
+        if (list.length > bestCount) { bestCount = list.length; bestDim = dim; bestList = list; }
+      }
+      dropped.push(bestDim);
+      remaining = remaining.filter(d => d !== bestDim);
+      if (bestCount > 0) { bestEvents = bestList; break; }
+    }
+    if (bestEvents.length === 0) return null;
+    return { dropped, kept: activeDims.filter(d => !dropped.includes(d)), events: bestEvents };
+  })();
+  const displayList = relajado ? relajado.events : filtered;
+
   useEffect(() => {
     if (isFirstFilterRender.current) { isFirstFilterRender.current = false; return; }
-    if (activeTab !== "home") return;
+    if (activeTab !== "home" && activeTab !== "explore") return;
     resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [activeFilter, activeDateFilter, activeZona, fechaElegida, cercaDeMi, activeIntenciones]);
 
   useEffect(() => {
     if (isFirstSearchRender.current) { isFirstSearchRender.current = false; return; }
-    if (activeTab !== "home" || !search) return;
+    if ((activeTab !== "home" && activeTab !== "explore") || !search) return;
     const timer = setTimeout(() => {
       resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 500);
     return () => clearTimeout(timer);
   }, [search]);
+
+  // "explore" comparte el mismo contenido que "home" (hero + filtros + listado) pero
+  // salta directo a los filtros, ya que su propósito (ícono de lupa "Buscar") es buscar,
+  // no ver el hero de nuevo.
+  useEffect(() => {
+    if (activeTab === "explore") {
+      filtersRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [activeTab]);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
@@ -1481,7 +1570,7 @@ export default function App() {
       const markerHtml = `<div style="width:32px;height:32px;border-radius:50% 50% 50% 0;background:${color};border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg);font-size:13px;">${ev.emoji||'📍'}</span></div>`;
       const icon = L.divIcon({ html: markerHtml, className: '', iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -36] });
       const marker = L.marker([coords.lat, coords.lng], { icon });
-      const priceColor = ev.price === "Gratis" ? "var(--green)" : "var(--gold)";
+      const priceColor = ev.price === "Gratis" ? "var(--green)" : "#8F5F05";
       marker.bindPopup(`
         <div class="map-popup">
           <div class="map-popup-title">${ev.title}</div>
@@ -1704,7 +1793,7 @@ export default function App() {
           </div>
         </nav>
 
-        {activeTab === "home" && (
+        {(activeTab === "home" || activeTab === "explore") && (
           <>
             <HeroBanner search={search} setSearch={(val) => { setSearch(val); if(val.length > 2) trackEvent({ action: "busqueda", category: "Interaccion", label: val }); }} stats={stats} t={t} lang={lang} heroTitle={zonaPageConfig?.heroTitle} heroSubtitle={zonaPageConfig?.heroSubtitle} />
 
@@ -1935,7 +2024,7 @@ export default function App() {
                     )}
                   </div>
                   <div style={{ flex: "1 1 260px", minWidth: 0, padding: "16px 20px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 6 }}>
-                    <span style={{ display: "inline-flex", alignSelf: "flex-start", alignItems: "center", gap: 5, background: "rgba(200,134,10,0.12)", color: "var(--gold)", padding: "3px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700 }}>
+                    <span style={{ display: "inline-flex", alignSelf: "flex-start", alignItems: "center", gap: 5, background: "rgba(200,134,10,0.12)", color: "var(--gold-text)", padding: "3px 10px", borderRadius: 100, fontSize: 11, fontWeight: 700 }}>
                       <Store size={11} />{t.featuredProviderBadge}
                     </span>
                     <div style={{ fontSize: 17, fontWeight: 700, color: "var(--text)" }}>{p.nombre}</div>
@@ -1945,7 +2034,7 @@ export default function App() {
                         {p.descripcion.length > 120 ? p.descripcion.slice(0, 120).trimEnd() + "…" : p.descripcion}
                       </div>
                     )}
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--gold)", marginTop: 4 }}>{t.featuredProviderBtn}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--gold-text)", marginTop: 4 }}>{t.featuredProviderBtn}</div>
                   </div>
                 </div>
               );
@@ -1966,7 +2055,7 @@ export default function App() {
               justifyContent: "space-between",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, flex: "1 1 300px", minWidth: 0 }}>
-                <Store size={22} style={{ color: "var(--gold)", flexShrink: 0 }} />
+                <Store size={22} style={{ color: "var(--gold-text)", flexShrink: 0 }} />
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: "var(--text)" }}>{t.vendorBannerTitle}</div>
                   <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 2 }}>{t.vendorBannerText}</div>
@@ -2070,7 +2159,7 @@ export default function App() {
                           <div style={{overflow:'hidden'}}>
                             <div style={{fontWeight:600, fontSize:13, lineHeight:1.3, marginBottom:2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{ev.title}</div>
                             <div style={{fontSize:12, color:'var(--muted)'}}>{ev.date}</div>
-                            <div style={{fontSize:12, color:'var(--gold)', fontWeight:700}}>{formatPriceLabel(ev.price)}</div>
+                            <div style={{fontSize:12, color:'var(--gold-text)', fontWeight:700}}>{formatPriceLabel(ev.price)}</div>
                           </div>
                         </div>
                       ))}
@@ -2114,7 +2203,7 @@ export default function App() {
               <div className="section-header" ref={resultsRef}>
                 <div className="section-title">{search ? `Resultados para "${search}"` : activeFilter === "Todos" ? <>{t.allEvents} <span>{t.allEventsSpan}</span></> : <span>{activeFilter}</span>}</div>
                 <div style={{display:'flex', alignItems:'center', gap:12}}>
-                  <span className="section-link">{(filtered.length !== 1 ? t.eventsFoundPlural : t.eventsFoundSingular).replace("{N}", filtered.length)}</span>
+                  <span className="section-link">{(displayList.length !== 1 ? t.eventsFoundPlural : t.eventsFoundSingular).replace("{N}", displayList.length)}</span>
                   <div style={{display:'flex', gap:4, background:'var(--surface2)', borderRadius:8, padding:3, border:'1px solid var(--border)'}}>
                     <button onClick={()=>setViewMode("grid")} style={{padding:'4px 8px', borderRadius:6, border:'none', cursor:'pointer', background: viewMode==="grid" ? 'var(--gold)' : 'none', color: viewMode==="grid" ? 'white' : 'var(--muted)', fontSize:14}}>⊞</button>
                     <button onClick={()=>setViewMode("list")} style={{padding:'4px 8px', borderRadius:6, border:'none', cursor:'pointer', background: viewMode==="list" ? 'var(--gold)' : 'none', color: viewMode==="list" ? 'white' : 'var(--muted)', fontSize:14}}>☰</button>
@@ -2122,19 +2211,30 @@ export default function App() {
                 </div>
               </div>
 
+              {relajado && !loading && (
+                <div style={{background:'var(--surface2)', border:'1px solid var(--border)', borderLeft:'4px solid var(--gold)', borderRadius:12, padding:'14px 18px', marginBottom:20}}>
+                  <div style={{fontSize:14, color:'var(--muted)'}}>
+                    No hay eventos {FILTER_DIMENSIONS.filter(d => relajado.dropped.includes(d) || relajado.kept.includes(d)).map(describeDimension).filter(Boolean).join(" ")}.
+                  </div>
+                  <div style={{fontSize:15, fontWeight:600, color:'var(--text)', marginTop:2}}>
+                    Aflojamos {relajado.dropped.map(describeDimension).filter(Boolean).join(" y ")}
+                    {relajado.kept.length > 0 ? ` — estos son los ${relajado.events.length} ${relajado.kept.map(describeDimension).filter(Boolean).join(" ")} que sí encontramos.` : ` — estos son los ${relajado.events.length} eventos que sí encontramos.`}
+                  </div>
+                </div>
+              )}
               {loading ? (
                 <div style={{textAlign:'center',padding:'60px 0',color:'var(--muted)'}}>
                   <div style={{fontSize:32,marginBottom:12}}>⏳</div>
                   <div style={{fontSize:16}}>{t.loading}</div>
                 </div>
-              ) : filtered.length === 0 ? (
+              ) : displayList.length === 0 ? (
                 <div style={{textAlign:'center',padding:'60px 0',color:'var(--muted)'}}>
                   <div style={{marginBottom:12}}><Search size={44} strokeWidth={1.5} /></div>
                   <div style={{fontSize:16}}>{search ? t.noEventsSearch.replace("{term}", search) : t.noEvents}</div>
                 </div>
               ) : viewMode === "grid" ? (
                 <div className="events-grid">
-                  {filtered.map(ev => (
+                  {displayList.map(ev => (
                     <div key={ev.id} className="event-card" onClick={() => { setSelectedEvent(ev); trackEvent({ action: "ver_detalle_evento", category: "Interaccion", label: ev.title }); }}>
                       <div className="event-card-img" style={{backgroundImage: `url(${ev.imageUrl || getCatConfig(ev.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}}>
                         <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.35)'}} />
@@ -2149,10 +2249,10 @@ export default function App() {
                       <div className="event-card-body">
                         <div className="event-card-title">{ev.title}</div>
                         <div className="event-card-info">
-                          <div className="event-card-info-row"><Calendar size={13} color="var(--muted)" /> {getDisplayDate(ev)}{ev.time ? ` · ${ev.time}` : ''}{ev.recurrencia && <span style={{marginLeft:4, fontSize:10, background:'rgba(200,134,10,0.15)', color:'var(--gold)', padding:'1px 6px', borderRadius:100, fontWeight:700}}>🔄 {ev.recurrencia}</span>}</div>
+                          <div className="event-card-info-row"><Calendar size={13} color="var(--muted)" /> {getDisplayDate(ev)}{ev.time ? ` · ${ev.time}` : ''}{ev.recurrencia && <span style={{marginLeft:4, fontSize:10, background:'rgba(200,134,10,0.15)', color:'var(--gold-text)', padding:'1px 6px', borderRadius:100, fontWeight:700}}>🔄 {ev.recurrencia}</span>}</div>
                           <div className="event-card-info-row"><MapPin size={13} color="var(--muted)" /> {ev.place}</div>
                           {cercaDeMi && miUbicacion && ev.lat != null && ev.lng != null && (
-                            <div className="event-card-info-row" style={{color:'var(--gold)', fontWeight:700}}>📍 {distanciaKm(miUbicacion.lat, miUbicacion.lng, ev.lat, ev.lng).toFixed(1)} km de ti</div>
+                            <div className="event-card-info-row" style={{color:'var(--gold-text)', fontWeight:700}}>📍 {distanciaKm(miUbicacion.lat, miUbicacion.lng, ev.lat, ev.lng).toFixed(1)} km de ti</div>
                           )}
                         </div>
                         {ev.organizerName && (
@@ -2166,7 +2266,7 @@ export default function App() {
                           <div style={{display:'flex',gap:6,position:'relative'}}>
                             {isAdmin && (
                               <>
-                                <button className="btn-reserve" style={{color:'var(--gold)',borderColor:'rgba(200,134,10,0.3)',fontSize:11}} onClick={e=>{e.stopPropagation();setAdminTagPicker(adminTagPicker===ev.id?null:ev.id);}}><Tag size={11} style={{marginRight:3, verticalAlign:'-1px'}} />Tag</button>
+                                <button className="btn-reserve" style={{color:'var(--gold-text)',borderColor:'rgba(200,134,10,0.3)',fontSize:11}} onClick={e=>{e.stopPropagation();setAdminTagPicker(adminTagPicker===ev.id?null:ev.id);}}><Tag size={11} style={{marginRight:3, verticalAlign:'-1px'}} />Tag</button>
                                 {adminTagPicker === ev.id && (
                                   <div className="admin-tag-picker" onClick={e=>e.stopPropagation()}>
                                     <div style={{fontSize:11,color:'var(--muted)',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6,padding:'0 4px'}}>Asignar tag</div>
@@ -2195,7 +2295,7 @@ export default function App() {
                 </div>
               ) : (
                 <div style={{display:'flex', flexDirection:'column', gap:12, marginBottom:48}}>
-                  {filtered.map(ev => (
+                  {displayList.map(ev => (
                     <div key={ev.id} onClick={() => { setSelectedEvent(ev); trackEvent({ action: "ver_detalle_evento", category: "Interaccion", label: ev.title }); }} style={{display:'flex', gap:16, alignItems:'center', background:'white', borderRadius:14, padding:14, cursor:'pointer', border:'1px solid var(--border)', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', transition:'all 0.2s'}}
                       onMouseEnter={e=>e.currentTarget.style.borderColor='var(--gold)'}
                       onMouseLeave={e=>e.currentTarget.style.borderColor='var(--border)'}
@@ -2209,7 +2309,7 @@ export default function App() {
                           <div className={`event-card-price ${esGratis(ev.price)?"free":""}`} style={{flexShrink:0, fontSize:13}}>{formatPriceLabel(ev.price)}</div>
                         </div>
                         <div style={{fontSize:12, color:'var(--muted)', marginTop:4, display:'flex', gap:12, flexWrap:'wrap'}}>
-                          <span><Calendar size={11} style={{display:'inline',marginRight:3}} />{getDisplayDate(ev)}{ev.recurrencia && <span style={{marginLeft:4, fontSize:10, color:'var(--gold)', fontWeight:700}}>🔄</span>}</span>
+                          <span><Calendar size={11} style={{display:'inline',marginRight:3}} />{getDisplayDate(ev)}{ev.recurrencia && <span style={{marginLeft:4, fontSize:10, color:'var(--gold-text)', fontWeight:700}}>🔄</span>}</span>
                           <span><MapPin size={11} style={{display:'inline',marginRight:3}} />{ev.place}</span>
                         </div>
                         <div style={{marginTop:6, display:'flex', gap:6, alignItems:'center'}}>
@@ -2338,7 +2438,7 @@ export default function App() {
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,maxWidth:300,margin:'0 auto 32px'}}>
                   {[[t.eventsAttended,"12"],[t.eventsSaved,String(saved.length)],[t.eventsCreated,"3"],[t.reviews,"8"]].map(([l,v])=>(
                     <div key={l} style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:14,padding:'16px 12px'}}>
-                      <div style={{fontFamily:'var(--font-display)',fontSize:28,color:'var(--gold)'}}>{v}</div>
+                      <div style={{fontFamily:'var(--font-display)',fontSize:28,color:'var(--gold-text)'}}>{v}</div>
                       <div style={{fontSize:12,color:'var(--muted)',marginTop:2}}>{l}</div>
                     </div>
                   ))}
@@ -2353,7 +2453,7 @@ export default function App() {
           <div style={{flex:1, display:'flex', flexDirection:'column', minHeight:0, height:'calc(100vh - 120px)'}}>
             <div style={{background:'white', borderBottom:'1px solid var(--border)', padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0}}>
               <div>
-                <div style={{fontFamily:'var(--font-display)', fontSize:22, color:'var(--text)'}}>Mapa de <span style={{color:'var(--gold)'}}>Eventos</span></div>
+                <div style={{fontFamily:'var(--font-display)', fontSize:22, color:'var(--text)'}}>Mapa de <span style={{color:'#8F5F05'}}>Eventos</span></div>
                 <div style={{fontSize:12, color:'var(--muted)', marginTop:1}}>{filtered.length} eventos · {activeFilter !== "Todos" ? activeFilter : "todas las categorías"}{activeZona !== "Todas" ? ` · ${activeZona}` : ""}</div>
               </div>
               {geoLoading && (
@@ -2375,7 +2475,7 @@ export default function App() {
               {!geoLoading && markerCount === 0 && filtered.length > 0 && (
                 <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', zIndex:999, pointerEvents:'none'}}>
                   <div style={{background:'white', border:'1px solid var(--border)', borderRadius:16, padding:'20px 28px', textAlign:'center', boxShadow:'0 4px 20px rgba(0,0,0,0.1)'}}>
-                    <div style={{marginBottom:8}}><MapIcon size={30} color="var(--gold)" /></div>
+                    <div style={{marginBottom:8}}><MapIcon size={30} color="#8F5F05" /></div>
                     <div style={{fontWeight:700, marginBottom:4}}>Geocodificando ubicaciones</div>
                     <div style={{fontSize:13, color:'var(--muted)'}}>Los pins aparecerán en unos segundos…</div>
                   </div>
@@ -2389,7 +2489,7 @@ export default function App() {
           <div className="admin-panel">
             <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', paddingBottom:4}}>
               <div style={{fontFamily:'var(--font-display)', fontSize:28, color:'var(--text)'}}>
-                Panel <span style={{color:'var(--gold)'}}>Admin</span>
+                Panel <span style={{color:'var(--gold-text)'}}>Admin</span>
               </div>
               <button onClick={()=>{fetchPendingEvents();fetchEvents();}} style={{background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,padding:'6px 12px',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'var(--font-body)'}}>
                 🔄 Actualizar
@@ -2433,7 +2533,7 @@ export default function App() {
                       <div className="admin-event-row-actions">
                         <button className="admin-btn-approve" onClick={()=>handleApprove(ev.id)}>✅ Aprobar</button>
                         <button className="admin-btn-reject" onClick={()=>handleReject(ev.id)}>✗ Rechazar</button>
-                        {ev.ticket_link && <a href={ev.ticket_link} target="_blank" rel="noopener noreferrer" style={{fontSize:12,color:'var(--gold)',fontWeight:600,textDecoration:'none',padding:'6px 0'}}>🔗 Ver link</a>}
+                        {ev.ticket_link && <a href={ev.ticket_link} target="_blank" rel="noopener noreferrer" style={{fontSize:12,color:'var(--gold-text)',fontWeight:600,textDecoration:'none',padding:'6px 0'}}>🔗 Ver link</a>}
                       </div>
                     </div>
                   </div>
@@ -2586,7 +2686,7 @@ export default function App() {
                                 return (
                                   <div key={domain} style={{marginBottom:8}}>
                                     <div style={{display:"flex", justifyContent:"space-between", fontSize:12, fontWeight:600, marginBottom:3}}>
-                                      <span>{domain}</span><span style={{color:"var(--gold)", fontWeight:700}}>{count}</span>
+                                      <span>{domain}</span><span style={{color:"var(--gold-text)", fontWeight:700}}>{count}</span>
                                     </div>
                                     <div style={{background:"var(--surface2)", borderRadius:100, height:8, overflow:"hidden"}}>
                                       <div style={{width:`${pct}%`, height:"100%", background:"#C8860A", borderRadius:100, transition:"width 0.5s"}} />
@@ -2602,7 +2702,7 @@ export default function App() {
                               <div style={{display:"flex", flexWrap:"wrap", gap:8}}>
                                 {Object.entries(adminStats.clicksByPage).sort((a,b)=>b[1]-a[1]).map(([page, count]) => (
                                   <div key={page} style={{background:"var(--surface2)", borderRadius:100, padding:"4px 12px", fontSize:12, fontWeight:600}}>
-                                    {page} <span style={{color:"var(--gold)", fontWeight:700}}>{count}</span>
+                                    {page} <span style={{color:"var(--gold-text)", fontWeight:700}}>{count}</span>
                                   </div>
                                 ))}
                               </div>
@@ -2733,23 +2833,23 @@ export default function App() {
           </div>
           <div style={{padding:'20px 24px', textAlign:'center'}}>
             <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:16, flexWrap:'wrap'}}>
-              <span style={{fontFamily:'var(--font-display)', fontSize:18, color:'var(--gold)'}}>MEDELLÍN VIBRA</span>
+              <span style={{fontFamily:'var(--font-display)', fontSize:18, color:'var(--gold-text)'}}>MEDELLÍN VIBRA</span>
               <a href="https://www.instagram.com/medellinvibra.co/" target="_blank" rel="noopener noreferrer" style={{display:'inline-flex', alignItems:'center', gap:6, color:'#C0392B', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
                 <InstagramIcon size={14} />@medellinvibra.co
               </a>
               <a href="https://www.facebook.com/profile.php?id=61591129902444" target="_blank" rel="noopener noreferrer" style={{display:'inline-flex', alignItems:'center', gap:6, color:'#1877F2', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
                 <FacebookIcon size={14} />Medellín Vibra
               </a>
-              <a href="mailto:hola@medellinvibra.co" style={{display:'inline-flex', alignItems:'center', gap:6, color:'var(--gold)', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
+              <a href="mailto:hola@medellinvibra.co" style={{display:'inline-flex', alignItems:'center', gap:6, color:'var(--gold-text)', fontWeight:600, fontSize:13, textDecoration:'none', fontFamily:'var(--font-body)'}}>
                 <Mail size={14} />hola@medellinvibra.co
               </a>
-              <button onClick={() => navigate(`${langPrefix}/preguntas-frecuentes`)} style={{background:'none', border:'none', color:'var(--gold)', fontWeight:600, fontSize:13, fontFamily:'var(--font-body)', cursor:'pointer', padding:0}}>
+              <button onClick={() => navigate(`${langPrefix}/preguntas-frecuentes`)} style={{background:'none', border:'none', color:'var(--gold-text)', fontWeight:600, fontSize:13, fontFamily:'var(--font-body)', cursor:'pointer', padding:0}}>
                 {t.faqLink}
               </button>
-              <button onClick={() => navigate("/proveedores")} style={{background:'none', border:'none', color:'var(--gold)', fontWeight:600, fontSize:13, fontFamily:'var(--font-body)', cursor:'pointer', padding:0}}>
+              <button onClick={() => navigate("/proveedores")} style={{background:'none', border:'none', color:'var(--gold-text)', fontWeight:600, fontSize:13, fontFamily:'var(--font-body)', cursor:'pointer', padding:0}}>
                 {t.navProveedores}
               </button>
-              <button onClick={() => navigate("/nosotros")} style={{background:'none', border:'none', color:'var(--gold)', fontWeight:600, fontSize:13, fontFamily:'var(--font-body)', cursor:'pointer', padding:0}}>
+              <button onClick={() => navigate("/nosotros")} style={{background:'none', border:'none', color:'var(--gold-text)', fontWeight:600, fontSize:13, fontFamily:'var(--font-body)', cursor:'pointer', padding:0}}>
                 {t.navNosotros}
               </button>
               <span style={{fontSize:12, color:'var(--muted)'}}>{t.copyright}</span>
@@ -2758,11 +2858,18 @@ export default function App() {
         </footer>
 
         <nav className="bottom-nav">
-          {[[Home,t.tabHome,"home"],[Search,t.tabExplore,"explore"],[MapIcon,t.navMap,"map"],[Heart,t.tabSaved,"saved"],[User,t.tabProfile,"profile"]].map(([Icon,label,tab])=>(
-            <button key={tab} className={`bottom-nav-item ${activeTab===tab?"active":""}`} onClick={()=>{setActiveTab(tab); trackEvent({ action: "cambiar_tab_bottom", category: "Navegacion", label: tab });}}>
-              <span><Icon size={20} fill={tab==="saved" && saved.length > 0 ? "#E8353A" : "none"} color={tab==="saved" && saved.length > 0 ? "#E8353A" : "currentColor"} /></span><span>{label}</span>
-            </button>
-          ))}
+          <button className={`bottom-nav-item ${activeTab==="home"?"active":""}`} onClick={()=>{setActiveTab("home"); trackEvent({ action: "cambiar_tab_bottom", category: "Navegacion", label: "home" });}}>
+            <span><Home size={20} /></span><span>{t.tabHome}</span>
+          </button>
+          <button className={`bottom-nav-item ${basePath==="/hoy"?"active":""}`} onClick={()=>{navigate(`${langPrefix}/hoy`); trackEvent({ action: "cambiar_tab_bottom", category: "Navegacion", label: "hoy" });}}>
+            <span><Calendar size={20} /></span><span>{t.filterToday}</span>
+          </button>
+          <button className={`bottom-nav-item ${activeTab==="explore"?"active":""}`} onClick={()=>{setActiveTab("explore"); trackEvent({ action: "cambiar_tab_bottom", category: "Navegacion", label: "explore" });}}>
+            <span><Search size={20} /></span><span>{t.searchBtn}</span>
+          </button>
+          <button className={`bottom-nav-item ${basePath==="/proveedores"?"active":""}`} onClick={()=>{navigate("/proveedores"); trackEvent({ action: "click_nav_proveedores", category: "Navegacion", label: "proveedores_bottom" });}}>
+            <span><Store size={20} /></span><span>{t.navProveedores}</span>
+          </button>
           {isAdmin && (
             <button className={`bottom-nav-item ${activeTab==="admin"?"active":""}`} onClick={()=>setActiveTab("admin")}>
               <span><Settings size={20} />{pendingEvents.length > 0 && <span className="admin-badge">{pendingEvents.length}</span>}</span>
@@ -2778,11 +2885,17 @@ export default function App() {
           <div className="more-menu-overlay" onClick={()=>setShowMoreMenu(false)}>
             <div className="more-menu-panel" onClick={e=>e.stopPropagation()}>
               <div className="more-menu-handle" />
+              <button className="more-menu-item" onClick={()=>{setShowMoreMenu(false); setActiveTab("map"); trackEvent({ action: "cambiar_tab_bottom", category: "Navegacion", label: "map_mas" });}}>
+                <MapIcon size={20} />{t.navMap}
+              </button>
+              <button className="more-menu-item" onClick={()=>{setShowMoreMenu(false); setActiveTab("saved"); trackEvent({ action: "cambiar_tab_bottom", category: "Navegacion", label: "saved_mas" });}}>
+                <Heart size={20} fill={saved.length > 0 ? "#E8353A" : "none"} color={saved.length > 0 ? "#E8353A" : "currentColor"} />{t.tabSaved}
+              </button>
+              <button className="more-menu-item" onClick={()=>{setShowMoreMenu(false); setActiveTab("profile"); trackEvent({ action: "cambiar_tab_bottom", category: "Navegacion", label: "profile_mas" });}}>
+                <User size={20} />{t.tabProfile}
+              </button>
               <button className="more-menu-item" onClick={()=>{setShowMoreMenu(false); navigate("/gratis"); trackEvent({ action: "click_nav_gratis", category: "Navegacion", label: "gratis_mas" });}}>
                 <Ticket size={20} />{t.navGratis}
-              </button>
-              <button className="more-menu-item" onClick={()=>{setShowMoreMenu(false); navigate("/proveedores"); trackEvent({ action: "click_nav_proveedores", category: "Navegacion", label: "proveedores_mas" });}}>
-                <Store size={20} />{t.navProveedores}
               </button>
               <button className="more-menu-item" onClick={()=>{setShowMoreMenu(false); navigate("/para-organizadores"); trackEvent({ action: "click_nav_organizadores", category: "Navegacion", label: "organizadores_mas" });}}>
                 <Megaphone size={20} />{t.navParaOrganizadores}
@@ -2814,7 +2927,7 @@ export default function App() {
                 <input className="auth-input" type="password" placeholder={t.passwordPlaceholder} value={authPassword} onChange={e=>setAuthPassword(e.target.value)} />
                 {authTab === "login" && !showForgot && (
                   <div style={{textAlign:'right',marginTop:-8}}>
-                    <span style={{fontSize:13,color:'var(--gold)',cursor:'pointer',textDecoration:'underline'}} onClick={()=>{setShowForgot(true);setAuthError("");setAuthSuccess("");}}>
+                    <span style={{fontSize:13,color:'#8F5F05',cursor:'pointer',textDecoration:'underline'}} onClick={()=>{setShowForgot(true);setAuthError("");setAuthSuccess("");}}>
                       {t.forgotPassword}
                     </span>
                   </div>
@@ -2861,7 +2974,7 @@ export default function App() {
                   <div className="detail-info-item"><div className="detail-info-label">{t.date}</div><div className="detail-info-value">{selectedEvent.date}</div></div>
                   <div className="detail-info-item"><div className="detail-info-label">{t.time}</div><div className="detail-info-value">{selectedEvent.time}</div></div>
                   <div className="detail-info-item"><div className="detail-info-label">{t.place}</div><div className="detail-info-value">{selectedEvent.place}</div></div>
-                  <div className="detail-info-item"><div className="detail-info-label">{t.price}</div><div className="detail-info-value" style={{color: selectedEvent.price==="Gratis"?'var(--green)':'var(--gold)'}}>{selectedEvent.price}</div></div>
+                  <div className="detail-info-item"><div className="detail-info-label">{t.price}</div><div className="detail-info-value" style={{color: selectedEvent.price==="Gratis"?'var(--green)':'var(--gold-text)'}}>{selectedEvent.price}</div></div>
                 </div>
                 <p className="detail-desc">{selectedEvent.desc}</p>
                 <div style={{marginBottom:16}}>
@@ -2874,17 +2987,17 @@ export default function App() {
                     src={`https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent('-75.65,-75.50,6.18,6.35')}&layer=mapnik&marker=${encodeURIComponent(`6.2442,-75.5812`)}`}
                   />
                   <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedEvent.place)}`} target="_blank" rel="noopener noreferrer"
-                    style={{display:'flex', alignItems:'center', gap:6, marginTop:8, color:'var(--gold)', fontSize:13, fontWeight:600, textDecoration:'none'}}>
+                    style={{display:'flex', alignItems:'center', gap:6, marginTop:8, color:'var(--gold-text)', fontSize:13, fontWeight:600, textDecoration:'none'}}>
                     <MapPin size={14} />Abrir en Google Maps · {selectedEvent.place} ↗
                   </a>
                 </div>
                 {selectedEvent.ticketPlatform && (
                   <div style={{marginBottom:12,display:'flex',alignItems:'center',gap:8,background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:10,padding:'10px 14px',cursor: selectedEvent.link ? 'pointer' : 'default'}}
                     onClick={() => selectedEvent.link && registrarClic(selectedEvent.id, selectedEvent.link, "home_modal", selectedEvent.title, selectedEvent.cat)}>
-                    <Ticket size={18} color="var(--gold)" style={{flexShrink:0}} />
+                    <Ticket size={18} color="var(--gold-text)" style={{flexShrink:0}} />
                     <div>
                       <div style={{fontSize:11,color:'var(--muted)',textTransform:'uppercase',letterSpacing:'0.5px'}}>{t.officialTickets}</div>
-                      <div style={{fontWeight:700,fontSize:14,color:'var(--gold)'}}>{selectedEvent.ticketPlatform} {selectedEvent.link && '↗'}</div>
+                      <div style={{fontWeight:700,fontSize:14,color:'var(--gold-text)'}}>{selectedEvent.ticketPlatform} {selectedEvent.link && '↗'}</div>
                     </div>
                   </div>
                 )}
@@ -2898,10 +3011,10 @@ export default function App() {
                       <div style={{fontSize:11, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'0.5px'}}>{t.organizer}</div>
                       <div style={{fontWeight:700, fontSize:14}}>{selectedEvent.organizerName}</div>
                       {selectedEvent.organizerContact && (
-                        <div style={{fontSize:12, color:'var(--gold)', marginTop:2}}>{selectedEvent.organizerContact}</div>
+                        <div style={{fontSize:12, color:'var(--gold-text)', marginTop:2}}>{selectedEvent.organizerContact}</div>
                       )}
                     </div>
-                    <span style={{color:'var(--gold)', fontSize:20}}>›</span>
+                    <span style={{color:'var(--gold-text)', fontSize:20}}>›</span>
                   </div>
                 )}
                 <div className="detail-actions">
@@ -3014,7 +3127,7 @@ export default function App() {
               </div>
 
               <div style={{borderTop:'1px solid var(--border)',margin:'16px 0',paddingTop:16}}>
-                <div style={{fontSize:12,fontWeight:700,color:'var(--gold)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:14}}><User size={12} style={{marginRight:4, verticalAlign:'-2px'}} />Información del organizador</div>
+                <div style={{fontSize:12,fontWeight:700,color:'#8F5F05',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:14}}><User size={12} style={{marginRight:4, verticalAlign:'-2px'}} />Información del organizador</div>
                 <div className="form-group">
                   <label className="form-label">Nombre del organizador <span style={{color:'#dc2626'}}>*</span></label>
                   <input className="form-input" placeholder="ej. Productora XYZ, nombre del artista o venue" value={form.organizer_name} onChange={e=>handleFormChange("organizer_name",e.target.value)} required />
@@ -3032,7 +3145,7 @@ export default function App() {
               </div>
 
               <div style={{borderTop:'1px solid var(--border)',margin:'16px 0',paddingTop:16}}>
-                <div style={{fontSize:12,fontWeight:700,color:'var(--gold)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:14}}>🎟️ Venta de entradas</div>
+                <div style={{fontSize:12,fontWeight:700,color:'#8F5F05',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:14}}>🎟️ Venta de entradas</div>
                 <div className="form-group">
                   <label className="form-label">Plataforma de venta</label>
                   <input className="form-input" placeholder="ej. TuBoleta, La Tiquetera, Gratis" value={form.ticket_platform} onChange={e=>handleFormChange("ticket_platform",e.target.value)} />
@@ -3044,7 +3157,7 @@ export default function App() {
               </div>
 
               <div style={{borderTop:'1px solid var(--border)',margin:'16px 0',paddingTop:16}}>
-                <div style={{fontSize:12,fontWeight:700,color:'var(--gold)',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:14}}>🔄 Recurrencia (opcional)</div>
+                <div style={{fontSize:12,fontWeight:700,color:'#8F5F05',textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:14}}>🔄 Recurrencia (opcional)</div>
                 <div className="form-group">
                   <label className="form-label">¿Este evento se repite?</label>
                   <select className="form-select" value={form.recurrencia} onChange={e=>handleFormChange("recurrencia",e.target.value)}>
