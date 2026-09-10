@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "./supabase";
+import { trackEvent } from "./analytics";
 import {
   Armchair, Speaker, Tent, MonitorPlay, UtensilsCrossed, Palette, Camera, Sofa, Truck, ShieldCheck,
   Store, Mail, MessageCircle, Globe, X, ImagePlus, Loader2, Wheat, Users, BadgeCheck,
@@ -317,9 +318,9 @@ export default function ProveedoresPage() {
           <div style={{ fontSize: 12, color: c.muted, marginBottom: 8 }}>📍 {p.zona}</div>
           {p.descripcion && <div style={{ fontSize: 12, color: c.muted, lineHeight: 1.5, marginBottom: 10 }}>{p.descripcion.length > 120 ? p.descripcion.slice(0, 120).trimEnd() + "…" : p.descripcion}</div>}
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {wa && <a href={wa} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700, color: "#25D366", textDecoration: "none" }}><MessageCircle size={13} />WhatsApp</a>}
-            {p.contacto_email && <a href={`mailto:${p.contacto_email}`} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700, color: gold, textDecoration: "none" }}><Mail size={13} />Correo</a>}
-            {p.sitio_web && <a href={p.sitio_web} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700, color: gold, textDecoration: "none" }}><Globe size={13} />Sitio</a>}
+            {wa && <a href={wa} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent({ action: "click_contacto_proveedor", category: "Conversión", label: `whatsapp - ${p.nombre}` })} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700, color: "#25D366", textDecoration: "none" }}><MessageCircle size={13} />WhatsApp</a>}
+            {p.contacto_email && <a href={`mailto:${p.contacto_email}`} onClick={() => trackEvent({ action: "click_contacto_proveedor", category: "Conversión", label: `correo - ${p.nombre}` })} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700, color: gold, textDecoration: "none" }}><Mail size={13} />Correo</a>}
+            {p.sitio_web && <a href={p.sitio_web} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent({ action: "click_contacto_proveedor", category: "Conversión", label: `sitio - ${p.nombre}` })} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700, color: gold, textDecoration: "none" }}><Globe size={13} />Sitio</a>}
           </div>
         </div>
       </div>
