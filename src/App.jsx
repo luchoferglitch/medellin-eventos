@@ -119,6 +119,17 @@ const slugify = (str) =>
     .trim().replace(/\s+/g, "-")
     .slice(0, 80) || "";
 
+// Las tarjetas de evento son <Link> reales (rastreables, clic-derecho, nueva
+// pestaña) pero conservan el modal de detalle en el clic izquierdo normal, en
+// vez de navegar a /evento/:slug. Deja pasar sin interceptar los casos donde
+// el navegador ya maneja la acción por su cuenta: clic con modificador
+// (nueva pestaña/ventana) o cualquier botón que no sea el izquierdo.
+const handleCardLinkClick = (e, openModal) => {
+  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  e.preventDefault();
+  openModal();
+};
+
 const isNewEvent = (event) => {
   if (!event.fechaReal) return false;
   const created = event.createdAt ? new Date(event.createdAt) : null;
@@ -1313,6 +1324,7 @@ export default function App() {
 
   const handleDeleteEvent = async (id, e) => {
     e.stopPropagation();
+    e.preventDefault();
     if (!window.confirm("¿Seguro que quieres eliminar este evento?")) return;
     const { error } = await supabase.from("events").delete().eq("id", id);
     if (error) showToast("⚠️ Error al eliminar");
@@ -2112,8 +2124,9 @@ export default function App() {
                       {findeEvents.map(ev => {
                         const cfg = getCatConfig(ev.cat);
                         return (
-                          <div key={ev.id} onClick={() => { setSelectedEvent(ev); trackEvent({ action: "ver_detalle_evento", category: "Interaccion", label: ev.title }); }}
-                            style={{borderRadius:16, overflow:'hidden', cursor:'pointer', position:'relative', aspectRatio:'3/4', background:`linear-gradient(135deg, ${cfg.color}33, ${cfg.color}66)`}}
+                          <Link key={ev.id} to={`${langPrefix}/evento/${slugify(ev.title)}-${ev.id}`}
+                            onClick={(e) => handleCardLinkClick(e, () => { setSelectedEvent(ev); trackEvent({ action: "ver_detalle_evento", category: "Interaccion", label: ev.title }); })}
+                            style={{display:'block', color:'inherit', textDecoration:'none', borderRadius:16, overflow:'hidden', cursor:'pointer', position:'relative', aspectRatio:'3/4', background:`linear-gradient(135deg, ${cfg.color}33, ${cfg.color}66)`}}
                             onMouseEnter={e=>e.currentTarget.style.transform='scale(1.02)'}
                             onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}
                           >
@@ -2126,7 +2139,7 @@ export default function App() {
                               <div style={{fontSize:11, color:'rgba(255,255,255,0.7)'}}>{ev.date}</div>
                               <div style={{fontSize:11, color:'rgba(255,255,255,0.6)', marginTop:2, display:'flex', alignItems:'center', gap:3}}><MapPin size={10} />{ev.place?.split(',')[0]}</div>
                             </div>
-                          </div>
+                          </Link>
                         );
                       })}
                     </div>
@@ -2151,7 +2164,9 @@ export default function App() {
                     </div>
                     <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(240px, 1fr))', gap:16}}>
                       {weekEvents.map(ev => (
-                        <div key={ev.id} onClick={() => { setSelectedEvent(ev); trackEvent({ action: "ver_detalle_evento", category: "Interaccion", label: ev.title }); }} style={{display:'flex', gap:12, alignItems:'center', background:'var(--surface2)', borderRadius:12, padding:12, cursor:'pointer', border:'1px solid var(--border)', transition:'all 0.2s'}}
+                        <Link key={ev.id} to={`${langPrefix}/evento/${slugify(ev.title)}-${ev.id}`}
+                          onClick={(e) => handleCardLinkClick(e, () => { setSelectedEvent(ev); trackEvent({ action: "ver_detalle_evento", category: "Interaccion", label: ev.title }); })}
+                          style={{display:'flex', color:'inherit', textDecoration:'none', gap:12, alignItems:'center', background:'var(--surface2)', borderRadius:12, padding:12, cursor:'pointer', border:'1px solid var(--border)', transition:'all 0.2s'}}
                           onMouseEnter={e=>e.currentTarget.style.borderColor='var(--gold)'}
                           onMouseLeave={e=>e.currentTarget.style.borderColor='var(--border)'}
                         >
@@ -2161,7 +2176,7 @@ export default function App() {
                             <div style={{fontSize:12, color:'var(--muted)'}}>{ev.date}</div>
                             <div style={{fontSize:12, color:'var(--gold-text)', fontWeight:700}}>{formatPriceLabel(ev.price)}</div>
                           </div>
-                        </div>
+                        </Link>
                       ))}
                     </div>
                   </div>
@@ -2173,7 +2188,9 @@ export default function App() {
               {activeFilter === "Todos" && !search && featuredEvent && (
                 <div className="desktop-only">
                   <div className="section-header"><div className="section-title">{t.featuredTitle} <span>{t.featuredTitleSpan}</span></div></div>
-                  <div className="featured-card" onClick={() => { setSelectedEvent(featuredEvent); trackEvent({ action: "ver_detalle_destacado", category: "Interaccion", label: featuredEvent.title }); }}>
+                  <Link className="featured-card" to={`${langPrefix}/evento/${slugify(featuredEvent.title)}-${featuredEvent.id}`}
+                    onClick={(e) => handleCardLinkClick(e, () => { setSelectedEvent(featuredEvent); trackEvent({ action: "ver_detalle_destacado", category: "Interaccion", label: featuredEvent.title }); })}
+                    style={{display:'block', color:'inherit', textDecoration:'none'}}>
                     <div className="featured-bg" style={{backgroundImage: `url(${getCatConfig(featuredEvent.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}} />
                     <div className="featured-overlay" />
                     <div className="featured-content">
@@ -2185,11 +2202,11 @@ export default function App() {
                         <span style={{display:'inline-flex', alignItems:'center', gap:5}}><MapPin size={13} />{featuredEvent.place}</span>
                       </div>
                       <div className="featured-actions">
-                        <button className="featured-price" onClick={e=>{e.stopPropagation();setSelectedEvent(featuredEvent);}}>{featuredEvent.price === "Gratis" ? "Ver evento · Gratis" : featuredEvent.price === "Con cobro" ? "Reservar entradas" : `Reservar · ${featuredEvent.price}`}</button>
-                        <button className="featured-save" onClick={e=>{e.stopPropagation();toggleSave(featuredEvent.id);}}><Heart size={14} fill={saved.includes(featuredEvent.id) ? "#E8353A" : "none"} style={{marginRight:6, verticalAlign:'-2px'}} />{(saved.includes(featuredEvent.id) ? t.saved : t.save).replace("❤️ ","").replace("🤍 ","")}<span style={{opacity:0.75, marginLeft:5}}>· {favoritesCounts[featuredEvent.id] || 0}</span></button>
+                        <button className="featured-price" onClick={e=>{e.stopPropagation();e.preventDefault();setSelectedEvent(featuredEvent);}}>{featuredEvent.price === "Gratis" ? "Ver evento · Gratis" : featuredEvent.price === "Con cobro" ? "Reservar entradas" : `Reservar · ${featuredEvent.price}`}</button>
+                        <button className="featured-save" onClick={e=>{e.stopPropagation();e.preventDefault();toggleSave(featuredEvent.id);}}><Heart size={14} fill={saved.includes(featuredEvent.id) ? "#E8353A" : "none"} style={{marginRight:6, verticalAlign:'-2px'}} />{(saved.includes(featuredEvent.id) ? t.saved : t.save).replace("❤️ ","").replace("🤍 ","")}<span style={{opacity:0.75, marginLeft:5}}>· {favoritesCounts[featuredEvent.id] || 0}</span></button>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 </div>
               )}
 
@@ -2235,7 +2252,9 @@ export default function App() {
               ) : viewMode === "grid" ? (
                 <div className="events-grid">
                   {displayList.map(ev => (
-                    <div key={ev.id} className="event-card" onClick={() => { setSelectedEvent(ev); trackEvent({ action: "ver_detalle_evento", category: "Interaccion", label: ev.title }); }}>
+                    <Link key={ev.id} className="event-card" to={`${langPrefix}/evento/${slugify(ev.title)}-${ev.id}`}
+                      onClick={(e) => handleCardLinkClick(e, () => { setSelectedEvent(ev); trackEvent({ action: "ver_detalle_evento", category: "Interaccion", label: ev.title }); })}
+                      style={{display:'block', color:'inherit', textDecoration:'none'}}>
                       <div className="event-card-img" style={{backgroundImage: `url(${ev.imageUrl || getCatConfig(ev.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}}>
                         <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.35)'}} />
                         <span className="event-card-cat" style={{zIndex:1}}>{t[CAT_LABEL_KEY[ev.cat]] || ev.cat}</span>
@@ -2256,19 +2275,25 @@ export default function App() {
                           )}
                         </div>
                         {ev.organizerName && (
-                          <Link to={`${langPrefix}/organizador/${slugify(ev.organizerName)}`} className="event-card-organizer"
-                            onClick={e => { e.stopPropagation(); trackEvent({ action: "click_organizador", category: "Navegacion", label: ev.organizerName }); }}>
+                          // No es <Link> a propósito: esta tarjeta completa ya es un
+                          // <a> real (arriba), y HTML no permite anidar <a> — React lo
+                          // rechaza con un error de hidratación. Mismo destino y
+                          // stopPropagation de siempre, solo que la navegación se
+                          // dispara a mano en vez de vía href.
+                          <span role="link" tabIndex={0} className="event-card-organizer" style={{cursor:'pointer'}}
+                            onClick={e => { e.stopPropagation(); e.preventDefault(); trackEvent({ action: "click_organizador", category: "Navegacion", label: ev.organizerName }); navigate(`${langPrefix}/organizador/${slugify(ev.organizerName)}`); }}
+                            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); trackEvent({ action: "click_organizador", category: "Navegacion", label: ev.organizerName }); navigate(`${langPrefix}/organizador/${slugify(ev.organizerName)}`); } }}>
                             Por {ev.organizerName}
-                          </Link>
+                          </span>
                         )}
                         <div className="event-card-footer">
                           <div className={`event-card-price ${esGratis(ev.price)?"free":""}`}>{formatPriceLabel(ev.price)}</div>
                           <div style={{display:'flex',gap:6,position:'relative'}}>
                             {isAdmin && (
                               <>
-                                <button className="btn-reserve" style={{color:'var(--gold-text)',borderColor:'rgba(200,134,10,0.3)',fontSize:11}} onClick={e=>{e.stopPropagation();setAdminTagPicker(adminTagPicker===ev.id?null:ev.id);}}><Tag size={11} style={{marginRight:3, verticalAlign:'-1px'}} />Tag</button>
+                                <button className="btn-reserve" style={{color:'var(--gold-text)',borderColor:'rgba(200,134,10,0.3)',fontSize:11}} onClick={e=>{e.stopPropagation();e.preventDefault();setAdminTagPicker(adminTagPicker===ev.id?null:ev.id);}}><Tag size={11} style={{marginRight:3, verticalAlign:'-1px'}} />Tag</button>
                                 {adminTagPicker === ev.id && (
-                                  <div className="admin-tag-picker" onClick={e=>e.stopPropagation()}>
+                                  <div className="admin-tag-picker" onClick={e=>{e.stopPropagation();e.preventDefault();}}>
                                     <div style={{fontSize:11,color:'var(--muted)',fontWeight:700,textTransform:'uppercase',letterSpacing:'0.5px',marginBottom:6,padding:'0 4px'}}>Asignar tag</div>
                                     {ADMIN_TAGS.map(tag => {
                                       const cfg = TAGS_CONFIG[tag];
@@ -2286,17 +2311,19 @@ export default function App() {
                                 <button className="btn-reserve" style={{color:'var(--red)',borderColor:'rgba(232,53,58,0.3)'}} onClick={e=>handleDeleteEvent(ev.id,e)}><Trash2 size={14} /></button>
                               </>
                             )}
-                            <button className="btn-reserve" style={{display:'inline-flex', alignItems:'center', gap:5}} onClick={e=>{e.stopPropagation();toggleSave(ev.id);}}><Heart size={13} fill={saved.includes(ev.id) ? "#E8353A" : "none"} color={saved.includes(ev.id) ? "#E8353A" : "currentColor"} />{(saved.includes(ev.id) ? t.saved : t.save).replace("❤️ ","").replace("🤍 ","")} <span style={{opacity:0.7}}>· {favoritesCounts[ev.id] || 0}</span></button>
+                            <button className="btn-reserve" style={{display:'inline-flex', alignItems:'center', gap:5}} onClick={e=>{e.stopPropagation();e.preventDefault();toggleSave(ev.id);}}><Heart size={13} fill={saved.includes(ev.id) ? "#E8353A" : "none"} color={saved.includes(ev.id) ? "#E8353A" : "currentColor"} />{(saved.includes(ev.id) ? t.saved : t.save).replace("❤️ ","").replace("🤍 ","")} <span style={{opacity:0.7}}>· {favoritesCounts[ev.id] || 0}</span></button>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               ) : (
                 <div style={{display:'flex', flexDirection:'column', gap:12, marginBottom:48}}>
                   {displayList.map(ev => (
-                    <div key={ev.id} onClick={() => { setSelectedEvent(ev); trackEvent({ action: "ver_detalle_evento", category: "Interaccion", label: ev.title }); }} style={{display:'flex', gap:16, alignItems:'center', background:'white', borderRadius:14, padding:14, cursor:'pointer', border:'1px solid var(--border)', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', transition:'all 0.2s'}}
+                    <Link key={ev.id} to={`${langPrefix}/evento/${slugify(ev.title)}-${ev.id}`}
+                      onClick={(e) => handleCardLinkClick(e, () => { setSelectedEvent(ev); trackEvent({ action: "ver_detalle_evento", category: "Interaccion", label: ev.title }); })}
+                      style={{display:'flex', color:'inherit', textDecoration:'none', gap:16, alignItems:'center', background:'white', borderRadius:14, padding:14, cursor:'pointer', border:'1px solid var(--border)', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', transition:'all 0.2s'}}
                       onMouseEnter={e=>e.currentTarget.style.borderColor='var(--gold)'}
                       onMouseLeave={e=>e.currentTarget.style.borderColor='var(--border)'}
                     >
@@ -2321,15 +2348,21 @@ export default function App() {
                             return <span style={{background:cfg?.color||'var(--red)', padding:'2px 8px', borderRadius:100, fontSize:11, color:'white', fontWeight:700}}>{t[TAG_LABEL_KEY[effTag]] || effTag}</span>;
                           })()}
                           {ev.organizerName && (
-                            <Link to={`${langPrefix}/organizador/${slugify(ev.organizerName)}`} style={{fontSize:11, color:'var(--muted)', textDecoration:'none'}}
-                              onClick={e => { e.stopPropagation(); trackEvent({ action: "click_organizador", category: "Navegacion", label: ev.organizerName }); }}>
+                            // No es <Link> a propósito: esta tarjeta completa ya es un
+                            // <a> real (arriba), y HTML no permite anidar <a> — React
+                            // lo rechaza con un error de hidratación. Mismo destino y
+                            // stopPropagation de siempre, solo que la navegación se
+                            // dispara a mano en vez de vía href.
+                            <span role="link" tabIndex={0} style={{fontSize:11, color:'var(--muted)', textDecoration:'none', cursor:'pointer'}}
+                              onClick={e => { e.stopPropagation(); e.preventDefault(); trackEvent({ action: "click_organizador", category: "Navegacion", label: ev.organizerName }); navigate(`${langPrefix}/organizador/${slugify(ev.organizerName)}`); }}
+                              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); trackEvent({ action: "click_organizador", category: "Navegacion", label: ev.organizerName }); navigate(`${langPrefix}/organizador/${slugify(ev.organizerName)}`); } }}>
                               Por {ev.organizerName}
-                            </Link>
+                            </span>
                           )}
                         </div>
                       </div>
-                      <button className="btn-reserve" style={{flexShrink:0, display:'inline-flex', alignItems:'center', gap:4}} onClick={e=>{e.stopPropagation();toggleSave(ev.id);}}><Heart size={15} fill={saved.includes(ev.id) ? "#E8353A" : "none"} color={saved.includes(ev.id) ? "#E8353A" : "currentColor"} /><span style={{fontSize:12, opacity:0.7}}>{favoritesCounts[ev.id] || 0}</span></button>
-                    </div>
+                      <button className="btn-reserve" style={{flexShrink:0, display:'inline-flex', alignItems:'center', gap:4}} onClick={e=>{e.stopPropagation();e.preventDefault();toggleSave(ev.id);}}><Heart size={15} fill={saved.includes(ev.id) ? "#E8353A" : "none"} color={saved.includes(ev.id) ? "#E8353A" : "currentColor"} /><span style={{fontSize:12, opacity:0.7}}>{favoritesCounts[ev.id] || 0}</span></button>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -2393,7 +2426,9 @@ export default function App() {
             ) : (
               <div className="events-grid">
                 {events.filter(e=>saved.includes(e.id)).map(ev => (
-                  <div key={ev.id} className="event-card" onClick={() => setSelectedEvent(ev)}>
+                  <Link key={ev.id} className="event-card" to={`${langPrefix}/evento/${slugify(ev.title)}-${ev.id}`}
+                    onClick={(e) => handleCardLinkClick(e, () => setSelectedEvent(ev))}
+                    style={{display:'block', color:'inherit', textDecoration:'none'}}>
                     <div className="event-card-img" style={{backgroundImage: `url(${ev.imageUrl || getCatConfig(ev.cat).img})`, backgroundSize:'cover', backgroundPosition:'center'}}>
                       <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.35)'}} />
                       <span className="event-card-cat" style={{zIndex:1}}>{t[CAT_LABEL_KEY[ev.cat]] || ev.cat}</span>
@@ -2405,17 +2440,23 @@ export default function App() {
                         <div className="event-card-info-row"><MapPin size={13} color="var(--muted)" /> {ev.place}</div>
                       </div>
                       {ev.organizerName && (
-                        <Link to={`${langPrefix}/organizador/${slugify(ev.organizerName)}`} className="event-card-organizer"
-                          onClick={e => { e.stopPropagation(); trackEvent({ action: "click_organizador", category: "Navegacion", label: ev.organizerName }); }}>
+                        // No es <Link> a propósito: esta tarjeta completa ya es un <a>
+                        // real (arriba), y HTML no permite anidar <a> — React lo
+                        // rechaza con un error de hidratación. Mismo destino y
+                        // stopPropagation de siempre, solo que la navegación se
+                        // dispara a mano en vez de vía href.
+                        <span role="link" tabIndex={0} className="event-card-organizer" style={{cursor:'pointer'}}
+                          onClick={e => { e.stopPropagation(); e.preventDefault(); trackEvent({ action: "click_organizador", category: "Navegacion", label: ev.organizerName }); navigate(`${langPrefix}/organizador/${slugify(ev.organizerName)}`); }}
+                          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); trackEvent({ action: "click_organizador", category: "Navegacion", label: ev.organizerName }); navigate(`${langPrefix}/organizador/${slugify(ev.organizerName)}`); } }}>
                           Por {ev.organizerName}
-                        </Link>
+                        </span>
                       )}
                       <div className="event-card-footer">
                         <div className={`event-card-price ${esGratis(ev.price)?"free":""}`}>{formatPriceLabel(ev.price)}</div>
-                        <button className="btn-reserve" onClick={e=>{e.stopPropagation();setSelectedEvent(ev);}}>{t.viewDetail}</button>
+                        <button className="btn-reserve" onClick={e=>{e.stopPropagation();e.preventDefault();setSelectedEvent(ev);}}>{t.viewDetail}</button>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

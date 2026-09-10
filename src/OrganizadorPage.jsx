@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { supabase } from "./supabase";
 import { esGratis, formatPriceLabel } from "./priceLabel";
 import { getLangFromPath, getLangPrefix } from "./lang";
@@ -120,8 +120,8 @@ export default function OrganizadorPage() {
   const EventCard = ({ ev }) => {
     const color = CAT_COLORS[ev.category] || '#C8860A';
     return (
-      <div onClick={() => navigate(`${langPrefix}/evento/${slugify(ev.title)}-${ev.id}`)}
-        style={{background:'white', border:'1px solid #e5e1d8', borderRadius:16, overflow:'hidden', cursor:'pointer', transition:'transform 0.2s, box-shadow 0.2s'}}
+      <Link to={`${langPrefix}/evento/${slugify(ev.title)}-${ev.id}`}
+        style={{display:'block', color:'inherit', textDecoration:'none', background:'white', border:'1px solid #e5e1d8', borderRadius:16, overflow:'hidden', cursor:'pointer', transition:'transform 0.2s, box-shadow 0.2s'}}
         onMouseOver={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 8px 24px rgba(0,0,0,0.1)'; }}
         onMouseOut={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='none'; }}
       >
@@ -142,7 +142,7 @@ export default function OrganizadorPage() {
           )}
           <div style={{fontWeight:700, fontSize:13, color: esGratis(ev.price) ? '#059669' : '#C8860A'}}>{formatPriceLabel(ev.price)}</div>
         </div>
-      </div>
+      </Link>
     );
   };
 

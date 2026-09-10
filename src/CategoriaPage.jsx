@@ -158,8 +158,8 @@ export default function CategoriaPage() {
   const EventCard = ({ ev }) => {
     const color = CAT_COLORS[ev.category] || '#C8860A';
     return (
-      <div onClick={() => navigate(`/evento/${slugify(ev.title)}-${ev.id}`)}
-        style={{background:'white', border:'1px solid #e5e1d8', borderRadius:16, overflow:'hidden', cursor:'pointer', transition:'transform 0.2s, box-shadow 0.2s'}}
+      <Link to={`/evento/${slugify(ev.title)}-${ev.id}`}
+        style={{display:'block', color:'inherit', textDecoration:'none', background:'white', border:'1px solid #e5e1d8', borderRadius:16, overflow:'hidden', cursor:'pointer', transition:'transform 0.2s, box-shadow 0.2s'}}
         onMouseOver={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 8px 24px rgba(0,0,0,0.1)'; }}
         onMouseOut={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='none'; }}
       >
@@ -178,14 +178,19 @@ export default function CategoriaPage() {
             <div style={{fontSize:12, color:'#666', lineHeight:1.5, marginBottom:8}}>{truncateDesc(ev.description)}</div>
           )}
           {ev.organizer_name && (
-            <Link to={`/organizador/${slugify(ev.organizer_name)}`} style={{display:'block', fontSize:12, color:'#888', textDecoration:'none', marginBottom:8}}
-              onClick={e => { e.stopPropagation(); trackEvent({ action: "click_organizador", category: "Navegacion", label: ev.organizer_name }); }}>
+            // No es <Link> a propósito: esta tarjeta completa ya es un <a> real
+            // (arriba), y HTML no permite anidar <a> — React lo rechaza con un
+            // error de hidratación. Mismo destino y stopPropagation de siempre,
+            // solo que la navegación se dispara a mano en vez de vía href.
+            <span role="link" tabIndex={0} style={{display:'block', fontSize:12, color:'#888', textDecoration:'none', marginBottom:8, cursor:'pointer'}}
+              onClick={e => { e.stopPropagation(); e.preventDefault(); trackEvent({ action: "click_organizador", category: "Navegacion", label: ev.organizer_name }); navigate(`/organizador/${slugify(ev.organizer_name)}`); }}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); trackEvent({ action: "click_organizador", category: "Navegacion", label: ev.organizer_name }); navigate(`/organizador/${slugify(ev.organizer_name)}`); } }}>
               Por {ev.organizer_name}
-            </Link>
+            </span>
           )}
           <div style={{fontWeight:700, fontSize:13, color: esGratis(ev.price) ? '#059669' : '#C8860A'}}>{formatPriceLabel(ev.price)}</div>
         </div>
-      </div>
+      </Link>
     );
   };
 

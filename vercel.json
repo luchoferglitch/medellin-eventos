@@ -64,6 +64,17 @@
       ],
       "destination": "/api/barrio-og?slug=:slug"
     },
+    {
+      "source": "/gratis",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|facebookcatalog|twitterbot|whatsapp|linkedinbot|telegrambot|slackbot|googlebot|bingbot|applebot|discordbot|pinterest|gptbot|chatgpt-user|google-extended|claudebot|anthropic-ai|perplexitybot|ccbot).*"
+        }
+      ],
+      "destination": "/api/gratis-og"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
