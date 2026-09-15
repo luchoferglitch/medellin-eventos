@@ -1254,7 +1254,7 @@ export default function App() {
       image_url: form.image_url || null,
       user_id: user.id,
       estado: esAdmin ? "aprobado" : "pendiente",
-    }]).select();
+    }]);
     setFormLoading(false);
     if (error) { showToast("⚠️ Error al publicar: " + error.message); return; }
     
