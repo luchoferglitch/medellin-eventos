@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useRef, useCallback } from "react";
 import { Routes, Route, Link, useNavigate, useLocation } from "react-router-dom";
-import { supabase } from "./supabase";
+import { supabase, supabaseAnonKey } from "./supabase";
 import { registrarClic } from "./registrarClic";
 import { initGA, logPageView, trackEvent } from "./analytics";
 import { esGratis, formatPriceLabel } from "./priceLabel";
@@ -1270,7 +1270,7 @@ export default function App() {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0YnFhcXVnbnFreW1wd25mc29kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODUzMzQsImV4cCI6MjA5MzA2MTMzNH0.3tHT9CVRhboFrC3pTNMMQ-i2GeEPv_nUkG4d-hPuSdc"
+          "Authorization": `Bearer ${supabaseAnonKey}`
         },
         body: JSON.stringify({ id: nuevoEvento?.[0]?.id, title: form.title, organizer: form.organizer_name, contact: form.organizer_contact, place: form.place, date: form.date }),
       });

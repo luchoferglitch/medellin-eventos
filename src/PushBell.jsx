@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Bell, BellRing } from "lucide-react";
-import { supabase } from "./supabase";
+import { supabase, supabaseAnonKey } from "./supabase";
 
 const FUNCTIONS_URL = "https://jtbqaqugnqkympwnfsod.supabase.co/functions/v1";
-const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0YnFhcXVnbnFreW1wd25mc29kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0ODUzMzQsImV4cCI6MjA5MzA2MTMzNH0.3tHT9CVRhboFrC3pTNMMQ-i2GeEPv_nUkG4d-hPuSdc";
 
 function urlBase64ToUint8Array(base64String) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -18,7 +17,7 @@ function urlBase64ToUint8Array(base64String) {
 async function gestionarPush(patch) {
   await fetch(`${FUNCTIONS_URL}/gestionar-push`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${ANON_KEY}` },
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseAnonKey}` },
     body: JSON.stringify(patch),
   });
 }
@@ -171,7 +170,7 @@ export default function PushBell({ t }) {
             <div style={{ fontSize: 13, color: "var(--text)", lineHeight: 1.5, marginBottom: 8 }}>
               {isSafari ? t.pushIOSInstructions : t.pushIOSNotSafari}
             </div>
-            <Link to="/preguntas-frecuentes#instalar-app" style={{ fontSize: 12, color: "var(--gold)", fontWeight: 600, textDecoration: "underline" }}>
+            <Link to="/preguntas-frecuentes#instalar-app" style={{ fontSize: 12, color: "var(--gold-text)", fontWeight: 600, textDecoration: "underline" }}>
               {t.pushIOSMoreInfo}
             </Link>
           </div>
