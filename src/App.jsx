@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useRef, useCallback } from "react";
 import { Routes, Route, Link, useNavigate, useLocation } from "react-router-dom";
-import { supabase, supabaseAnonKey } from "./supabase";
+import { supabase } from "./supabase";
 import { registrarClic } from "./registrarClic";
 import { initGA, logPageView, trackEvent } from "./analytics";
 import { esGratis, formatPriceLabel } from "./priceLabel";
@@ -1227,53 +1227,54 @@ export default function App() {
     if (form.ticket_link && !isValidUrl(form.ticket_link)) { showToast("⚠️ El link de compra no es válido"); return; }
     if (form.image_url && !isValidUrl(form.image_url)) { showToast("⚠️ El link de la imagen no es válido"); return; }
     setFormLoading(true);
-    const esAdmin = ADMINS.includes(user.email);
-    const { data: nuevoEvento, error } = await supabase.from("events").insert([{
-      title: sanitize(form.title).slice(0, 200),
-      category: form.category,
-      date: sanitize(form.date).slice(0, 100),
-      fecha_real: sanitize(form.date).slice(0, 100),
-      fecha_fin: sanitize(form.date).slice(0, 100),
-      time: sanitize(form.time).slice(0, 50),
-      place: sanitize(form.place).slice(0, 300),
-      como_llegar: sanitize(form.como_llegar).slice(0, 300) || null,
-      price: sanitize(form.price).slice(0, 50) || "Gratis",
-      capacity: parseInt(form.capacity) || 0, attendees: 0,
-      description: sanitize(form.description).slice(0, 2000),
-      emoji: form.emoji,
-      tag: form.tag || null,
-      ticket_platform: sanitize(form.ticket_platform).slice(0, 100),
-      ticket_link: form.ticket_link,
-      color: "linear-gradient(135deg,#1a0a00,#2a1500)",
-      organizer_name: sanitize(form.organizer_name).slice(0, 150),
-      organizer_contact: sanitize(form.organizer_contact).slice(0, 150),
-      performer: sanitize(form.performer).slice(0, 150) || null,
-      recurrencia: form.recurrencia || null,
-      dia_semana: form.dia_semana !== "" ? parseInt(form.dia_semana) : null,
-      dia_mes: form.dia_mes !== "" ? parseInt(form.dia_mes) : null,
-      image_url: form.image_url || null,
-      user_id: user.id,
-      estado: esAdmin ? "aprobado" : "pendiente",
-    }]);
+    const { data: { session } } = await supabase.auth.getSession();
+    let nuevoEvento, error;
+    try {
+      const res = await fetch("https://jtbqaqugnqkympwnfsod.supabase.co/functions/v1/crear-evento", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          title: sanitize(form.title).slice(0, 200),
+          category: form.category,
+          date: sanitize(form.date).slice(0, 100),
+          time: sanitize(form.time).slice(0, 50),
+          place: sanitize(form.place).slice(0, 300),
+          como_llegar: sanitize(form.como_llegar).slice(0, 300) || null,
+          price: sanitize(form.price).slice(0, 50) || "Gratis",
+          capacity: parseInt(form.capacity) || 0,
+          description: sanitize(form.description).slice(0, 2000),
+          emoji: form.emoji,
+          tag: form.tag || null,
+          ticket_platform: sanitize(form.ticket_platform).slice(0, 100),
+          ticket_link: form.ticket_link,
+          organizer_name: sanitize(form.organizer_name).slice(0, 150),
+          organizer_contact: sanitize(form.organizer_contact).slice(0, 150),
+          performer: sanitize(form.performer).slice(0, 150) || null,
+          recurrencia: form.recurrencia || null,
+          dia_semana: form.dia_semana !== "" ? parseInt(form.dia_semana) : null,
+          dia_mes: form.dia_mes !== "" ? parseInt(form.dia_mes) : null,
+          image_url: form.image_url || null,
+        }),
+      });
+      ({ data: nuevoEvento, error } = await res.json());
+      if (!res.ok && !error) error = { message: `Error del servidor (${res.status})` };
+    } catch (e) {
+      error = { message: e.message };
+    }
     setFormLoading(false);
     if (error) { showToast("⚠️ Error al publicar: " + error.message); return; }
-    
+
     trackEvent({ action: "publicar_evento", category: "Organizador", label: form.category });
     setShowCreate(false);
     setForm({ title:"", category:"Música", date:"", time:"", place:"", como_llegar:"", price:"", capacity:"", description:"", emoji:"🎵", tag:"", ticket_platform:"", ticket_link:"", organizer_name:"", organizer_contact:"", performer:"", image_url:"" });
-    if (esAdmin) {
+    if (nuevoEvento?.estado === "aprobado") {
       showToast("✓ ¡Evento publicado exitosamente!");
       fetchEvents();
     } else {
       showToast("✓ ¡Evento enviado! Lo revisaremos pronto.");
-      await fetch("https://jtbqaqugnqkympwnfsod.supabase.co/functions/v1/alerta-evento", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${supabaseAnonKey}`
-        },
-        body: JSON.stringify({ id: nuevoEvento?.[0]?.id, title: form.title, organizer: form.organizer_name, contact: form.organizer_contact, place: form.place, date: form.date }),
-      });
     }
   };
 
