@@ -32,6 +32,16 @@ const escBody = (s = "") =>
     .trim()
     .replace(/\r?\n/g, "<br/>");
 
+// Igual slugify que src/EventoPage.jsx y api/organizador-og.js — este archivo
+// corre en el runtime edge de Vercel, sin import de src/, así que se duplica
+// a propósito (mismo criterio ya documentado en api/sitemap.js).
+const slugify = (str) =>
+  str?.toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim().replace(/\s+/g, "-")
+    .slice(0, 80) || "";
+
 function slugToId(slug) {
   const parts = slug.split("-");
   const last = parts[parts.length - 1];
@@ -56,7 +66,7 @@ export default async function handler(req) {
   if (id) {
     try {
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/events?id=eq.${id}&estado=eq.aprobado&select=title,description,image_url,place,date,time,price,category,fecha_real,fecha_fin,organizer_name,organizer_contact,ticket_link,ticket_platform&limit=1`,
+        `${SUPABASE_URL}/rest/v1/events?id=eq.${id}&estado=eq.aprobado&select=title,description,image_url,place,date,time,price,category,fecha_real,fecha_fin,organizer_name,organizer_contact,ticket_link,ticket_platform,performer,created_at,tag,zona&limit=1`,
         { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
       );
       const data = await res.json();
@@ -89,21 +99,53 @@ export default async function handler(req) {
   );
   const image = esc(event.image_url || IMAGEN_DEFAULT);
 
-  // JSON-LD server-side: el carrusel de eventos de Google sin depender de JS
+  // JSON-LD server-side: el carrusel de eventos de Google sin depender de JS.
+  // Es lo que Googlebot realmente lee (el filtro de user-agent en vercel.json
+  // lo manda aquí, no a EventoPage.jsx), así que debe llevar los mismos campos
+  // que el JSON-LD de EventoPage.jsx: endDate, organizer con url y offers
+  // siempre presentes — su ausencia era lo que reportaba Search Console.
+  // Misma regla esGratis que src/priceLabel.js y EventoPage.jsx.
+  const precioLower = (event.price || "").toLowerCase();
+  const esGratis = precioLower.startsWith("gratis") || precioLower.startsWith("entrada libre");
+  const priceMatch = (event.price || "").match(/[0-9][0-9.,]*/);
+  const offerPrice = esGratis ? "0" : (priceMatch ? priceMatch[0].replace(/\./g, "").replace(/,/g, "") : undefined);
+  // Municipio real para addressLocality: antes iba "Medellín" fijo incluso
+  // para eventos de La Ceja o Rionegro. Se toma del propio campo place
+  // (convención "..., Municipio, Antioquia"); si no se puede leer, Medellín
+  // solo cuando la zona es Medellín, y si no, se omite en vez de adivinar.
+  const partesPlace = (event.place || "").split(",").map((p) => p.trim()).filter(Boolean);
+  const iAntioquia = partesPlace.findIndex((p) => /^antioquia$/i.test(p));
+  const municipio = iAntioquia > 0 ? partesPlace[iAntioquia - 1] : (event.zona === "Medellín" ? "Medellín" : null);
+  const validFrom = (event.created_at || new Date().toISOString()).split("T")[0];
   const jsonLd = event.fecha_real
     ? `<script type="application/ld+json">${JSON.stringify({
         "@context": "https://schema.org",
         "@type": "Event",
         name: event.title,
         startDate: event.fecha_real,
-        ...(event.fecha_fin ? { endDate: event.fecha_fin } : {}),
+        endDate: event.fecha_fin || event.fecha_real,
         eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
         eventStatus: "https://schema.org/EventScheduled",
-        location: { "@type": "Place", name: event.place, address: { "@type": "PostalAddress", addressLocality: "Medellín", addressRegion: "Antioquia", addressCountry: "CO" } },
-        ...(event.image_url ? { image: [event.image_url] } : {}),
+        location: { "@type": "Place", name: event.place, address: { "@type": "PostalAddress", ...(municipio ? { addressLocality: municipio } : {}), addressRegion: "Antioquia", addressCountry: "CO" } },
+        image: [event.image_url || IMAGEN_DEFAULT],
         ...(event.description ? { description: event.description.slice(0, 300) } : {}),
-        ...(event.organizer_name ? { organizer: { "@type": "Organization", name: event.organizer_name } } : {}),
-        ...(event.price === "Gratis" ? { isAccessibleForFree: true, offers: { "@type": "Offer", price: "0", priceCurrency: "COP", availability: "https://schema.org/InStock", url: canonical } } : {}),
+        // performer solo si events.performer está lleno — nunca se inventa ni
+        // se reutiliza organizer_name (promotor/venue) en su lugar.
+        ...(event.performer ? { performer: { "@type": "Person", name: event.performer } } : {}),
+        organizer: {
+          "@type": "Organization",
+          name: event.organizer_name || "Medellín Vibra",
+          url: event.organizer_name ? `${DOMINIO}/organizador/${slugify(event.organizer_name)}` : DOMINIO,
+        },
+        offers: {
+          "@type": "Offer",
+          url: event.ticket_link && String(event.ticket_link).startsWith("http") ? event.ticket_link : canonical,
+          priceCurrency: "COP",
+          availability: event.tag === "Agotado" ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
+          validFrom,
+          ...(offerPrice ? { price: offerPrice } : {}),
+        },
+        ...(esGratis ? { isAccessibleForFree: true } : {}),
       }).replace(/</g, "\\u003c")}</script>`
     : "";
 
