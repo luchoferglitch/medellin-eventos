@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "./supabase";
 import { trackEvent } from "./analytics";
 import { esGratis, formatPriceLabel } from "./priceLabel";
+import { buildEventSchema } from "./eventSchema.js";
 
 const slugify = (str) =>
   str?.toLowerCase()
@@ -205,17 +206,7 @@ export default function CategoriaPage() {
     itemListElement: events.map((ev, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      item: {
-        "@type": "Event",
-        name: ev.title,
-        startDate: ev.fecha_real || undefined,
-        endDate: ev.fecha_fin || ev.fecha_real || undefined,
-        eventStatus: "https://schema.org/EventScheduled",
-        url: `https://www.medellinvibra.co/evento/${slugify(ev.title)}-${ev.id}`,
-        image: [ev.image_url || "https://pub-c5ba255ea192436da56e91e3ef3ecfa5.r2.dev/default-fallback-medellin"],
-        ...(ev.description ? { description: ev.description.slice(0, 300) } : {}),
-        ...(ev.place ? { location: { "@type": "Place", name: ev.place, address: { "@type": "PostalAddress", addressLocality: "Medellín", addressRegion: "Antioquia", addressCountry: "CO" } } } : {}),
-      },
+      item: buildEventSchema(ev),
     })),
   };
 

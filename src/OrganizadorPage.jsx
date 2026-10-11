@@ -6,6 +6,7 @@ import { getLangFromPath, getLangPrefix } from "./lang";
 import { translations } from "./translations";
 import { CAT_LABEL_KEY } from "./categoryLabels";
 import { LanguageSelectorCompact } from "./components/LanguageSelector";
+import { buildEventSchema } from "./eventSchema.js";
 
 const slugify = (str) =>
   str?.toLowerCase()
@@ -155,14 +156,7 @@ export default function OrganizadorPage() {
     "@type": "Organization",
     name: organizerName,
     url: `https://www.medellinvibra.co/organizador/${slug}`,
-    event: events.map(ev => ({
-      "@type": "Event",
-      name: ev.title,
-      startDate: ev.fecha_real || undefined,
-      endDate: ev.fecha_fin || ev.fecha_real || undefined,
-      url: `https://www.medellinvibra.co/evento/${slugify(ev.title)}-${ev.id}`,
-      ...(ev.place ? { location: { "@type": "Place", name: ev.place } } : {}),
-    })),
+    event: events.map(ev => buildEventSchema(ev)),
   };
 
   return (
