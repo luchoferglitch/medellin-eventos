@@ -84,6 +84,19 @@ const TAG_LABEL_KEY = {
   "PRÓXIMO": "tagLabelProximoCron",
 };
 
+// Texto visible del tag en tarjetas y detalle. El cron sigue escribiendo
+// "PRÓXIMO" en la base (no se toca); solo cambia lo que se muestra: si el
+// evento es de un año posterior al actual, la etiqueta dice el año ("2027")
+// en vez de "PRÓXIMO", para que se note de un vistazo que no es de este año.
+// Los chips de filtro por tag siguen usando el valor real de la base.
+const tagDisplayLabel = (effTag, ev, t) => {
+  if (effTag === "PRÓXIMO" && ev?.fechaReal) {
+    const year = Number(String(ev.fechaReal).slice(0, 4));
+    if (year > new Date().getFullYear()) return String(year);
+  }
+  return t[TAG_LABEL_KEY[effTag]] || effTag;
+};
+
 // El valor filtra contra events.intenciones (array) en Supabase y nunca se traduce.
 // Un color por chip para distinguirlos entre sí — ninguno cerca del dorado de
 // marca (--gold, #C8860A) para que no se confundan con el filtro de categoría.
@@ -2263,7 +2276,7 @@ export default function App() {
                           const effTag = getEffectiveTag(ev);
                           if (!effTag) return null;
                           const cfg = TAGS_CONFIG[effTag];
-                          return <span style={{position:'absolute',top:12,right:12,background:cfg?.color||'var(--red)',color:'white',padding:'3px 8px',borderRadius:'100px',fontSize:'10px',fontWeight:700,zIndex:1}}>{t[TAG_LABEL_KEY[effTag]] || effTag}</span>;
+                          return <span style={{position:'absolute',top:12,right:12,background:cfg?.color||'var(--red)',color:'white',padding:'3px 8px',borderRadius:'100px',fontSize:'10px',fontWeight:700,zIndex:1}}>{tagDisplayLabel(effTag, ev, t)}</span>;
                         })()}
                       </div>
                       <div className="event-card-body">
@@ -2346,7 +2359,7 @@ export default function App() {
                             const effTag = getEffectiveTag(ev);
                             if (!effTag) return null;
                             const cfg = TAGS_CONFIG[effTag];
-                            return <span style={{background:cfg?.color||'var(--red)', padding:'2px 8px', borderRadius:100, fontSize:11, color:'white', fontWeight:700}}>{t[TAG_LABEL_KEY[effTag]] || effTag}</span>;
+                            return <span style={{background:cfg?.color||'var(--red)', padding:'2px 8px', borderRadius:100, fontSize:11, color:'white', fontWeight:700}}>{tagDisplayLabel(effTag, ev, t)}</span>;
                           })()}
                           {ev.organizerName && (
                             // No es <Link> a propósito: esta tarjeta completa ya es un
@@ -3009,7 +3022,7 @@ export default function App() {
                   const effTag = getEffectiveTag(selectedEvent);
                   if (!effTag) return null;
                   const cfg = TAGS_CONFIG[effTag];
-                  return <span className="detail-badge" style={{background:cfg?.color||'var(--red)',color:'white'}}>{cfg?.emoji} {t[TAG_LABEL_KEY[effTag]] || effTag}</span>;
+                  return <span className="detail-badge" style={{background:cfg?.color||'var(--red)',color:'white'}}>{cfg?.emoji} {tagDisplayLabel(effTag, selectedEvent, t)}</span>;
                 })()}
                 <div className="detail-title">{selectedEvent.title}</div>
                 <div className="detail-info-grid">
