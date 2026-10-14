@@ -156,6 +156,14 @@ export default function EventoPage() {
     let canonicalEl = document.querySelector('link[rel="canonical"]');
     if (!canonicalEl) { canonicalEl = document.createElement("link"); canonicalEl.setAttribute("rel", "canonical"); document.head.appendChild(canonicalEl); }
     canonicalEl.setAttribute("href", `https://www.medellinvibra.co/evento/${slugify(event.title)}-${event.id}`);
+
+    // Si se llegó con un slug viejo o distinto (título editado, enlace
+    // compartido con otro texto), se reemplaza la URL por la canónica sin
+    // dejar entrada en el historial — mismo criterio que el 301 de api/og.js.
+    const expectedSlug = `${slugify(event.title)}-${event.id}`;
+    if (slug !== expectedSlug) {
+      navigate(`${langPrefix}/evento/${expectedSlug}`, { replace: true });
+    }
   }, [event]);
 
   useEffect(() => {

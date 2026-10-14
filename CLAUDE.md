@@ -142,8 +142,18 @@ por proveedor (ver sección SEO). Convenciones:
 Las políticas SELECT de `events` y `proveedores` son:
 
 ```
-estado = 'aprobado' OR auth.email() = 'luchofer2001@gmail.com'
+events:      estado IN ('aprobado','archivado') OR auth.email() = 'luchofer2001@gmail.com'
+proveedores: estado = 'aprobado' OR auth.email() = 'luchofer2001@gmail.com'
 ```
+
+`events` incluye `archivado` desde el 2026-10-14: con solo `aprobado`, los ~850
+eventos pasados quedaron ilegibles para la anon key — `EventoPage` los mandaba
+al home, `api/og.js` le servía a Googlebot el shell con canonical al home, y
+Search Console empezó a reportar "Duplicada: Google ha elegido una versión
+canónica diferente". Los archivados ya fueron públicos cuando estaban
+aprobados, así que no exponen nada nuevo; `pendiente`/`rechazado` siguen ocultos.
+Todo listado público filtra `estado = 'aprobado'` explícitamente en su query,
+así que los archivados no aparecen en home, categorías, hoy, etc.
 
 Antes eran `true` (sin filtro) — cualquiera con la anon key podía leer filas
 `pendiente`/`rechazado` directo por la REST API de Supabase, sin pasar por el
@@ -272,6 +282,11 @@ Lo que ya está implementado y no se debe romper:
 - `llms.txt` en la raíz
 - Eventos inexistentes redirigen al home (corrección de Soft 404)
 - Eventos archivados muestran "Ya finalizó" con enlace a próximos, no un 404 genérico
+  (también en `api/og.js` para bots, con canonical propio y sin JSON-LD de Event)
+- El canonical de un evento se arma siempre desde `slugify(title)-id`, nunca desde el
+  slug de la URL. Un slug viejo o distinto con el mismo id hace 301 a la URL canónica
+  en `api/og.js` y `navigate(replace)` en `EventoPage` — editar el título de un evento
+  no deja URLs duplicadas.
 - Páginas de categoría (`/categoria/:slug`, `CategoriaPage.jsx`) — SEO programático por
   intención de búsqueda ("conciertos en Medellín", "eventos de teatro en Medellín"), solo
   para categorías con **≥15 eventos aprobados** (umbral calculado en vivo, no una lista fija

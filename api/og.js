@@ -66,7 +66,7 @@ export default async function handler(req) {
   if (id) {
     try {
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/events?id=eq.${id}&estado=eq.aprobado&select=title,description,image_url,place,date,time,price,category,fecha_real,fecha_fin,organizer_name,organizer_contact,ticket_link,ticket_platform,performer,created_at,tag,zona&limit=1`,
+        `${SUPABASE_URL}/rest/v1/events?id=eq.${id}&estado=in.(aprobado,archivado)&select=id,estado,title,description,image_url,place,date,time,price,category,fecha_real,fecha_fin,organizer_name,organizer_contact,ticket_link,ticket_platform,performer,created_at,tag,zona&limit=1`,
         { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
       );
       const data = await res.json();
@@ -74,12 +74,29 @@ export default async function handler(req) {
     } catch { /* meta tags genéricos */ }
   }
 
-  const canonical = `${DOMINIO}/evento/${slug}`;
+  // El canonical se arma SIEMPRE desde el título actual + id, igual que
+  // EventoPage.jsx y el sitemap — nunca desde el slug pedido. Antes se usaba
+  // el slug de la URL tal cual: si el título de un evento cambiaba (o alguien
+  // compartía un enlace con otro slug), cada variante se declaraba canónica a
+  // sí misma y Search Console reportaba "Google eligió una canónica diferente".
+  const canonicalSlug = event ? `${slugify(event.title)}-${event.id}` : slug;
+  const canonical = `${DOMINIO}/evento/${canonicalSlug}`;
+
+  // 2bis. Slug viejo o distinto con el mismo id: 301 a la URL canónica, así
+  // Google consolida las variantes en una sola en vez de verlas duplicadas.
+  if (event && slug !== canonicalSlug) {
+    return Response.redirect(canonical, 301);
+  }
 
   // 3. Sin shell no hay nada que inyectar: redirigir al sitio normal
   if (!shell) {
     return Response.redirect(event ? canonical : DOMINIO, 302);
   }
+
+  // Evento que ya pasó (el cron lo archiva): se sirve igual, con su canonical
+  // propio y el aviso "Ya finalizó", pero sin JSON-LD de Event — no tiene
+  // sentido ofrecerle a Google un evento con fechas pasadas.
+  const archivado = event?.estado === "archivado";
 
   // 4. Sin evento: servir el shell tal cual (meta tags genéricos del sitio)
   if (!event) {
@@ -117,7 +134,7 @@ export default async function handler(req) {
   const iAntioquia = partesPlace.findIndex((p) => /^antioquia$/i.test(p));
   const municipio = iAntioquia > 0 ? partesPlace[iAntioquia - 1] : (event.zona === "Medellín" ? "Medellín" : null);
   const validFrom = (event.created_at || new Date().toISOString()).split("T")[0];
-  const jsonLd = event.fecha_real
+  const jsonLd = event.fecha_real && !archivado
     ? `<script type="application/ld+json">${JSON.stringify({
         "@context": "https://schema.org",
         "@type": "Event",
@@ -195,6 +212,7 @@ export default async function handler(req) {
   <div id="root"></div>
   <main>
     <h1>${esc(event.title)}</h1>
+    ${archivado ? `<p><strong>Este evento ya finalizó.</strong> <a href="${DOMINIO}/">Ver los próximos eventos en Medellín Vibra</a></p>` : ""}
     <p><strong>Fecha:</strong> ${esc(fecha || event.date || "Por confirmar")}</p>
     <p><strong>Lugar:</strong> ${esc(event.place || "Por confirmar")}</p>
     <p><strong>Precio:</strong> ${esc(event.price || "Consultar boletería")}</p>
