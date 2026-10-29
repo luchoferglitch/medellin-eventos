@@ -1867,7 +1867,10 @@ export default function App() {
           lang={lang}
           onVerPlanes={() => {
             setActiveTab("home");
-            setSearch(temporada.busqueda);
+            // Solo filtra si hay eventos con esa palabra: una búsqueda vacía sería peor que la agenda completa.
+            const q = (temporada.busqueda || "").toLowerCase();
+            const hayEventos = q && events.some(e => `${e.title || ""} ${e.desc || ""}`.toLowerCase().includes(q));
+            setSearch(hayEventos ? temporada.busqueda : "");
             trackEvent({ action: "click_temporada", category: "Temporada", label: temporada.id });
             setTimeout(() => filtersRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
           }}

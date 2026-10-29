@@ -1,12 +1,22 @@
 import { useState } from "react";
-import { Ghost, MoonStar, Candy, Skull, Sparkles, TreePine, Star, X } from "lucide-react";
+import {
+  Ghost, MoonStar, Candy, Skull, Sparkles, TreePine, Star, Gift, Bell, Flame, Lamp, Church, Sprout, Sunrise,
+  Flower, Flower2, Heart, GraduationCap, BookOpen, Pencil, Apple, Coffee, Award, Music, Mountain, Moon,
+  PartyPopper, Clock, X,
+} from "lucide-react";
+import { añoBogota } from "./temporadas";
 
 // Mapa explícito nombre → ícono (en vez de importar todo lucide) para que el
 // bundle solo incluya los íconos que usan las temporadas. Si una temporada
 // nueva usa otro ícono, se importa arriba y se agrega aquí.
-export const ICONOS_TEMPORADA = { Ghost, MoonStar, Candy, Skull, Sparkles, TreePine, Star };
+export const ICONOS_TEMPORADA = {
+  Ghost, MoonStar, Candy, Skull, Sparkles, TreePine, Star, Gift, Bell, Flame, Lamp, Church, Sprout, Sunrise,
+  Flower, Flower2, Heart, GraduationCap, BookOpen, Pencil, Apple, Coffee, Award, Music, Mountain, Moon,
+  PartyPopper, Clock,
+};
 
-const claveCerrada = (id) => `mv-temporada-cerrada-${id}`;
+// La clave lleva el año: quien cerró Halloween 2026 sí ve Halloween 2027.
+const claveCerrada = (id) => `mv-temporada-cerrada-${id}-${añoBogota()}`;
 
 function yaCerrada(id) {
   try { return localStorage.getItem(claveCerrada(id)) === "1"; } catch { return false; }
