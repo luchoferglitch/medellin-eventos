@@ -2,7 +2,7 @@ import { useState } from "react";
 import {
   Ghost, MoonStar, Candy, Skull, Sparkles, TreePine, Star, Gift, Bell, Flame, Lamp, Church, Sprout, Sunrise,
   Flower, Flower2, Heart, GraduationCap, BookOpen, Pencil, Apple, Coffee, Award, Music, Mountain, Moon,
-  PartyPopper, Clock, X,
+  PartyPopper, Clock, Rose, Mail, Balloon, ToyBrick, IceCreamCone, Rocket, HeartHandshake, Users, X,
 } from "lucide-react";
 import { añoBogota } from "./temporadas";
 
@@ -12,7 +12,7 @@ import { añoBogota } from "./temporadas";
 export const ICONOS_TEMPORADA = {
   Ghost, MoonStar, Candy, Skull, Sparkles, TreePine, Star, Gift, Bell, Flame, Lamp, Church, Sprout, Sunrise,
   Flower, Flower2, Heart, GraduationCap, BookOpen, Pencil, Apple, Coffee, Award, Music, Mountain, Moon,
-  PartyPopper, Clock,
+  PartyPopper, Clock, Rose, Mail, Balloon, ToyBrick, IceCreamCone, Rocket, HeartHandshake, Users,
 };
 
 // La clave lleva el año: quien cerró Halloween 2026 sí ve Halloween 2027.

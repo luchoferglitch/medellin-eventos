@@ -13,6 +13,7 @@
 // No toca títulos, metadatos, rutas ni contenido indexable: es solo visual.
 //
 // Fechas:
+//   - `fechaPendiente: true` desactiva la temporada hasta que haya fechas oficiales.
 //   - Fijas: `desde` / `hasta` en "MM-DD". Un rango que cruza el año nuevo
 //     ("12-31" a "01-01") también funciona.
 //   - Móviles (Semana Santa, Día de la Madre, Día del Padre): `fechas(año)`
@@ -45,11 +46,31 @@ export function enesimoDomingo(año, mes, n) {
   return sumarDias(primero, hastaDomingo + 7 * (n - 1));
 }
 
+// Último sábado de un mes (mes 1-12).
+export function ultimoSabado(año, mes) {
+  const ultimo = new Date(Date.UTC(año, mes, 0));
+  return sumarDias(ultimo, -((ultimo.getUTCDay() - 6 + 7) % 7));
+}
+
 // Semana que termina en un domingo dado (lunes a domingo).
 const semanaHasta = (domingo) => ({ desde: mmdd(sumarDias(domingo, -6)), hasta: mmdd(domingo) });
 
 export const TEMPORADAS = [
   // ── Primer semestre ──────────────────────────────────────────────
+  {
+    id: "san-valentin",
+    desde: "02-08",
+    hasta: "02-14",
+    iconos: ["Heart", "Rose", "Mail", "Sparkles"],
+    colores: { fondo: "#5B1430", texto: "#FFF0F4", acento: "#FF6F91" },
+    busqueda: null,
+    textos: {
+      es: { mensaje: "San Valentín: planes para salir en pareja", cta: "Ver planes" },
+      en: { mensaje: "Valentine's Day: date ideas", cta: "See plans" },
+      pt: { mensaje: "Dia de São Valentim: programas a dois", cta: "Ver programas" },
+      fr: { mensaje: "Saint-Valentin : des sorties à deux", cta: "Voir les sorties" },
+    },
+  },
   {
     id: "semana-santa",
     // Domingo de Ramos a Domingo de Resurrección.
@@ -65,6 +86,23 @@ export const TEMPORADAS = [
       en: { mensaje: "Holy Week in Medellín and the East", cta: "See schedule" },
       pt: { mensaje: "Semana Santa em Medellín e no Oriente", cta: "Ver agenda" },
       fr: { mensaje: "Semaine sainte à Medellín et dans l'Est", cta: "Voir l'agenda" },
+    },
+  },
+  {
+    id: "dia-del-nino",
+    // Último sábado de abril: se muestra esa semana (domingo a sábado).
+    fechas: (año) => {
+      const sabado = ultimoSabado(año, 4);
+      return { desde: mmdd(sumarDias(sabado, -6)), hasta: mmdd(sabado) };
+    },
+    iconos: ["Balloon", "ToyBrick", "IceCreamCone", "Rocket"],
+    colores: { fondo: "#123E66", texto: "#F2F8FF", acento: "#FFD23F" },
+    busqueda: null,
+    textos: {
+      es: { mensaje: "Día del Niño: planes para ir con los peques", cta: "Ver planes" },
+      en: { mensaje: "Children's Day: plans for the little ones", cta: "See plans" },
+      pt: { mensaje: "Dia da Criança: programas para os pequenos", cta: "Ver programas" },
+      fr: { mensaje: "Journée de l'enfant : des sorties pour les petits", cta: "Voir les sorties" },
     },
   },
   {
@@ -113,7 +151,10 @@ export const TEMPORADAS = [
   // ── Segundo semestre ─────────────────────────────────────────────
   {
     id: "feria-de-las-flores",
-    // La Alcaldía anuncia las fechas cada año: ajustar aquí cuando salgan.
+    // La Alcaldía anuncia las fechas cada año. Mientras `fechaPendiente` sea true
+    // la temporada NO se activa: al salir las fechas oficiales, poner desde/hasta
+    // y quitar `fechaPendiente`.
+    fechaPendiente: true,
     desde: "08-01",
     hasta: "08-10",
     iconos: ["Flower", "Flower2", "Music", "Sparkles"],
@@ -138,6 +179,20 @@ export const TEMPORADAS = [
       en: { mensaje: "Antioquia Identity Day", cta: "See plans" },
       pt: { mensaje: "Dia da Antioquenidade", cta: "Ver programas" },
       fr: { mensaje: "Journée de l'identité d'Antioquia", cta: "Voir les sorties" },
+    },
+  },
+  {
+    id: "amor-y-amistad",
+    desde: "09-01",
+    hasta: "09-30",
+    iconos: ["HeartHandshake", "Heart", "Gift", "Users"],
+    colores: { fondo: "#4A1D4F", texto: "#FFF2FB", acento: "#FF7AB6" },
+    busqueda: null,
+    textos: {
+      es: { mensaje: "Mes del Amor y la Amistad: planes para compartir", cta: "Ver planes" },
+      en: { mensaje: "Love and Friendship Month: plans to share", cta: "See plans" },
+      pt: { mensaje: "Mês do Amor e da Amizade: programas para compartilhar", cta: "Ver programas" },
+      fr: { mensaje: "Mois de l'amour et de l'amitié : des sorties à partager", cta: "Voir les sorties" },
     },
   },
   {
@@ -186,17 +241,18 @@ export const TEMPORADAS = [
   },
   {
     id: "navidad",
-    // Novenas de aguinaldos (16 al 24) y Navidad (25).
-    desde: "12-16",
-    hasta: "12-25",
+    // Todo diciembre salvo Velitas (7-8, que va antes en la lista y gana) y
+    // el 31 (Año Nuevo): alumbrados, novenas de aguinaldos (16-24) y Navidad.
+    desde: "12-01",
+    hasta: "12-30",
     iconos: ["TreePine", "Star", "Gift", "Bell"],
     colores: { fondo: "#14361F", texto: "#FFF8EC", acento: "#E8473C" },
     busqueda: "navidad",
     textos: {
-      es: { mensaje: "Novenas y Navidad en Medellín", cta: "Ver planes" },
-      en: { mensaje: "Novenas and Christmas in Medellín", cta: "See plans" },
-      pt: { mensaje: "Novenas e Natal em Medellín", cta: "Ver programas" },
-      fr: { mensaje: "Neuvaines et Noël à Medellín", cta: "Voir les sorties" },
+      es: { mensaje: "Alumbrados, novenas y Navidad en Medellín", cta: "Ver planes" },
+      en: { mensaje: "Christmas lights, novenas and Christmas in Medellín", cta: "See plans" },
+      pt: { mensaje: "Iluminação, novenas e Natal em Medellín", cta: "Ver programas" },
+      fr: { mensaje: "Illuminations, neuvaines et Noël à Medellín", cta: "Voir les sorties" },
     },
   },
   {
@@ -255,6 +311,7 @@ export function getTemporadaActiva(fecha = new Date(), { permitirForzar = true }
   }
   const { año, mmdd: hoy } = hoyBogota(fecha);
   return TEMPORADAS.find((t) => {
+    if (t.fechaPendiente) return false;
     const { desde, hasta } = rangoDe(t, año);
     return enRango(hoy, desde, hasta);
   }) || null;
