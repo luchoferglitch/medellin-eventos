@@ -1,4 +1,5 @@
 import { MapPin } from "lucide-react";
+import { SeasonalHeroDecor } from "./SeasonalRibbon";
 
 const NACIMIENTO = new Date("2026-05-13");
 
@@ -8,7 +9,7 @@ function diasVivos() {
   return diff;
 }
 
-export default function HeroBanner({ search, setSearch, stats, t, lang, heroTitle, heroSubtitle }) {
+export default function HeroBanner({ temporada, search, setSearch, stats, t, lang, heroTitle, heroSubtitle }) {
   const dias = diasVivos();
 
   const [titleLine1, titleLine2, titleLine3] = (t.heroDefaultTitle || "").split("|");
@@ -33,6 +34,7 @@ export default function HeroBanner({ search, setSearch, stats, t, lang, heroTitl
   return (
     <div className="hero">
       <div className="hero-bg" />
+      <SeasonalHeroDecor temporada={temporada} />
       <div className="hero-content">
         <a
           href="https://www.google.com/maps/place/Medell%C3%ADn,+Antioquia/@6.2441988,-75.6357583,12z"

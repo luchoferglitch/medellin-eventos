@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useCallback } from "react";
+﻿import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Routes, Route, Link, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "./supabase";
 import { registrarClic } from "./registrarClic";
@@ -20,6 +20,8 @@ import HoyPage from "./HoyPage";
 import EstaSemanaPage from "./EstaSemanaPage";
 import FindePage from "./FindePage";
 import HeroBanner from "./HeroBanner";
+import SeasonalRibbon, { ICONOS_TEMPORADA } from "./SeasonalRibbon";
+import { getTemporadaActiva } from "./temporadas";
 import NewsletterCTAs from "./NewsletterCTAs";
 import PushBell from "./PushBell";
 import FiltroCalendario, { eventoOcurreEnFecha } from "./FiltroCalendario";
@@ -220,6 +222,37 @@ const style = `
   }
   .nav-logo { font-family: var(--font-display); font-size: 26px; letter-spacing: 1px; color: var(--gold-text); }
   .nav-logo span { color: var(--red); }
+  /* Temporadas (src/temporadas.js): decoración liviana por fechas especiales. */
+  .nav-logo-season { display: inline-block; margin-left: 6px; vertical-align: -2px; color: var(--season-accent, var(--gold)); }
+  .seasonal-ribbon {
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+    height: 40px; padding: 0 8px 0 14px; background: var(--sr-bg); color: var(--sr-text);
+    font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .seasonal-ribbon-main {
+    flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: none; border: none; color: inherit; font: inherit; cursor: pointer; padding: 6px 4px; border-radius: 6px;
+  }
+  .seasonal-ribbon-main:hover .seasonal-ribbon-cta { text-decoration: underline; }
+  .seasonal-ribbon-main:focus-visible, .seasonal-ribbon-close:focus-visible { outline: 2px solid var(--sr-accent); outline-offset: 2px; }
+  .seasonal-ribbon-icon { color: var(--sr-accent); flex-shrink: 0; }
+  .seasonal-ribbon-msg { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .seasonal-ribbon-cta { color: var(--sr-accent); font-weight: 700; white-space: nowrap; }
+  .seasonal-ribbon-close {
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px;
+    background: none; border: none; color: inherit; opacity: 0.7; cursor: pointer; border-radius: 6px;
+  }
+  .seasonal-ribbon-close:hover { opacity: 1; background: rgba(255,255,255,0.08); }
+  .seasonal-hero-decor { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+  .seasonal-hero-fig { position: absolute; color: var(--sr-accent); opacity: 0.32; animation: seasonFloat 6s ease-in-out infinite; }
+  @keyframes seasonFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  @media (max-width: 640px) {
+    .seasonal-ribbon { font-size: 12px; }
+    .nav-logo-season { display: none; }
+    .seasonal-hero-fig.fig-0, .seasonal-hero-fig.fig-1, .seasonal-hero-fig.fig-2 { display: none; }
+    .seasonal-hero-fig { opacity: 0.22; }
+  }
+  @media (prefers-reduced-motion: reduce) { .seasonal-hero-fig { animation: none; } }
   .nav-actions { display: flex; gap: 10px; align-items: center; }
   .lang-switcher { display: flex; gap: 2px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 3px; margin-right: 12px; }
   .lang-btn { padding: 6px 10px; border-radius: 6px; border: none; background: transparent; color: var(--text); font-size: 14px; font-weight: 700; letter-spacing: 0.3px; cursor: pointer; font-family: var(--font-body); transition: all 0.15s ease; }
@@ -657,6 +690,9 @@ const matchVenueConocido = (place) => {
 export default function App() {
   const location = useLocation();
   const lang = getLangFromPath(location.pathname);
+  // Temporada activa (Halloween, Navidad...) según la fecha de Colombia. Ver src/temporadas.js.
+  const temporada = useMemo(() => getTemporadaActiva(), []);
+  const IconoTemporada = temporada ? ICONOS_TEMPORADA[temporada.iconos[0]] : null;
   const langPrefix = getLangPrefix(lang);
   const basePath = lang === "es" ? location.pathname : (location.pathname.slice(langPrefix.length) || "/");
   const t = translations[lang];
@@ -1776,7 +1812,7 @@ export default function App() {
       <style>{style}</style>
       <div className="app">
         <nav className="nav">
-          <div className="nav-logo" style={{cursor:'pointer'}} onClick={()=>{setActiveTab("home"); trackEvent({ action: "cambiar_tab", category: "Navegacion", label: "home" });}}>MEDELLÍN VIBRA</div>
+          <div className="nav-logo" style={{cursor:'pointer'}} onClick={()=>{setActiveTab("home"); trackEvent({ action: "cambiar_tab", category: "Navegacion", label: "home" });}}>MEDELLÍN VIBRA{IconoTemporada && <IconoTemporada size={18} aria-hidden="true" className="nav-logo-season" style={{"--season-accent": temporada.colores.acento}} />}</div>
           <div className="nav-links">
             {[[t.tabExplore,"explore"],[t.navMap,"map"],[t.tabSaved,"saved"]].map(([label,tab]) => (
               <button key={tab} className={`nav-link ${activeTab===tab?"active":""}`} onClick={()=>{setActiveTab(tab); trackEvent({ action: "cambiar_tab", category: "Navegacion", label: tab });}}>{label}</button>
@@ -1818,10 +1854,20 @@ export default function App() {
             )}
           </div>
         </nav>
+        <SeasonalRibbon
+          temporada={temporada}
+          lang={lang}
+          onVerPlanes={() => {
+            setActiveTab("home");
+            setSearch(temporada.busqueda);
+            trackEvent({ action: "click_temporada", category: "Temporada", label: temporada.id });
+            setTimeout(() => filtersRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+          }}
+        />
 
         {(activeTab === "home" || activeTab === "explore") && (
           <>
-            <HeroBanner search={search} setSearch={(val) => { setSearch(val); if(val.length > 2) trackEvent({ action: "busqueda", category: "Interaccion", label: val }); }} stats={stats} t={t} lang={lang} heroTitle={zonaPageConfig?.heroTitle} heroSubtitle={zonaPageConfig?.heroSubtitle} />
+            <HeroBanner temporada={temporada} search={search} setSearch={(val) => { setSearch(val); if(val.length > 2) trackEvent({ action: "busqueda", category: "Interaccion", label: val }); }} stats={stats} t={t} lang={lang} heroTitle={zonaPageConfig?.heroTitle} heroSubtitle={zonaPageConfig?.heroSubtitle} />
 
             <NewsletterCTAs t={t} alreadySubscribed={alreadySubscribed} showPopup={showPopup} showStickyFooter={showStickyFooter} subEmail={subEmail} setSubEmail={setSubEmail} handleSubscribe={handleSubscribe} dismissPopup={dismissPopup} dismissSticky={dismissSticky} />
             <div className="zona-group-wrap" ref={filtersRef}>

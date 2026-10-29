@@ -1,0 +1,74 @@
+import { useState } from "react";
+import { Ghost, MoonStar, Candy, Skull, Sparkles, TreePine, Star, X } from "lucide-react";
+
+// Mapa explícito nombre → ícono (en vez de importar todo lucide) para que el
+// bundle solo incluya los íconos que usan las temporadas. Si una temporada
+// nueva usa otro ícono, se importa arriba y se agrega aquí.
+export const ICONOS_TEMPORADA = { Ghost, MoonStar, Candy, Skull, Sparkles, TreePine, Star };
+
+const claveCerrada = (id) => `mv-temporada-cerrada-${id}`;
+
+function yaCerrada(id) {
+  try { return localStorage.getItem(claveCerrada(id)) === "1"; } catch { return false; }
+}
+
+// Franja delgada bajo el menú. Altura fija (40px) y se pinta en el primer render
+// (la fecha se conoce en el cliente sin esperar ninguna consulta), así que no
+// desplaza el contenido después de cargar.
+export default function SeasonalRibbon({ temporada, lang = "es", onVerPlanes }) {
+  const [cerrada, setCerrada] = useState(() => (temporada ? yaCerrada(temporada.id) : true));
+  if (!temporada || cerrada) return null;
+
+  const { colores, textos, iconos } = temporada;
+  const txt = textos[lang] || textos.es;
+  const Icono = ICONOS_TEMPORADA[iconos[0]] || Sparkles;
+
+  const cerrar = () => {
+    setCerrada(true);
+    try { localStorage.setItem(claveCerrada(temporada.id), "1"); } catch { /* sin storage: solo se cierra en esta vista */ }
+  };
+
+  return (
+    <div
+      className="seasonal-ribbon"
+      role="region"
+      aria-label={txt.mensaje}
+      style={{ "--sr-bg": colores.fondo, "--sr-text": colores.texto, "--sr-accent": colores.acento }}
+    >
+      <button type="button" className="seasonal-ribbon-main" onClick={onVerPlanes}>
+        <Icono size={16} aria-hidden="true" className="seasonal-ribbon-icon" />
+        <span className="seasonal-ribbon-msg">{txt.mensaje}</span>
+        <span className="seasonal-ribbon-cta">{txt.cta} →</span>
+      </button>
+      <button type="button" className="seasonal-ribbon-close" onClick={cerrar} aria-label="Cerrar aviso de temporada">
+        <X size={14} aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
+
+// Figuras tenues para el fondo del hero. Puramente decorativas.
+export function SeasonalHeroDecor({ temporada }) {
+  if (!temporada) return null;
+  const iconos = temporada.iconos.map((n) => ICONOS_TEMPORADA[n]).filter(Boolean);
+  if (!iconos.length) return null;
+  // Posiciones fijas (no aleatorias) para que el render sea estable.
+  const posiciones = [
+    { top: "14%", right: "8%", size: 64, delay: "0s" },
+    { top: "58%", right: "16%", size: 40, delay: "1.2s" },
+    { top: "30%", right: "26%", size: 30, delay: "2.1s" },
+    { top: "72%", right: "5%", size: 34, delay: "0.6s" },
+  ];
+  return (
+    <div className="seasonal-hero-decor" aria-hidden="true" style={{ "--sr-accent": temporada.colores.acento }}>
+      {posiciones.map((p, i) => {
+        const Icono = iconos[i % iconos.length];
+        return (
+          <span key={i} className={`seasonal-hero-fig fig-${i}`} style={{ top: p.top, right: p.right, animationDelay: p.delay }}>
+            <Icono size={p.size} strokeWidth={1.5} />
+          </span>
+        );
+      })}
+    </div>
+  );
+}
