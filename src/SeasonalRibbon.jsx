@@ -52,19 +52,23 @@ export function SeasonalHeroDecor({ temporada }) {
   if (!temporada) return null;
   const iconos = temporada.iconos.map((n) => ICONOS_TEMPORADA[n]).filter(Boolean);
   if (!iconos.length) return null;
-  // Posiciones fijas (no aleatorias) para que el render sea estable.
+  // Posiciones fijas (no aleatorias) para que el render sea estable. Todas van
+  // en la mitad derecha del hero, donde no hay texto. En celular solo se ven
+  // las marcadas con `movil` (más pequeñas, en las esquinas libres).
   const posiciones = [
-    { top: "14%", right: "8%", size: 64, delay: "0s" },
-    { top: "58%", right: "16%", size: 40, delay: "1.2s" },
-    { top: "30%", right: "26%", size: 30, delay: "2.1s" },
-    { top: "72%", right: "5%", size: 34, delay: "0.6s" },
+    { top: "12%", right: "7%", size: 84, delay: "0s", movil: true },
+    { top: "52%", right: "14%", size: 52, delay: "1.2s" },
+    { top: "28%", right: "28%", size: 38, delay: "2.1s" },
+    { top: "74%", right: "4%", size: 46, delay: "0.6s", movil: true },
+    { top: "66%", right: "32%", size: 30, delay: "1.7s" },
+    { top: "8%", right: "38%", size: 26, delay: "2.6s" },
   ];
   return (
-    <div className="seasonal-hero-decor" aria-hidden="true" style={{ "--sr-accent": temporada.colores.acento }}>
+    <div className="seasonal-hero-decor" aria-hidden="true" style={{ "--sr-accent": temporada.colores.acento, "--sr-bg": temporada.colores.fondo }}>
       {posiciones.map((p, i) => {
         const Icono = iconos[i % iconos.length];
         return (
-          <span key={i} className={`seasonal-hero-fig fig-${i}`} style={{ top: p.top, right: p.right, animationDelay: p.delay }}>
+          <span key={i} className={`seasonal-hero-fig fig-${i}${p.movil ? " fig-movil" : ""}`} style={{ top: p.top, right: p.right, animationDelay: p.delay }}>
             <Icono size={p.size} strokeWidth={1.5} />
           </span>
         );

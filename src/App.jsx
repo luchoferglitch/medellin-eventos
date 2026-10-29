@@ -243,14 +243,22 @@ const style = `
     background: none; border: none; color: inherit; opacity: 0.7; cursor: pointer; border-radius: 6px;
   }
   .seasonal-ribbon-close:hover { opacity: 1; background: rgba(255,255,255,0.08); }
-  .seasonal-hero-decor { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-  .seasonal-hero-fig { position: absolute; color: var(--sr-accent); opacity: 0.32; animation: seasonFloat 6s ease-in-out infinite; }
+  .seasonal-hero-decor { position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    /* Velo morado muy suave sobre la mitad derecha de la foto, para dar ambiente de temporada. */
+    background: linear-gradient(to right, transparent 45%, color-mix(in srgb, var(--sr-bg) 45%, transparent) 100%); }
+  .seasonal-hero-fig { position: absolute; color: var(--sr-accent); opacity: 0.6;
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--sr-accent) 70%, transparent));
+    animation: seasonFloat 6s ease-in-out infinite; }
   @keyframes seasonFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
   @media (max-width: 640px) {
     .seasonal-ribbon { font-size: 12px; }
     .nav-logo-season { display: none; }
-    .seasonal-hero-fig.fig-0, .seasonal-hero-fig.fig-1, .seasonal-hero-fig.fig-2 { display: none; }
-    .seasonal-hero-fig { opacity: 0.22; }
+    .seasonal-hero-fig:not(.fig-movil) { display: none; }
+    .seasonal-hero-fig { opacity: 0.38; }
+    .seasonal-hero-fig.fig-0 { top: 4% !important; right: 4% !important; }
+    .seasonal-hero-fig.fig-0 svg { width: 44px; height: 44px; }
+    .seasonal-hero-fig.fig-3 { top: auto !important; bottom: 3%; right: 5% !important; }
+    .seasonal-hero-fig.fig-3 svg { width: 34px; height: 34px; }
   }
   @media (prefers-reduced-motion: reduce) { .seasonal-hero-fig { animation: none; } }
   .nav-actions { display: flex; gap: 10px; align-items: center; }
