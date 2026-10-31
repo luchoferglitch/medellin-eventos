@@ -231,7 +231,7 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
     ctaBannerTitle: "No te pierdas nada. Suscríbete al newsletter.",
     ctaBannerText: "Los mejores eventos filtrados por tu zona, cada viernes en tu correo. 100% gratis.",
     eventoNlTitle: "¿Te gustó este plan?",
-    eventoNlText: "Cada viernes te mandamos los mejores planes de la semana en Medellín y alrededores. Gratis, y te puedes salir cuando quieras.",
+    eventoNlText: "Cada viernes te enviamos los mejores planes de la semana en Medellín y alrededores. Gratis, y te puedes salir cuando quieras.",
     eventoNlDone: "Listo, el viernes te llega el primer boletín.",
     eventoNlAlready: "Ya estás suscrito. Nos vemos el viernes.",
     eventoNlError: "No pudimos suscribirte. Intenta de nuevo.",
