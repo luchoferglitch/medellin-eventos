@@ -9,6 +9,7 @@ import { getLangFromPath, getLangPrefix, getLocale } from "./lang";
 import { CAT_LABEL_KEY } from "./categoryLabels";
 import { LanguageSelectorCompact } from "./components/LanguageSelector";
 import NewsletterEventoCTA from "./NewsletterEventoCTA";
+import PushInvite from "./PushInvite";
 
 const CAT_COLORS = {
   "Música": "#7C3AED", "Arte": "#EA580C", "Comedia": "#D97706",
@@ -79,6 +80,9 @@ export default function EventoPage() {
   const [hotelRecomendado, setHotelRecomendado] = useState(null);
   const [interested, setInterested] = useState(false);
   const [interestedCount, setInterestedCount] = useState(0);
+  // Sube cada vez que la persona muestra interés (comprar / me interesa):
+  // dispara la invitación a activar avisos.
+  const [pushDisparo, setPushDisparo] = useState(0);
   const [toast, setToast] = useState(null);
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500); };
 
@@ -229,6 +233,7 @@ export default function EventoPage() {
       const { error } = await supabase.from("favorites").insert({ event_id: event.id });
       if (!error) {
         setInterested(true);
+        setPushDisparo(n => n + 1);
         setInterestedCount(n => n + 1);
         showToast("✓ Marcado — le avisamos al organizador que te interesa");
       }
@@ -381,7 +386,7 @@ export default function EventoPage() {
 
         {event.ticketPlatform && (
           <div style={{background:'white', border:'1px solid #e5e1d8', borderRadius:14, padding:'16px 20px', marginBottom:20, display:'flex', gap:14, alignItems:'center', cursor: event.link ? 'pointer' : 'default'}}
-            onClick={() => event.link && registrarClic(event.id, event.link, "evento", event.title, event.cat)}>
+            onClick={() => { if (event.link) { registrarClic(event.id, event.link, "evento", event.title, event.cat); setPushDisparo(n => n + 1); } }}>
             <div style={{width:44, height:44, borderRadius:'50%', background:'#f5f3ef', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C8860A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg></div>
             <div>
               <div style={{fontSize:11, color:'#888', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:2}}>{t.ticketPlatformLabel}</div>
@@ -390,7 +395,7 @@ export default function EventoPage() {
           </div>
         )}
 
-        <button onClick={() => event.link ? registrarClic(event.id, event.link, "evento", event.title, event.cat) : navigate("/")}
+        <button onClick={() => { if (event.link) { registrarClic(event.id, event.link, "evento", event.title, event.cat); setPushDisparo(n => n + 1); } else navigate("/"); }}
           style={{width:'100%', padding:'16px', background:'#C8860A', color:'white', border:'none', borderRadius:14, fontWeight:700, fontSize:16, cursor:'pointer', fontFamily:'inherit', marginBottom:12}}>
           {event.price === "Gratis" ? t.registerFree : event.link ? `${t.buy} · ${event.price} →` : t.seeMoreEventsBtn}
         </button>
@@ -513,6 +518,8 @@ export default function EventoPage() {
         <a href="/" style={{fontFamily:"'Bebas Neue', sans-serif", fontSize:20, color:'#C8860A', textDecoration:'none', letterSpacing:1}}>MEDELLÍN VIBRA</a>
         <div style={{color:'#666', fontSize:12, marginTop:6}}>© {new Date().getFullYear()} medellinvibra.co</div>
       </div>
+
+      <PushInvite t={t} disparo={pushDisparo} />
 
       {toast && (
         <div style={{position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)', background:'#059669', color:'white', padding:'12px 24px', borderRadius:100, fontWeight:700, fontSize:14, zIndex:300, boxShadow:'0 4px 20px rgba(0,0,0,0.15)', whiteSpace:'nowrap'}}>

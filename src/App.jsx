@@ -4,7 +4,7 @@ import { supabase } from "./supabase";
 import { registrarClic } from "./registrarClic";
 import { initGA, logPageView, trackEvent } from "./analytics";
 import { esGratis, formatPriceLabel } from "./priceLabel";
-import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette, Megaphone, MoreHorizontal, Store, HelpCircle, Info, Armchair, Speaker, Tent, MonitorPlay, UtensilsCrossed, Camera, Sofa, Truck, ShieldCheck, Wheat, Users, BadgeCheck } from "lucide-react";
+import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette, Megaphone, MoreHorizontal, Store, HelpCircle, Info, Armchair, Speaker, Tent, MonitorPlay, UtensilsCrossed, Camera, Sofa, Truck, ShieldCheck, Wheat, Users, BadgeCheck, Bell } from "lucide-react";
 import { translations } from "./translations";
 import EventoPage from "./EventoPage";
 import OrganizadorPage from "./OrganizadorPage";
@@ -24,6 +24,8 @@ import SeasonalRibbon, { ICONOS_TEMPORADA } from "./SeasonalRibbon";
 import { getTemporadaActiva } from "./temporadas";
 import NewsletterCTAs from "./NewsletterCTAs";
 import PushBell from "./PushBell";
+import PushSheet from "./PushSheet";
+import { LanguageSelectorCompact } from "./components/LanguageSelector";
 import FiltroCalendario, { eventoOcurreEnFecha } from "./FiltroCalendario";
 import BackToTop from "./BackToTop";
 import HreflangTags from "./components/HreflangTags";
@@ -262,6 +264,9 @@ const style = `
   }
   @media (prefers-reduced-motion: reduce) { .seasonal-hero-fig { animation: none; } }
   .nav-actions { display: flex; gap: 10px; align-items: center; }
+  .lang-compact { display: none; }
+  .more-menu-theme { display: none !important; }
+  @media (max-width: 400px) { .more-menu-theme { display: flex !important; } }
   .lang-switcher { display: flex; gap: 2px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 3px; margin-right: 12px; }
   .lang-btn { padding: 6px 10px; border-radius: 6px; border: none; background: transparent; color: var(--text); font-size: 14px; font-weight: 700; letter-spacing: 0.3px; cursor: pointer; font-family: var(--font-body); transition: all 0.15s ease; }
   .lang-btn:hover:not(.active) { color: var(--gold-text); }
@@ -282,6 +287,22 @@ const style = `
     .nav-actions .btn-ghost { padding: 8px 10px; }
     .nav-actions .btn-primary { padding: 8px 12px; white-space: nowrap; }
     .lang-btn { padding: 5px 7px; font-size: 12px; }
+    /* En celular la fila del menú superior se salía de la pantalla (~600px de
+       ancho en un teléfono de 375px): eso desplazaba la página de lado y dejaba
+       el menú "Más" fuera de la vista. Idioma pasa a un selector compacto y
+       entrar/registrarse quedan en Más → Perfil. */
+    .lang-switcher { display: none; }
+    .lang-compact { display: inline-flex; }
+    .nav-auth-btn { display: none; }
+    .nav { padding: 0 12px; }
+    .nav-logo { font-size: 18px; }
+    .nav-actions { gap: 5px; }
+    .nav-actions .btn-primary { padding: 8px 9px; font-size: 12px; }
+    .nav-actions .mv-bell, .nav-actions .mv-theme { padding: 7px 8px !important; }
+  }
+  @media (max-width: 400px) {
+    /* En los teléfonos más angostos el modo oscuro pasa al menú Más. */
+    .nav-actions .mv-theme { display: none !important; }
   }
   .btn-ghost {
     background: none; border: 1px solid var(--border); color: var(--text);
@@ -355,13 +376,14 @@ const style = `
     content: ''; position: absolute; inset: 0;
     background: linear-gradient(to right, rgba(0,0,0,0.75) 40%, rgba(0,0,0,0.3) 100%);
   }
-  .hero-content { position: relative; z-index: 1; padding: 80px 24px 60px; max-width: 640px; }
+  .hero-content { position: relative; z-index: 1; padding: 80px 24px 60px; max-width: 640px; min-width: 0; box-sizing: border-box; }
   .hero-tag {
     display: inline-flex; align-items: center; gap: 6px;
     background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
     color: white; padding: 4px 12px; border-radius: 100px;
     font-size: 12px; font-weight: 500; letter-spacing: 0.5px; margin-bottom: 20px;
     backdrop-filter: blur(8px);
+    max-width: 100%; box-sizing: border-box;
   }
   .hero-tag::before { content: '●'; font-size: 8px; color: #F5A623; animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
@@ -377,7 +399,10 @@ const style = `
   .search-bar input { flex: 1; background: none; border: none; color: var(--text); padding: 14px 18px; font-family: var(--font-body); font-size: 15px; outline: none; }
   .search-bar input::placeholder { color: var(--muted); }
   .search-bar button { background: var(--gold); color: white; border: none; padding: 14px 24px; cursor: pointer; font-weight: 700; font-family: var(--font-body); font-size: 14px; }
+  .cat-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+  @media (max-width: 480px) { .cat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; } .cat-grid .filter-chip { font-size: 11px !important; padding: 10px 2px !important; } }
   .stats { display: flex; gap: 32px; margin-top: 40px; }
+  @media (max-width: 480px) { .stats { gap: 10px; justify-content: space-between; } .stat-num { font-size: 26px; } .stat-label { font-size: 11px; } }
   .stat-num { font-family: var(--font-display); font-size: 32px; color: #F5A623; }
   .stat-label { font-size: 12px; color: rgba(255,255,255,0.6); }
 
@@ -500,7 +525,7 @@ const style = `
   .bottom-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted); font-size: 11px; cursor: pointer; padding: 4px 10px; transition: color 0.2s; background: none; border: none; font-family: var(--font-body); flex-shrink: 0; white-space: nowrap; }
   .bottom-nav-item.active { color: var(--gold-text); }
   .bottom-nav-item span:first-child { font-size: 20px; display: flex; align-items: center; justify-content: center; position: relative; }
-  .more-menu-overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); display: flex; align-items: flex-end; justify-content: center; animation: fadeIn 0.2s; }
+  .more-menu-overlay { position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); display: flex; align-items: flex-end; justify-content: center; animation: fadeIn 0.2s; }
   .more-menu-panel { background: var(--surface); border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px)); animation: slideUp 0.25s cubic-bezier(0.34,1.56,0.64,1); box-shadow: 0 -8px 40px rgba(0,0,0,0.2); }
   .more-menu-handle { width: 36px; height: 4px; border-radius: 100px; background: var(--border); margin: 0 auto 16px; }
   .more-menu-item { display: flex; align-items: center; gap: 14px; width: 100%; background: none; border: none; padding: 14px 10px; border-radius: 12px; cursor: pointer; font-family: var(--font-body); font-size: 15px; font-weight: 600; color: var(--text); transition: background 0.15s; text-align: left; }
@@ -731,6 +756,7 @@ export default function App() {
   const [showPopup, setShowPopup] = useState(false);
   const [showStickyFooter, setShowStickyFooter] = useState(false);
   const [alreadySubscribed, setAlreadySubscribed] = useState(false);
+  const [showPushSheet, setShowPushSheet] = useState(false);
   const [subNombre, setSubNombre] = useState("");
   const [subLoading, setSubLoading] = useState(false);
   const [subDone, setSubDone] = useState(false);
@@ -758,8 +784,9 @@ export default function App() {
   const navigate = useNavigate();
   // El selector de idioma navega a la URL con prefijo correspondiente (Fase 1: home + 3 zonas).
   // Fuera de esas rutas (páginas todavía sin versión por idioma) cae al home del idioma elegido.
-  const changeLang = (newLang) => {
-    trackEvent({ action: "cambiar_idioma", category: "Navegacion", label: newLang });
+  // yaRegistrado: el selector compacto del menú en celular ya envía el evento.
+  const changeLang = (newLang, yaRegistrado = false) => {
+    if (!yaRegistrado) trackEvent({ action: "cambiar_idioma", category: "Navegacion", label: newLang });
     const knownPaths = ["/", "/medellin", "/area-metropolitana", "/oriente-cercano"];
     const targetBase = knownPaths.includes(basePath) ? basePath : "/";
     const newPrefix = newLang === "es" ? "" : `/${newLang}`;
@@ -1838,6 +1865,7 @@ export default function App() {
             )}
           </div>
           <div className="nav-actions">
+            <span className="lang-compact"><LanguageSelectorCompact lang={lang} onChange={(l) => changeLang(l, true)} /></span>
             <div className="lang-switcher" role="group" aria-label="Idioma">
               {["es","en","pt","fr"].map(l => (
                 <button key={l} type="button" className={`lang-btn ${lang===l?"active":""}`} onClick={()=>changeLang(l)} aria-pressed={lang===l}>
@@ -1845,7 +1873,7 @@ export default function App() {
                 </button>
               ))}
             </div>
-            <button onClick={toggleDarkMode} title={darkMode ? "Modo claro" : "Modo oscuro"}
+            <button className="mv-theme" onClick={toggleDarkMode} title={darkMode ? "Modo claro" : "Modo oscuro"} aria-label={darkMode ? "Modo claro" : "Modo oscuro"}
               style={{background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:8, padding:'7px 10px', cursor:'pointer', display:'flex', alignItems:'center', color:'var(--text)'}}>
               {darkMode ? <Sun size={16} /> : <Moon size={16} />}
             </button>
@@ -1859,8 +1887,8 @@ export default function App() {
             ) : (
               <>
                 <button className="btn-primary" onClick={() => { localStorage.setItem("pendingCreate", "1"); setAuthTab("register"); setShowAuth(true); }}>{t.createEvent}</button>
-                <button className="btn-ghost" onClick={() => { setAuthTab("login"); setShowAuth(true); }}>{t.login}</button>
-                <button className="btn-ghost" onClick={() => { setAuthTab("register"); setShowAuth(true); }}>{t.register}</button>
+                <button className="btn-ghost nav-auth-btn" onClick={() => { setAuthTab("login"); setShowAuth(true); }}>{t.login}</button>
+                <button className="btn-ghost nav-auth-btn" onClick={() => { setAuthTab("register"); setShowAuth(true); }}>{t.register}</button>
               </>
             )}
           </div>
@@ -1964,7 +1992,7 @@ export default function App() {
                 {t.allCategoriesBtn}
                 <span style={{fontSize:12, opacity:0.8, marginLeft:6}}>({stats.eventos})</span>
               </button>
-              <div style={{display:"grid", gridTemplateColumns:"repeat(5, 1fr)", gap:8}}>
+              <div className="cat-grid">
                 {(() => {
                   const EMO = {"Música":"🎵","Arte":"🎨","Comedia":"😂","Tech":"💻","Gastronomía":"🍽️","Baile":"💃","Deportes":"⚽","Teatro":"🎭","Bienestar":"🧘","Académicos":"📚"};
                   return CATS.filter(c => c !== "Todos").map(c => {
@@ -3009,6 +3037,12 @@ export default function App() {
               <button className="more-menu-item" onClick={()=>{setShowMoreMenu(false); setActiveTab("profile"); trackEvent({ action: "cambiar_tab_bottom", category: "Navegacion", label: "profile_mas" });}}>
                 <User size={20} />{t.tabProfile}
               </button>
+              <button className="more-menu-item more-menu-theme" onClick={()=>{setShowMoreMenu(false); toggleDarkMode();}}>
+                {darkMode ? <Sun size={20} /> : <Moon size={20} />}{darkMode ? "Modo claro" : "Modo oscuro"}
+              </button>
+              <button className="more-menu-item" onClick={()=>{setShowMoreMenu(false); setShowPushSheet(true); trackEvent({ action: "abrir_avisos", category: "Navegacion", label: "menu_mas" });}}>
+                <Bell size={20} />{t.pushMenuItem}
+              </button>
               <button className="more-menu-item" onClick={()=>{setShowMoreMenu(false); navigate("/gratis"); trackEvent({ action: "click_nav_gratis", category: "Navegacion", label: "gratis_mas" });}}>
                 <Ticket size={20} />{t.navGratis}
               </button>
@@ -3024,6 +3058,8 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {showPushSheet && <PushSheet t={t} onClose={() => setShowPushSheet(false)} />}
 
         {showAuth && (
           <div className="auth-overlay" onClick={()=>setShowAuth(false)}>
