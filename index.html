@@ -53,7 +53,9 @@
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-ZRW8DCYBFS');
+      // send_page_view: false — las vistas las registra react-ga4 (src/analytics.js)
+      // en cada cambio de ruta; con el envío automático cada carga contaba doble.
+      gtag('config', 'G-ZRW8DCYBFS', { send_page_view: false });
     </script>
   </head>
   <body>

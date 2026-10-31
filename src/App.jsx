@@ -2,6 +2,7 @@
 import { Routes, Route, Link, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "./supabase";
 import { registrarClic } from "./registrarClic";
+import { registrarCampana } from "./registrarCampana";
 import { initGA, logPageView, trackEvent } from "./analytics";
 import { esGratis, formatPriceLabel } from "./priceLabel";
 import { Calendar, MapPin, MessageCircle, Home, Search, Map as MapIcon, Heart, User, Settings, Sun, Moon, Clock, Mail, CalendarPlus, PartyPopper, Link2, Trash2, Tag, Ticket, Drama, Music, FerrisWheel, Landmark, Music4, Trophy, Telescope, ShoppingBag, Mic, Palette, Megaphone, MoreHorizontal, Store, HelpCircle, Info, Armchair, Speaker, Tent, MonitorPlay, UtensilsCrossed, Camera, Sofa, Truck, ShieldCheck, Wheat, Users, BadgeCheck, Bell } from "lucide-react";
@@ -820,6 +821,7 @@ export default function App() {
   // ── INTEGRACIÓN GOOGLE ANALYTICS 4 ──
   useEffect(() => {
     initGA();
+    registrarCampana();
   }, []);
 
   useEffect(() => {

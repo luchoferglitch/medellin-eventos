@@ -3,7 +3,7 @@ import { supabase } from "./supabase";
 // Identificador anónimo del navegador (no es un dato personal: es un número
 // al azar guardado en este dispositivo). Sirve para contar personas distintas
 // y no solo clics, y para detectar clics repetidos o automáticos.
-function visitanteAnonimo() {
+export function visitanteAnonimo() {
   try {
     let id = localStorage.getItem("mv_vid");
     if (!id) {
@@ -15,7 +15,7 @@ function visitanteAnonimo() {
 }
 
 // Tipo de dispositivo, sin guardar el user agent completo.
-function tipoDispositivo() {
+export function tipoDispositivo() {
   const ua = navigator.userAgent || "";
   if (navigator.webdriver || /bot|crawl|spider|slurp|headless|lighthouse|preview|facebookexternalhit|whatsapp/i.test(ua)) return "bot";
   return /Mobi|Android|iPhone|iPad/i.test(ua) ? "movil" : "escritorio";
