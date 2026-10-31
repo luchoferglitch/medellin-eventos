@@ -2,7 +2,8 @@ import { supabase } from "./supabase";
 import { visitanteAnonimo, tipoDispositivo } from "./registrarClic";
 
 // Registra de qué campaña llega una visita (enlaces con utm_*, por ejemplo
-// medellinvibra.co/ig o medellinvibra.co/ig/carrusel-halloween). Una sola vez
+// medellinvibra.co/ig/carrusel-halloween, o el enlace de la bio de Instagram,
+// que Instagram ya marca solo con utm_source=ig). Una sola vez
 // por sesión y solo cuando la URL de entrada trae utm_source, para poder
 // comparar qué publicación de Instagram (u otro canal) trae gente al sitio.
 // Complementa a Google Analytics, que también lee los utm por su cuenta.

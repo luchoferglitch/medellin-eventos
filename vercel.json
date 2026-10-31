@@ -12,11 +12,6 @@
       "permanent": true
     },
     {
-      "source": "/ig",
-      "destination": "/?utm_source=instagram&utm_medium=bio&utm_campaign=bio",
-      "permanent": false
-    },
-    {
       "source": "/ig/:campana/evento/:slug",
       "destination": "/evento/:slug?utm_source=instagram&utm_medium=social&utm_campaign=:campana",
       "permanent": false
