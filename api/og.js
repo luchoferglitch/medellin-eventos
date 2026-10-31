@@ -42,6 +42,72 @@ const slugify = (str) =>
     .trim().replace(/\s+/g, "-")
     .slice(0, 80) || "";
 
+
+// ── Título y descripción SEO del evento ──
+// Copia de src/seoEvento.js (este archivo corre en el runtime edge sin
+// importar src/). Si cambias algo aquí, cámbialo también allá.
+const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+const normalizar = (s = "") =>
+  s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+// Municipio real tomado del campo place (convención "..., Municipio, Antioquia").
+// Si no se puede leer, Medellín solo cuando la zona es Medellín; si no, null.
+function municipioDelEvento(place = "", zona = "") {
+  const partes = String(place).split(",").map((p) => p.trim()).filter(Boolean);
+  const iAntioquia = partes.findIndex((p) => /^antioquia$/i.test(p));
+  if (iAntioquia > 0) return partes[iAntioquia - 1];
+  // "..., Envigado" o "..., Medellín": la última parte, si no es una dirección.
+  const ultima = (partes[partes.length - 1] || "").split(/\s[—-]\s/).pop().trim();
+  if (partes.length > 1 && ultima && !/\d/.test(ultima) && ultima.length <= 30) {
+    return /^medell[ií]n$/i.test(ultima) ? "Medellín" : ultima;
+  }
+  return zona === "Medellín" ? "Medellín" : null;
+}
+
+// Cómo nombrar el lugar en el título. La gente busca "<artista> medellín"
+// también para conciertos del Área Metropolitana (DAVIarena en Sabaneta,
+// Polideportivo Sur en Envigado), así que ahí va "Medellín (Sabaneta)":
+// coincide con la búsqueda y dice el municipio real.
+function lugarParaTitulo(place, zona) {
+  const municipio = municipioDelEvento(place, zona);
+  if (zona === "Área Metropolitana") {
+    return municipio && municipio !== "Medellín" ? `Medellín (${municipio})` : "Medellín";
+  }
+  return municipio;
+}
+
+function fechaCorta(iso) {
+  if (!iso || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return null;
+  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  return `${d} ${MESES[m - 1]} ${y}`;
+}
+
+function tituloSeoEvento({ title = "", place = "", zona = "", fechaReal = "" }) {
+  const ciudad = lugarParaTitulo(place, zona);
+  const yaTieneCiudad = ciudad && normalizar(title).includes(normalizar(ciudad.split(" (")[0]));
+  const fecha = fechaCorta(fechaReal);
+  let t = title.trim();
+  // Si el título ya dice "en <lugar>", no se repite el "en".
+  if (ciudad && !yaTieneCiudad) t += / en /i.test(t) ? ` · ${ciudad}` : ` en ${ciudad}`;
+  if (fecha) t += ` · ${fecha}`;
+  return `${t} | Medellín Vibra`;
+}
+
+// Descripción: primero los datos que la gente busca (fecha, lugar, precio)
+// y después el texto del evento, todo en ~155 caracteres.
+function descripcionSeoEvento({ description = "", place = "", fechaReal = "", time = "", price = "", category = "" }) {
+  const fecha = fechaCorta(fechaReal);
+  const lugar = String(place).split(",")[0].split(/\s[—-]\s/)[0].trim();
+  // Precios largos (etapas, localidades) se recortan a la primera parte.
+  let precio = String(price || "").trim();
+  if (precio.length > 40) precio = precio.split(/\s*\(|;|\.\s|,\s/)[0].trim();
+  const datos = [fecha && time ? `${fecha}, ${time}` : fecha, lugar, precio].filter(Boolean).join(" · ");
+  const texto = String(description || "").replace(/\s+/g, " ").trim();
+  const base = texto ? `${datos}. ${texto}` : `${category ? category + " · " : ""}${datos}`;
+  return base.length > 155 ? base.slice(0, 154).replace(/\s+\S*$/, "") + "…" : base;
+}
+
 function slugToId(slug) {
   const parts = slug.split("-");
   const last = parts[parts.length - 1];
@@ -109,11 +175,8 @@ export default async function handler(req) {
   }
 
   // 5. Construir los meta tags del evento
-  const title = esc(`${event.title} — Medellín Vibra`);
-  const description = esc(
-    event.description?.slice(0, 155) ||
-    `${event.category} en ${event.place} · ${event.date} · ${event.price}`
-  );
+  const title = esc(tituloSeoEvento({ title: event.title, place: event.place, zona: event.zona, fechaReal: event.fecha_real }));
+  const description = esc(descripcionSeoEvento({ description: event.description, place: event.place, fechaReal: event.fecha_real, time: event.time, price: event.price, category: event.category }));
   const image = esc(event.image_url || IMAGEN_DEFAULT);
 
   // JSON-LD server-side: el carrusel de eventos de Google sin depender de JS.

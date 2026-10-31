@@ -10,6 +10,7 @@ import { CAT_LABEL_KEY } from "./categoryLabels";
 import { LanguageSelectorCompact } from "./components/LanguageSelector";
 import NewsletterEventoCTA from "./NewsletterEventoCTA";
 import PushInvite from "./PushInvite";
+import { tituloSeoEvento, descripcionSeoEvento } from "./seoEvento";
 
 const CAT_COLORS = {
   "Música": "#7C3AED", "Arte": "#EA580C", "Comedia": "#D97706",
@@ -254,7 +255,8 @@ export default function EventoPage() {
   const tagCfg = event.tag ? TAGS_CONFIG[event.tag] : null;
   const canonicalUrl = `https://www.medellinvibra.co/evento/${slugify(event.title)}-${event.id}`;
   const eventImg = event.imageUrl || "https://pub-c5ba255ea192436da56e91e3ef3ecfa5.r2.dev/default-fallback-medellin";
-  const eventDesc = event.desc ? event.desc.slice(0, 155) : `${event.cat} en ${event.place} · ${event.date} · ${event.price}`;
+  const eventDesc = descripcionSeoEvento({ description: event.desc, place: event.place, fechaReal: event.fechaReal, time: event.time, price: event.price, category: event.cat });
+  const eventSeoTitle = tituloSeoEvento({ title: event.title, place: event.place, zona: event.zona, fechaReal: event.fechaReal });
 
   // Estructura JSON-LD de Evento para Google Search
   const precioLower = (event.price || "").toLowerCase();
@@ -294,7 +296,7 @@ export default function EventoPage() {
     <div style={{minHeight:'100vh', background:'#f5f3ef', fontFamily:"'DM Sans', sans-serif"}}>
       {/* 🚀 COMPONENTE DE SEO DINÁMICO */}
       <SEO 
-        title={`${event.title} — Medellín Vibra`}
+        title={eventSeoTitle}
         description={eventDesc}
         image={eventImg}
         url={canonicalUrl}
