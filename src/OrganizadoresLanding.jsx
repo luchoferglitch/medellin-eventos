@@ -56,6 +56,7 @@ export default function OrganizadoresLanding() {
     await supabase.from("subscribers").insert({
       email: formEmail.trim().toLowerCase(),
       nombre: `[ORGANIZADOR] ${formNombre.trim()} — ${formEmpresa.trim()} — ${formMensaje.trim()}`.slice(0, 500),
+      origen: "organizadores",
     }).then(() => {});
     setEnviado(true);
     setEnviando(false);

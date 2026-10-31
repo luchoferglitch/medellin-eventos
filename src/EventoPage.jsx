@@ -8,6 +8,7 @@ import { translations } from "./translations";
 import { getLangFromPath, getLangPrefix, getLocale } from "./lang";
 import { CAT_LABEL_KEY } from "./categoryLabels";
 import { LanguageSelectorCompact } from "./components/LanguageSelector";
+import NewsletterEventoCTA from "./NewsletterEventoCTA";
 
 const CAT_COLORS = {
   "Música": "#7C3AED", "Arte": "#EA580C", "Comedia": "#D97706",
@@ -410,6 +411,8 @@ export default function EventoPage() {
           style={{width:'100%', padding:'13px', background:'white', color:'#1a1a1a', border:'1px solid #e5e1d8', borderRadius:14, fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:'inherit', marginBottom:32, display:'flex', alignItems:'center', justifyContent:'center', gap:6}}>
           <CalendarPlus size={15} />{t.addToCalendarBtn}
         </button>
+
+        <NewsletterEventoCTA t={t} lang={lang} eventId={event.id} />
 
         {/* SECCIÓN DE RESEÑAS */}
         <div style={{marginTop:8}}>
