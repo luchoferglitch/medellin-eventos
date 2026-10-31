@@ -22,27 +22,37 @@ export default async function handler(req) {
     });
   }
 
-  // Desactivar suscriptor
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/subscribers?email=eq.${encodeURIComponent(email)}`,
-    {
-      method: "PATCH",
-      headers: {
-        "apikey": SUPABASE_KEY,
-        "Authorization": `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json",
-        "Prefer": "return=minimal",
-      },
-      body: JSON.stringify({ activo: false }),
-    }
-  );
+  // Desactivar suscriptor. Va por la función desuscribir() (security definer)
+  // porque la anon key no puede leer ni actualizar filas de subscribers
+  // directamente: un PATCH por la REST API afectaba 0 filas y devolvía 204,
+  // así que la página decía "cancelada" sin haber cambiado nada.
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/desuscribir`, {
+    method: "POST",
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": `Bearer ${SUPABASE_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ p_email: email }),
+  });
 
-  if (res.ok || res.status === 204) {
+  if (res.ok) {
+    const encontrado = await res.json().catch(() => false);
+    if (encontrado === true) {
+      return new Response(
+        buildPage(
+          "Suscripción cancelada",
+          "Ya no recibirás el newsletter semanal de Medellín Vibra. Si cambias de opinión, siempre puedes volver a suscribirte en nuestro sitio.",
+          true
+        ),
+        { headers: { "content-type": "text/html; charset=utf-8" } }
+      );
+    }
     return new Response(
       buildPage(
-        "Suscripción cancelada",
-        "Ya no recibirás el newsletter semanal de Medellín Vibra. Si cambias de opinión, siempre puedes volver a suscribirte en nuestro sitio.",
-        true
+        "Correo no encontrado",
+        "Este correo no está en nuestra lista, así que no te llegará el newsletter. Si te sigue llegando, escríbenos a hola@medellinvibra.co.",
+        false
       ),
       { headers: { "content-type": "text/html; charset=utf-8" } }
     );

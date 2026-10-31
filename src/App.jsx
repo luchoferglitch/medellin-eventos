@@ -1771,11 +1771,14 @@ export default function App() {
     setSubLoading(true);
     const cleanEmail = sanitize(subEmail).trim().toLowerCase();
     const cleanNombre = sanitize(subNombre).trim().slice(0, 100) || null;
-    const { error } = await supabase.from("subscribers").insert({ email: cleanEmail, nombre: cleanNombre, idioma: lang, origen });
+    // suscribir() inserta, o reactiva a quien se había dado de baja.
+    const { data: resultado, error } = await supabase.rpc("suscribir", { p_email: cleanEmail, p_idioma: lang, p_origen: origen, p_nombre: cleanNombre });
     setSubLoading(false);
-    if (error) {
-      if (error.code === "23505") showToast("📧 Ya estás suscrito");
-      else showToast("⚠️ Error al suscribirse");
+    if (error || resultado === "invalido") {
+      showToast(resultado === "invalido" ? "⚠️ Ingresa un correo válido" : "⚠️ Error al suscribirse");
+    } else if (resultado === "ya") {
+      showToast("📧 Ya estás suscrito");
+      markSubscribed();
     } else {
       setSubDone(true);
       setSubEmail("");

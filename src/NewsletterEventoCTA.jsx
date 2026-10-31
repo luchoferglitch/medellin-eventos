@@ -40,11 +40,13 @@ export default function NewsletterEventoCTA({ t, lang = "es", eventId }) {
     if (!isValidEmail(limpio)) { setEstado("invalido"); return; }
     if (!limiteDeIntentos()) { setEstado("error"); return; }
     setEstado("enviando");
-    const { error } = await supabase.from("subscribers").insert({ email: limpio, idioma: lang, origen: "evento" });
-    if (error && error.code !== "23505") { setEstado("error"); return; }
+    // suscribir() inserta, o reactiva a quien se había dado de baja.
+    const { data, error } = await supabase.rpc("suscribir", { p_email: limpio, p_idioma: lang, p_origen: "evento" });
+    if (error) { setEstado("error"); return; }
+    if (data === "invalido") { setEstado("invalido"); return; }
     try { localStorage.setItem("mv_subscribed", "1"); } catch { /* sin storage */ }
-    setEstado(error ? "ya" : "listo");
-    if (!error) trackEvent({ action: "suscripcion_newsletter", category: "Conversión", label: "evento", value: eventId });
+    setEstado(data === "ya" ? "ya" : "listo");
+    if (data !== "ya") trackEvent({ action: "suscripcion_newsletter", category: "Conversión", label: "evento", value: eventId });
   };
 
   const terminado = estado === "listo" || estado === "ya";

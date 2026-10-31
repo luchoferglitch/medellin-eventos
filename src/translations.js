@@ -220,7 +220,7 @@ aboutText: "Nacimos en Medellín, pero por petición de nuestra comunidad nos he
 
     // Lote 3b (final): Newsletter — footer + banner + pop-up + sticky
     newsletterConfirmTitle: "¡YA ESTÁS SUSCRITO!",
-    newsletterConfirmSubtitle: "Cada viernes te mandamos los mejores eventos de la semana.",
+    newsletterConfirmSubtitle: "Cada viernes te enviamos los mejores eventos de la semana.",
     newsletterTitle: "AGENDA SEMANAL",
     newsletterSubtitle: "Recibe cada viernes los mejores eventos de Medellín",
     newsletterNamePlaceholder: "Tu nombre (opcional)",
