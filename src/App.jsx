@@ -43,6 +43,7 @@ import catTeatro from "./assets/cat-teatro.jpg";
 import catGastronomia from "./assets/cat-gastronomia.jpg";
 import catBienestar from "./assets/cat-bienestar.jpg";
 import catAcademicos from "./assets/cat-academicos.jpg";
+import PanelCrecimiento from "./PanelCrecimiento";
 
 // Iconos de marca (retirados de lucide-react; trazos originales MIT)
 const InstagramIcon = ({ size = 14, style }) => (
@@ -1882,7 +1883,7 @@ export default function App() {
             <PushBell t={t} />
             {user ? (
               <>
-                <button className="btn-ghost" onClick={handleLogout}>{t.logout}</button>
+                <button className="btn-ghost nav-auth-btn" onClick={handleLogout}>{t.logout}</button>
                 <div className="user-avatar" onClick={() => setActiveTab("profile")}>{getUserInitial()}</div>
                 <button className="btn-primary" onClick={() => setShowCreate(true)}>{t.createEvent}</button>
               </>
@@ -2642,10 +2643,10 @@ export default function App() {
             </div>
 
             <div style={{display:'flex', gap:8, background:'var(--surface2)', borderRadius:12, padding:4}}>
-              {[["pending","⏳ Pendientes", pendingEvents.length],["approved","✅ Aprobados", events.length],["stats","📊 Stats", null]].map(([key,label,count])=>(
+              {[["pending","⏳ Pendientes", pendingEvents.length],["approved","✅ Aprobados", events.length],["stats","📊 Stats", null],["crecimiento","📈 Crecimiento", null]].map(([key,label,count])=>(
                 <button key={key} onClick={()=>{ setAdminSection(key); if(key==='stats') { fetchAdminStats(); fetchOrgClicks(orgClicksRange); } }}
                   style={{flex:1, padding:'8px', borderRadius:9, border:'none', fontFamily:'var(--font-body)', fontWeight:700, fontSize:13, cursor:'pointer',
-                    background: adminSection===key ? 'white' : 'transparent',
+                    background: adminSection===key ? 'var(--surface)' : 'transparent',
                     color: adminSection===key ? 'var(--text)' : 'var(--muted)',
                     boxShadow: adminSection===key ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
                   }}>
@@ -2722,6 +2723,8 @@ export default function App() {
                 </div>
               ))
             )}
+
+            {adminSection === "crecimiento" && <PanelCrecimiento />}
 
             {adminSection === "stats" && (
               !adminStats
